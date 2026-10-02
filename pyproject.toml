@@ -65,4 +65,4 @@ idms-web = "idms.web.wsgi:main"
 [tool.uv.sources]
 idms-common-constants = { git = "https://github.com/rivm-syso/iDMS_common_constants" }
 idms-common-filesys   = { git = "https://github.com/rivm-syso/iDMS_common_filesys" }
-idms-common-irods     = { git = "https://github.com/rivm-syso/iDMS_common_irods" }
+idms-common-irods     = { path = "../iDMS_common_irods", editable = true }
