@@ -14,7 +14,7 @@ def configure_cache(app):
         try:
             redis_host = app.config.get('CACHE_REDIS_HOST', '')
             import redis
-            redis_test = redis.Redis('redis')
+            redis_test = redis.Redis(redis_host)
             redis_test.set('test', 'value')
             logger.info(f'Use REDIS on host {redis_host}')
         except:
