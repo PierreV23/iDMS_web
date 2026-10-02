@@ -9,4 +9,4 @@ if "packaged by conda-forge" in sys.version:
 
 from idms.web.app.idms_web import create_app
 
-create_app()
+# create_app()
