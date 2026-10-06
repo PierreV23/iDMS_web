@@ -141,7 +141,7 @@ class WebUser(UserMixin):
     @property
     def native_password(self):
         if self._encrypted_native_password is None:
-            self.validate_irods_session()
+            return decrypt(self._encrypted_password)
         return decrypt(self._encrypted_native_password)
 
     @property
@@ -226,18 +226,26 @@ class WebUser(UserMixin):
             # to check the credentials, we need to make a new session with the password of this webuser.
 
             # Create iRODS session and verify if root collection can be retrieved
-            check_pw_session = create_session(current_app.config["IRODS_ENVS"].get(self.environment, None), self, use_pam=True)
-            # Get the temporary password from our custom Connection class
-            conn = Connection2(check_pw_session.pool, check_pw_session.pool.account)
-            # Store the temporary password
-            self._encrypted_native_password = encrypt(conn.native_password)
+            env_config = current_app.config["IRODS_ENVS"].get(self.environment, None) or {}
+            scheme = env_config.get("authentication_scheme", "pam_password")
+            use_pam = scheme == "pam_password"
+            check_pw_session = create_session(env_config, self, use_pam=use_pam)
+            if use_pam:
+                # Get the temporary password from our custom Connection class
+                conn = Connection2(check_pw_session.pool, check_pw_session.pool.account)
+                # Store the temporary password
+                self._encrypted_native_password = encrypt(conn.native_password)
+            else:
+                # native password is the credential. touch home path to verify authentication
+                check_pw_session.collections.get(f"/{env_config.get('zone')}/home/{self.username}")
+                self._encrypted_native_password = None
             self._is_authenticated = True
             check_pw_session.cleanup()
             # Remove old sessions
             irods_manager.remove(self)
             return True
         except Exception as e:
-            logging.info(f"Authentication (session validation) failed for user {self.username} on {self.environment}")
+            logging.exception(f"Authentication (session validation) failed for user {self.username} on {self.environment}")
             irods_manager.remove(self)
         return False
 
