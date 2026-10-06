@@ -1,0 +1,62 @@
+<div class="action-topbar mb-3">
+    <div class="alignleft">
+        <button class="btn btn-outline-secondary" id="start-websav">
+            <i class="bi bi-graph-up me-1"></i> Illumina webSAV
+        </button>
+    </div>
+</div>
+
+<!-- webSAV Modal -->
+<div class="modal fade" id="websavModal" tabindex="-1" aria-labelledby="websavModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xxl modal-fullscreen-xl-down">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="websavModalLabel">
+                    web<span>SAV</span>vy <small class="text-muted fs-6">| Illumina InterOp Visualizer</small>
+                </h5>
+                {{ coll_state.collection }}
+                <button type="button" class="btn-close btn-close-white" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="websav-spinner" class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading webSAVvy...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Parsing InterOp binary metrics from iRODS...</p>
+                </div>
+                <iframe id="websav-iframe" src="" style="width:100%; height:80vh; border:none; display:none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function () {
+    $('#start-websav').on('click', function () {
+        // Dynamically extract current iRODS collection path
+        var irodsPath = "{{ coll_state.collection }}"; 
+        
+        if (!irodsPath) {
+            alert('Could not determine current iRODS collection path.');
+            return;
+        }
+
+        // Construct webSAV URL
+        var websavUrl = "{{ url_for('websav.index') }}?path=" + encodeURIComponent(irodsPath);
+
+        // Show spinner & hide iframe initially
+        $('#websav-spinner').show();
+        $('#websav-iframe').hide().attr('src', websavUrl);
+
+        // Hide spinner once iframe finishes loading
+        $('#websav-iframe').off('load').on('load', function () {
+            $('#websav-spinner').hide();
+            $(this).show();
+        });
+
+        // Open modal
+        var modal = new bootstrap.Modal(document.getElementById('websavModal'));
+        modal.show();
+    });
+});
+</script>

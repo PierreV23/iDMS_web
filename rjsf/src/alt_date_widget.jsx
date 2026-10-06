@@ -1,0 +1,86 @@
+// This custom puts labels in the right place. It is a modified version of the default
+// AltDateWidget: https://github.com/rjsf-team/react-jsonschema-form/blob/main/packages/core/src/components/widgets/AltDateWidget.tsx
+
+import React from "react";
+import { DateElement, TranslatableString, useAltDateWidgetProps } from '@rjsf/utils';
+
+/** The `AltDateWidget` is an alternative widget for rendering date properties.
+ * @param props - The `WidgetProps` for this component
+ */
+
+function AltDateWidget(props) {
+  const {
+    disabled = false,
+    readonly = false,
+    autofocus = false,
+    options = {},
+    id,
+    name,
+    registry,
+    onBlur,
+    onFocus,
+  } = props;
+
+  const { translateString } = registry;
+  const { elements, handleChange, handleClear, handleSetNow } =
+    useAltDateWidgetProps(props);
+
+  return (
+    <ul className="list-inline">
+      {elements.map((elemProps, i) => (
+        // eslint-disable-next-line react/no-array-index-key
+        <li className="list-inline-item" key={i}>
+          <label
+            htmlFor={id + "_" + elemProps.type}
+            className="sr-only"
+          >
+            {elemProps.type || name}
+          </label>
+
+          <DateElement
+            rootId={id}
+            name={name}
+            select={handleChange}
+            {...elemProps}
+            disabled={disabled}
+            readonly={readonly}
+            registry={registry}
+            onBlur={onBlur}
+            onFocus={onFocus}
+            autofocus={autofocus && i === 0}
+          />
+        </li>
+      ))}
+
+      {(options.hideNowButton !== "undefined"
+        ? !options.hideNowButton
+        : true) && (
+          <li className="list-inline-item">
+            <button
+              type="button"
+              className="btn btn-info btn-now"
+              onClick={handleSetNow}
+            >
+              {translateString(TranslatableString.NowLabel)}
+            </button>
+          </li>
+        )}
+
+      {(options.hideClearButton !== "undefined"
+        ? !options.hideClearButton
+        : true) && (
+          <li className="list-inline-item">
+            <button
+              type="button"
+              className="btn btn-warning btn-clear"
+              onClick={handleClear}
+            >
+              {translateString(TranslatableString.ClearLabel)}
+            </button>
+          </li>
+        )}
+    </ul>
+  );
+}
+
+export default AltDateWidget;

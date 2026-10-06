@@ -1,0 +1,5 @@
+<ul class="list-unstyled card-columns" style="column-count: {{ columns }}">
+{% for project in projectdetails | sort %}
+<li><a href="{{ url_for('collbrowser.collbrowser') }}?path={{ projectdetails[project] }}">{{ project }}</a></li>
+{% endfor %}
+</ul>

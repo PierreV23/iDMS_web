@@ -1,0 +1,62 @@
+<script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
+<script>
+    function addShare() {
+        $('.shareinput').val('')
+        $('#shareGroup').removeClass('hidden')
+        $('#newshare input').attr('readonly', false)
+        $('.results').addClass('hidden')
+        $('#newshare').modal()
+    }
+
+    function deleteShares() {
+        if (confirm("Are you sure you want to remove selected shares?")) {
+            $('#sharetable').addClass('pending')
+            $('#sharetable').bootstrapTable('getSelections').forEach(function (element) {
+                $.post('{{ url_for('collbrowser.actions_deleteshare') }}', {
+                    ticket_id: element['ticket_id'],
+                    collection_id: element['coll_id']
+                }
+                )
+                .fail(function(data) {
+                    alert(data["responseJSON"]["message"])
+                })
+                .done(function() {$('#sharetable').bootstrapTable('refresh')})
+            });
+        }
+    }
+    
+
+    function shareTableButtons() {
+        return {
+            btnAddShare: {
+                text: 'Add Share',
+                icon: 'fa-plus',
+                event: addShare,
+                attributes: {
+                    title: 'Add a new share'
+                }
+            },
+            btnDeleteSelected: {
+                text: 'Delete selected',
+                icon: 'fa-trash',
+                event: deleteShares,
+                attributes: {
+                    title: 'Delete selected shares'
+                }
+            }
+        }
+    }
+
+</script>
+<table class="table" id="sharetable" data-click-to-select="true" data-toggle='table' data-striped="true"
+    data-show-columns="false" data-buttons="shareTableButtons"
+    data-url="{{ url_for('collbrowser.sharetable', collection=coll_state.collection ) }}">
+    <thead>
+        <tr>
+            <th data-checkbox="true"></th>
+            <th data-sortable="true" data-field="description">Description</th>
+            <th data-sortable="true" data-field="endtime">End time</th>
+            <th data-field="ticket_id" data-visible="false"></th>
+        </tr>
+    </thead>
+</table>

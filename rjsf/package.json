@@ -1,0 +1,31 @@
+{
+  "name": "rjsf",
+  "version": "1.0.0",
+  "description": "rjsf bundled for use in flask",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@rjsf/react-bootstrap": "^6.4.1",
+    "@rjsf/utils": "^6.4.1",
+    "@rjsf/validator-ajv8": "^6.4.1",
+    "@react-icons/all-files": "^4.1.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
+    "@babel/preset-react": "^7.28.5",
+    "babel-loader": "^10.1.1",
+    "css-loader": "^7.1.5",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.105.4",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.3"
+  }
+}

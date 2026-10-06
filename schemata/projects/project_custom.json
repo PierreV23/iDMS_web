@@ -1,0 +1,14 @@
+{
+    "title": "Metadata form project custom metadata",
+    "description": "",
+    "type": "object",
+    "properties": {
+        "extra_fields": {
+            "type": "object",
+            "title": "Custom metadata fields",
+            "description": "Add any number of custom metadata fields as key/value pairs.",
+            "additionalProperties": {
+            }
+        }
+    }
+}

@@ -1,0 +1,50 @@
+{
+  "title": "Upload registration metadata form: 10x",
+  "description": "",
+  "type": "object",
+  "required": [
+    "user::experimental_technique"
+  ],
+  "properties": {
+    "user::researchers_computational_lab": {
+      "type": "array",
+      "title": "Researchers (computational, lab)",
+      "items": {
+                "type": "string"
+            }
+    },
+    "user::project": {
+      "type": "string",
+      "title": "Project"
+    },	
+    "user::experimental_technique": {
+      "type": "string",
+      "title": "Experimental technique   ",
+      "enum": [
+                "10x Flex",
+                "10x Flex+VDJ",
+                "10x Flex+FB",
+                "10x Flex+VDJ+FB",
+                "10x 5GEX",
+                "10x 5GEX+VDJ",
+                "10x 5GEX+FB",
+                "10x 5GEX+VDJ+FB",
+                "10x 3GEX",
+                "10x 3GEX+FB",
+                "Other"
+            ]
+    },
+    "user::version_10x_genomics_kit": {
+      "type": "string",
+      "title": "Version 10x Genomics kit"
+    },
+    "user::type_of_data": {
+      "type": "string",
+      "title": "Type of data"
+    },
+    "user::additional_info": {
+      "type": "string",
+      "title": "Additional info"
+    }
+  }
+  }

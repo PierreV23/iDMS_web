@@ -1,0 +1,95 @@
+{% extends 'upload_pages.html' %}
+
+{% block heading %}
+<h2>Upload data for: <b>{{ coll }}</b></h2>
+{% endblock %}
+
+{%block menuname %}
+menuname='upload_data'
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/dropzone.min.css">
+<script>
+    function load_list(){
+        $.get('{{ url_for("collbrowser.collist") }}', {
+          path: '{{ coll }}',
+          download_btn: "false",
+          view_btn: "false",
+          delete_btn: "true",
+          refresh: 1
+        }, function (data) {
+            console.log('LOADED')
+            $('#collbrowser').html(data)
+        });
+    }
+    $(document).ready(function () {
+        load_list();
+    })
+</script>
+
+<!-- <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@rjsf/core/dist/react-jsonschema-form.js"></script> -->
+
+<div class="card h-100 d-flex flex-column">
+    <h3 class="card-header">Data upload methods:</h3>
+    <div class="card-body d-flex flex-column overflow-hidden">
+        <dl class="mb-3">
+            <dt>Use the drop zone below</dt>
+            <dd class="mb-3">
+                Drag and drop files into the drop zone. You can also click in the drop zone to select your upload files.
+                The maximum file size is {{ (config.get("MAX_FILE_UPLOAD_SIZE", 20000) / 1000) | round(1) }} GB. If you need to upload larger files, use the command line based method below to upload your files.
+            </dd>
+
+            <dt>Use the command line upload</dt>
+            <dd class="mb-0">
+                You can use this method in the scientific workplace. Use one of the commands below:
+                <pre class="bg-light p-3 rounded border my-2"><code><b>iput [-v] [filename] {{ coll }}</b>
+or
+<b>irsync -r [-v] [dirname] i:{{ coll }}</b></code></pre>
+                Don't forget to finalize your upload in the web interface after uploading.
+            </dd>
+        </dl>
+
+        <!-- flex-grow-1 allows the form to take only the remaining available height -->
+        <form action="{{ url_for('upload.upload_data') }}" class="dropzone flex-grow-1 d-flex flex-column overflow-auto" id="data-upload">
+            <input type="hidden" name="coll" value="{{ coll }}">
+            <div class="dropzone-previews"></div>
+
+            <!-- Restricts browser container to remaining height inside the form -->
+            <div id="collbrowser" class="flex-grow-1 overflow-hidden" style="max-height: 45vh;"></div>
+        </form>
+    </div>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/dropzone.min.js"></script>
+<script>
+
+    $('input, select').on('change', function () {
+        $('.formsubmit').prop("disabled", false);
+    })
+
+    Dropzone.options.dataUpload = {
+        maxFilesize: {{ config.get("MAX_FILE_UPLOAD_SIZE", 20000) }},
+        parallelUploads: 8,
+        createImageThumbnails: false,
+        previewsContainer: ".dropzone-previews",
+        timeout: 360000,
+        dictDefaultMessage: 'Drag files here or click to select',
+        init: function() {
+            this.on("success", function(file, response) {
+                this.removeFile(file);
+                load_list();
+            });
+            this.on("sending", function(file, xhr, formData) {
+                // Will send the filesize along with the file as POST data.
+                formData.append("fullPath", file.fullPath);
+            });
+        }
+    }
+
+</script>
+
+{% endblock %}

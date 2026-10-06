@@ -1,0 +1,24 @@
+{% extends 'upload_pages.html' %}
+{% import 'components/metadata_editor.html' as metadata_widget %}
+
+{% block heading %}
+<h2>Upload metadata for: <b>{{ name }}</b></h2>
+{% endblock %}
+
+{%block menuname %}
+menuname='upload_meta'
+{% endblock %}
+
+{% block content %}
+      {{ metadata_widget.render_metadata_editor(
+          id="comp_upload_metadata",
+          prefix=prefix,
+          project_name=project_name, 
+          collection=collection, 
+          meta_default_values_collection=meta_default_values_collection,
+          edit_allowed='true',
+          schemata_data_url=url_for('metaedit.schemata_for_dataset_upload', collection=collection, project_name=project_name),
+          attribute_type=attribute_type
+      ) }}
+
+{% endblock %}

@@ -1,0 +1,325 @@
+{% extends 'base2.html' %} {% block heading %}
+<h2>Accounting dashboard</h2>
+{% endblock %} {%block menuname %} menuname='accounting' {% endblock %} {% block
+content %}
+
+<!-- imports for the date selector -->
+<script
+	type="text/javascript"
+	src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<link
+	rel="stylesheet"
+	type="text/css"
+	href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+<!-- import for chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- export extention -->
+<script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.10.21/tableExport.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.10.21/libs/jsPDF/jspdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.10.21/libs/jsPDF-AutoTable/jspdf.plugin.autotable.js"></script>
+<script src="https://unpkg.com/bootstrap-table@1.21.1/dist/extensions/export/bootstrap-table-export.min.js"></script>
+
+<div class="container-fluid h-100 scroll">
+	<!-- Selectors -->
+	<div class="row">
+		<div class="col-lg-3 col-6">
+			<div class="small-box bg-info">
+				<div class="inner">
+					<h3>Settings</h3>
+					<p>place holder</p>
+				</div>
+				<!-- <div class="inner">
+					<h3 class="display-2 pb-2 border-bottom">Settings</h3>
+					<p>Place holder</p>
+				</div>
+				<a
+					class="small-box-footer"
+					href="#"
+					data-widget="control-sidebar">
+					<i class="fa-solid fa-gears"></i> Change settings
+					<i class="fas fa-arrow-circle-right"></i>
+				</a> -->
+			</div>
+		</div>
+		<div class="col-lg-3 col-6">
+			<div class="small-box bg-success">
+				<div class="inner">
+					<h3>Top usage</h3>
+					<p>place holder</p>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-3 col-6">
+			<div class="small-box bg-warning">
+				<div class="inner">
+					<h3>Highest user</h3>
+					<p>place holder</p>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-3 col-6">
+			<div class="small-box bg-danger">
+				<div class="inner">
+					<h3>Overview</h3>
+					<p>place holder</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- graph and tables-->
+	<div class="row">
+		<!-- table display all department -->
+		<!-- maybe using tree grid -->
+		<div id="all-depa-table" class="col-lg-12">
+			<div class="card">
+				<div class="card-header">
+					<h3 class="card-title">
+						<i class="fa-solid fa-table"></i>
+						All department overview
+					</h3>
+				</div>
+				<div class="card-body" style="overflow-x: auto">
+					<table
+						id="acc_table"
+						data-show-export="true"
+						data-search="true"
+						data-sortable="true"
+						data-pagination="true"
+						data-page-list="[10,25,50,100]"
+						data-page-size="10"></table>
+				</div>
+			</div>
+		</div>
+		<!-- graph display all department -->
+		<!-- <div id="all-depa-graph" class="col-lg-6">
+			<div class="card">
+				<div class="card-header">
+					<h3 class="card-title">
+						<i class="fas fa-chart-pie mr-1"></i>
+						Graph overview
+					</h3>
+				</div>
+				<div class="card-body">
+					<div class="chart">
+						<canvas
+							id="over_bar"
+							height="300"
+							style="height: 300px; display: block; width: 579px"
+							width="579"></canvas>
+					</div>
+				</div>
+			</div>
+		</div> -->
+		<!-- per department -->
+		<div id="per-depa-table" class="col-lg-12">
+			<div class="card">
+				<div class="card-header">
+					<h3 class="card-title">
+						<i class="fa-solid fa-table"></i>
+						Per department overview
+					</h3>
+				</div>
+				<div class="card-body" style="overflow-x: auto">
+					<div class="tab-content p-0">
+						<select
+							class="form-control selectpicker"
+							id="selectDepa">
+							{% for depa in departments %}
+							<option data-target="#depa-{{loop.index}}-tab">
+								{{depa}}
+							</option>
+							{% endfor %}
+						</select>
+						{% for depa in departments %}
+						<div
+							id="depa-{{loop.index}}-tab"
+							role="tabpanel"
+							class="tab-pane{% if loop.index == 1 %} active{% endif %}">
+							<table
+								id="depa-{{loop.index}}-table"
+								data-show-export="true"
+								data-search="true"
+								data-sortable="true"
+								data-pagination="true"
+								data-page-list="[10,25,50,100]"
+								data-page-size="10"></table>
+						</div>
+						{% endfor %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- date picker -->
+<!-- <script>
+	// define the dates (subtract one date to block the ability to see today)
+	var start_date = moment().subtract(30, "days");
+	var end_date = moment().subtract(1, "days");
+
+	function sendDate() {
+		request_url =
+			"{{ url_for('admin.get_dates') }}?start=" +
+			start_date.format("YYYY-MM-DD") +
+			"&end=" +
+			end_date.format("YYYY-MM-DD");
+
+		// fetch the api
+		fetch(request_url)
+			.then((response) => {
+				if (response.redirected) {
+					// If the response is a redirect, reload the page
+					window.location.href = response.url;
+				}
+			})
+			.catch((error) => {
+				console.error(error);
+				alert("Failed to send data. Check the console for details."); // Display an error message (optional)
+			});
+	}
+
+	function placeholder(start, end) {
+		$("#request-date").html(
+			start.format("DD-MM-YYYY") + " - " + end.format("DD-MM-YYYY")
+		);
+	}
+
+	function datePicker(start, end) {
+		$("#date-input").daterangepicker({
+			startDate: start,
+			endDate: end,
+			ranges: {
+				"Yesterday": [
+					moment().subtract(2, "days"),
+					moment().subtract(1, "days"),
+				],
+				"Last 7 Days": [
+					moment().subtract(7, "days"),
+					moment().subtract(1, "days"),
+				],
+				"Last 30 Days": [
+					moment().subtract(30, "days"),
+					moment().subtract(1, "days"),
+				],
+				"This Month (until today)": [
+					moment().startOf("month"),
+					moment().subtract(1, "days"),
+				],
+				"Last Month": [
+					moment().subtract(1, "month").startOf("month"),
+					moment().subtract(1, "month").endOf("month"),
+				],
+			},
+		});
+	}
+
+	$(function () {
+		datePicker(start_date, end_date);
+	});
+</script> -->
+<script>
+	$("#selectDepa").on("change", function (e) {
+		var $optionSelected = $("option:selected", this);
+		$optionSelected.tab("show");
+	});
+</script>
+<!-- table script -->
+<script>
+	$(function buildMainTable() {
+		$('#acc_table').bootstrapTable({
+		columns: {{ all_department_overview.column | safe }},
+		data: {{ all_department_overview.data | safe }}
+		});
+	});
+
+	// repeat the function to make as many table as available
+	$(function buildsideTable() {
+	{% for userinfo in per_department_overview.data %}
+		$('#depa-{{loop.index}}-table').bootstrapTable({
+		columns: {{ per_department_overview.column | safe }},
+		data: {{ userinfo | safe }}
+		});
+	{% endfor %}
+	});
+</script>
+
+<!-- chart script -->
+<script>
+	// let over_bar = document.getElementById("over_bar").getContext("2d");
+
+	// let barchart = new Chart(over_bar, {
+	// 	type: "bar", // bar, horizontalBar pie, line, doughnut, radar, ploarArea
+	// 	data: {
+	// 		labels: {{ departments | safe }},
+	// 		datasets: {{ main_chartdata | safe }}
+	// 	},
+	// 	options: {
+	// 		responsive: true,
+	// 		maintainAspectRatio: false,
+	// indexAxis : "y",
+	// scales: {
+	// 	x : {
+	// 		stacked : true
+	// 	},
+	// 	y : {
+	// 		stacked : true
+	// 	}
+	// }
+	// 	}
+	// });
+</script>
+
+{% endblock %} {% block control_sidebar %}
+<div class="p-3">
+	<!-- Content of the sidebar goes here -->
+	<div class="form-group">
+		<!-- Date input -->
+		<label class="control-label" for="date">
+			<i class="fa-solid fa-calendar"></i>
+			Date</label
+		>
+		<input class="form-control" id="date-input" readonly />
+	</div>
+	<!-- department selector -->
+	<div class="form-group">
+		<label>Departments</label>
+		<select class="form-control">
+			<option>None</option>
+			{% for depa in departments%}
+			<option>{{ depa }}</option>
+			{% endfor %}
+		</select>
+	</div>
+	<!-- user selector -->
+	<div class="form-group">
+		<label>Users</label>
+		<select class="form-control">
+			<option>user1</option>
+			<option>user2</option>
+			<option id="custom">custom</option>
+		</select>
+	</div>
+	<div class="form-group">
+		<label>Additional options</label>
+		<div class="custom-control custom-switch">
+			<input
+				type="checkbox"
+				class="custom-control-input"
+				id="customSwitch1" />
+			<label class="custom-control-label" for="customSwitch1"
+				>Use dummy data</label
+			>
+		</div>
+	</div>
+	<button
+		id="time_submit"
+		type="submit"
+		class="btn btn-primary"
+		onclick="sendDate()">
+		Submit
+	</button>
+</div>
+{% endblock %}

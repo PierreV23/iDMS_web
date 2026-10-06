@@ -1,0 +1,114 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3>Process details : <div class="activeprocess" style="display:inline"></div>
+</h3>
+{% endblock %}
+
+{%block menuname %}
+menuname='processes'
+{% endblock %}
+
+{% block menuitems %}
+<li class="nav-header bg-warning text-center">ACTIONS</li>
+<li class="nav-item">
+  <a class="nav-link" data-toggle="modal" data-target="#processModal">
+    <i class="fas fa-plus nav-icon"></i>
+    Add new process
+  </a>
+</li>
+
+{% endblock %}
+
+{% block content %}
+<script>
+
+  $(document).on('click', '.processname', function () {
+    process = $(this).data('processname');
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'last_process',
+      value: process
+    })
+    $('.processname').removeClass('highlight')
+    $(this).addClass("highlight")
+    $('#details').html('<div class="card">Loading settings for ' + process + " ... </div>")
+    $.get('{{ url_for('projects.show_processdetails') }}', {
+      name: process
+    }, function (data) {
+      $('#details').html(data);
+      $('.activeprocess').html(process)
+    });
+  });
+
+  $(document).ready(function () {
+    const $row = $(".processname[data-processname='{{ process }}']");
+    const $container = $('.fixed-table-body');
+    if ($row.length > 0) {
+      $row.trigger('click');
+
+      // Calculate the distance from the top of the container to the row
+      var targetOffset = $row.position().top + $container.scrollTop() - $container.height() / 3;
+
+      $container.animate({
+        scrollTop: targetOffset
+      }, 200);
+    }
+  });
+</script>
+
+
+<div class="modal fade" id="processModal">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">
+          Add process
+        </div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form class="form" action="{{ url_for('projects.update_projectsettings') }}" method="post">
+        <div class="form-group">
+          <div class="modal-body">
+            <label for="new_procname" class="col-form-label">Process name</label>
+            <input type="text" class="form-control menuexpand" id='new_procname' name="process">
+            <input type="hidden" name="action" value="add_process2">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type=submit class="btn btn-primary">Submit</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="selectgrid h100">
+  <div class="card selectlist">
+    <div class="nopadding card-body scroll ">
+      <table id="process-table" data-toggle="table" data-search="true">
+        <thead>
+          <tr>
+            <th>Process</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for process in processes | sort %}
+          <tr>
+            <td class="processname" data-processname="{{ process }}">{{ process }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card selectdetail">
+    <div class="card-body" id="details"></div>
+  </div>
+</div>
+
+
+{% endblock %}

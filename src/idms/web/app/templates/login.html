@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+  
+{% block header %}
+<h2>{% block title %}Login to iDMS{% endblock %}</h2>
+{% endblock %}
+
+{% block content %}
+<div id="content" class="card card-body">
+
+<h3 id="title">Login to iDMS</h3>
+
+<form id="loginform" action="{{ url_for('auth.login') }}" method="post">
+  <input type="hidden" name="next" id="next" value="{{ next }}"></input>
+{% with messages = get_flashed_messages(category_filter=["login"]) %}
+  {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-danger" role="alert">
+      {{ message }}
+    </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+  <div class="form-group">
+    <label for="environment">Environment</label>
+    <select class="custom-select" name="environment" id="environment" >
+      {% for env in envs %}
+        <option {% if envs[env].default == True %} selected {% endif %} value="{{ env }}">{{ env }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  
+  <div class="form-group">
+    <label for="username">Username</label>
+    <input type="text" class="form-control" name="username" id="username" placeholder="Username" {% if debug %} value="rods" {% endif %}></input>
+  </div>
+
+  <div class="form-group">
+    <label for="password">Password</label>
+    <input type="password" class="form-control" name="password" id="password" placeholder="Password"  {% if debug %} value="12345" {% endif %}></input>
+  </div>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+</div>
+
+<script>
+
+$("#loginform").on("submit", function(){
+  $("#title").html('Login in progress ... please wait')
+})
+
+</script>
+
+{% endblock %}
+

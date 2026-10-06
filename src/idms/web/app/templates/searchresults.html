@@ -1,0 +1,34 @@
+<table id="{{ tableId }}" 
+       data-toggle='table'
+       data-striped="true"
+       data-height="540"  
+       data-show-columns-toggle-all="false"
+       data-pagination="true"
+       data-show-extended-pagination="true"
+       data-show-pagination-switch="true"
+       data-show-toggle="false"
+       data-filter-control="true"
+       data-show-columns="true"
+       data-side-pagination="server"
+       xdata-buttons-prefix="btn-sm btn"
+       data-buttons-toolbar=".buttons-toolbar"
+       data-url="{{ url_for('collbrowser.search_result', object_type=objectType) }}"
+       data-query-params="queryParams">
+</table>
+
+<script>
+  $(function() {
+    $('#{{ tableId }}').bootstrapTable({
+      columns: {{ columns|safe }},
+    });
+  });
+</script>
+<script>
+  function queryParams(params) {
+    params.searchId = Date.now()
+    params.searchIn =  "{{ searchDict['searchIn'] }}"
+    params.searchtext = "{{ searchDict['searchtext'] }}"
+    params.useExactMatch = "{{ searchDict['useExactMatch'] }}"
+    return params
+  }
+</script>

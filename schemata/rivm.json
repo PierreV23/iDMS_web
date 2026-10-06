@@ -1,0 +1,813 @@
+{
+    "schema_version": "1.2.4",
+    "description": "RIVM metadata versie 1.2.4 ( * : Verplichte velden )",
+    "type": "object",
+    "properties": {
+        "schema_version": {
+            "title": "Metadata schema versie",
+            "description": "De schema versie van de metadata template.",
+            "type": "string",
+            "default": "1.2.4"
+        },
+        "title": {
+            "title": "Titel dataset",
+            "description": "Een titel die duidelijk maakt waar je dataset over gaat.",
+            "type": "string",
+            "minLength": 1
+        },
+        "metadata_identifier": {
+            "title": "Metadata identifier",
+            "description": "De identifier (volledige uri) van deze metadata.",
+            "type": "string",
+            "format": "uri",
+            "pattern": "^(https?|ftp)://[^\\s/$.?#].[^\\s]*$",
+            "minLength": 5
+        },
+        "identifier": {
+            "title": "Dataset identifier",
+            "description": "De universeel unieke identifier (UUID) van deze dataset binnen het RIVM.",
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+        },
+        "metadata_language": {
+            "title": "Taal metadata",
+            "description": "De taal van het metadatarecord.",
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "Nederlands",
+                    "Engels"
+                ]
+            },
+            "maxItems": 1
+        },
+        "language": {
+            "title": "Taal data",
+            "description": "De taal van de dataset.",
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "Nederlands",
+                    "Engels"
+                ]
+            }
+        },
+        "author": {
+            "title": "Auteur",
+            "description": "Meer dan 1 auteur kan worden ingevuld door de + te klikken",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "title": "Auteur: Naam",
+                        "description": "De naam van de persoon of personen die de dataset hebben samengesteld.",
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "affiliation": {
+                        "title": "Auteur: Affiliatie",
+                        "description": "De organisatie waarmee de auteur(s) verbonden zijn.",
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "identifier": {
+                        "title": "Auteur: Identifier",
+                        "description": "Een unieke identifier voor de auteur(s).",
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "id_type": {
+                        "title": "Auteur: Type identifier",
+                        "description": "Het type identifier.",
+                        "type": "string",
+                        "minLength": 1,
+                        "enum": [
+                            "ORCID",
+                            "ROR"
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "name",
+                    "affiliation"
+                ]
+            },
+            "minItems": 1
+        },
+        "contact": {
+            "title": "Contactpunt",
+            "description": "",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "title": "Contactpunt: Afdeling",
+                        "description": "De naam van de afdeling binnen het RIVM die vragen over de dataset kan beantwoorden.",
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "email": {
+                        "title": "Contactpunt: E-mailadres",
+                        "description": "Het e-mailadres van de afdeling die verantwoordelijk is voor de dataset.",
+                        "type": "string",
+                        "format": "email"
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "name",
+                    "email"
+                ]
+            },
+            "minItems": 1,
+            "maxItems": 1
+        },
+        "description": {
+            "title": "Beschrijving",
+            "description": "Een korte samenvatting over het doel en de inhoud van de dataset.",
+            "type": "string",
+            "minLength": 1
+        },
+        "subject": {
+            "title": "Thema",
+            "description": "Het belangrijkste onderwerp van de dataset.",
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "Landbouw, visserij, bosbouw en voeding",
+                    "Economie en financi\u00ebn",
+                    "Onderwijs, cultuur en sport",
+                    "Energie",
+                    "Milieu",
+                    "Overheid en publieke sector",
+                    "Gezondheid",
+                    "Internationale vraagstukken",
+                    "Justitie, rechtsstelsel en openbare veiligheid",
+                    "Regio's en steden",
+                    "Bevolking en samenleving",
+                    "Wetenschap en technologie",
+                    "Vervoer",
+                    "Voorlopige gegevens",
+                    "Anders"
+                ]
+            },
+            "minItems": 1
+        },
+        "keyword": {
+            "title": "Trefwoorden",
+            "description": "Belangrijke termen die de dataset beschrijven.",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 3
+        },
+        "distribution_date": {
+            "title": "Distributiedatum",
+            "description": "Datum waarop het werk beschikbaar is gemaakt voor distributie/presentatie.",
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "format": "date"
+        },
+        "depositor": {
+            "title": "Deponeerder",
+            "description": "Entiteit die verantwoordelijk is voor onderhoud en publicatie van de dataset",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "Rijksinstituut voor Volksgezondheid en Milieu"
+            ]
+        },
+        "authority": {
+            "title": "Autoriteit",
+            "description": "Entiteit die verantwoordelijk is voor de inhoud van de dataset",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "Rijksinstituut voor Volksgezondheid en Milieu"
+            ]
+        },
+        "geographic_coverage": {
+            "title": "Geografische dekking",
+            "description": "Het geografische gebied waar de data in de dataset over gaat.",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "time_period": {
+            "title": "Omvatte tijdsperiode",
+            "description": "De tijdsperiode waarnaar de data verwijzen. Ook bekend als span. Dit is de tijdsperiode die door de data wordt bestreken, niet de datums van codering, het verzamelen van data of het machinaal leesbaar maken van documenten.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "start": {
+                        "title": "Omvatte tijdsperiode: Begindatum",
+                        "description": "De begindatum van de tijdsperiode waar de data in de dataset betrekking op heeft.",
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                        "format": "date"
+                    },
+                    "end": {
+                        "title": "Omvatte tijdsperiode: Einddatum",
+                        "description": "De einddatum van de tijdsperiode waar de data in de dataset betrekking op heeft.",
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                        "format": "date"
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "series": {
+            "title": "Serie",
+            "description": "De naam van de datasetserie waar de dataset bij hoort.",
+            "type": "string",
+            "minLength": 1
+        },
+        "other_identifier": {
+            "title": "Andere identifier",
+            "description": "Een andere code of link om de dataset te beschrijven.",
+            "type": "string",
+            "minLength": 1
+        },
+        "landing_page": {
+            "title": "Landingspagina",
+            "description": "De website van het onderzoeksproject.",
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            }
+        },
+        "documentation": {
+            "title": "Documentatie",
+            "description": "Een pagina of document over deze dataset met aanvullende informatie.",
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            }
+        },
+        "related_resource": {
+            "title": "Gerelateerde bron",
+            "description": "Een gerelateerde bron.",
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            }
+        },
+        "funding_information": {
+            "title": "Financieringsinformatie",
+            "description": "Informatie over wie de dataset heeft gefinancierd.",
+            "type": "string",
+            "minLength": 1
+        },
+        "access_rights": {
+            "title": "Toegangsrechten",
+            "description": "De toegankelijkheid van de dataset",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "Openbaar",
+                "Voorwaardelijk",
+                "Niet openbaar"
+            ]
+        },
+        "license": {
+            "title": "Licentie",
+            "description": "De licentie die bij de dataset hoort.",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "CC-BY-4.0",
+                "CC0-1.0",
+                "CC-BY-SA-4.0",
+                "CC-BY-ND-4.0",
+                "CC-BY-NC-4.0",
+                "CC-BY-NC-SA-4.0",
+                "CC-BY-NC-ND-4.0",
+                "Niet open",
+                "EUPL-1.2",
+                "Unlicense",
+                "MIT",
+                "Apache-2.0",
+                "BSL-1.0",
+                "MPL-2.0",
+                "LGPL-3.0-or-later",
+                "GPL-3.0-or-later",
+                "AGPL-3.0-or-later"
+            ]
+        },
+        "terms_of_use": {
+            "title": "Gebruiksvoorwaarden",
+            "description": "De voorwaarden die gelden voor het gebruik van de dataset.",
+            "type": "string",
+            "minLength": 1
+        },
+        "legislation": {
+            "title": "Geldende wetgeving",
+            "description": "De wetgeving die de creatie of het beheer van de dataset verplicht stelt.",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "maxItems": 1
+        },
+        "hvd_category": {
+            "title": "HVD-categorie",
+            "description": "De High Value Dataset-categorie waar deze dataset onder valt",
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "Meteorological: NWP model data",
+                    "Meteorological: Climate data: validated observations",
+                    "Meteorological: Observations data measured by weather stations",
+                    "Meteorological: Weather alerts",
+                    "Meteorological: Radar data",
+                    "Companies and company ownership: Basic company information: key attributes",
+                    "Companies and company ownership: Company documents and accounts",
+                    "Companies and company ownership: Geospatial",
+                    "Companies and company ownership: Buildings",
+                    "Companies and company ownership: Agricultural parcels",
+                    "Companies and company ownership: Cadastral parcels",
+                    "Companies and company ownership: Geographical names",
+                    "Companies and company ownership: Administrative units",
+                    "Companies and company ownership: Addresses",
+                    "Companies and company ownership: Reference parcels",
+                    "Mobility: Transport networks",
+                    "Mobility: Inland waterways datasets: Regular lock and bridge operating times",
+                    "Mobility: Inland waterways datasets: Bank of waterway at mean water level",
+                    "Mobility: Inland waterways datasets: Reference data for water level gauges relevant to navigation",
+                    "Mobility: Inland waterways datasets: Navigation rules and recommendations",
+                    "Mobility: Inland waterways datasets: Rates of waterway infrastructure charges",
+                    "Mobility: Inland waterways datasets: Links to the external xml-files with operation times of restricting structures",
+                    "Mobility: Inland waterways datasets: Location and characteristics of ports and transhipment sites",
+                    "Mobility: Inland waterways datasets: Location of ports and transhipment sites",
+                    "Mobility: Inland waterways datasets: Short term changes of aids to navigation",
+                    "Mobility: Inland waterways datasets: Boundaries of the fairway/navigation channel",
+                    "Mobility: Inland waterways datasets: Short term changes of lock and bridge operating times",
+                    "Mobility: Inland waterways datasets: Other physical limitations on waterways",
+                    "Mobility: Inland waterways datasets: Contours of locks and dams",
+                    "Mobility: Inland waterways datasets: Isolated dangers in the fairway/navigation channel under and above water",
+                    "Mobility: Inland waterways datasets: List of navigation aids and traffic signs",
+                    "Mobility: Inland waterways datasets: Temporary obstructions in the fairway",
+                    "Mobility: Inland waterways datasets: Official aids-to-navigation (e.g. buoys, beacons, lights, notice marks)",
+                    "Mobility: Inland waterways datasets: Shoreline construction",
+                    "Mobility: Inland waterways datasets: Waterway axis with kilometres indication",
+                    "Mobility: Inland waterways datasets: State of the rivers, canals, locks and bridges",
+                    "Mobility: Inland waterways datasets: Present and future water levels at gauges",
+                    "Mobility: Inland waterways datasets: Restrictions caused by flood and ice",
+                    "Mobility: Inland waterways datasets: Fairway characteristics",
+                    "Mobility: Inland waterways datasets: Long-time obstructions in the fairway and reliability",
+                    "Mobility: Inland waterways datasets: Water depths contours in the navigation channel",
+                    "Earth observation and environment: Hydrography",
+                    "Earth observation and environment: Elevation",
+                    "Earth observation and environment: Waste",
+                    "Earth observation and environment: Water",
+                    "Earth observation and environment: Emissions",
+                    "Earth observation and environment: Horizontal legislation",
+                    "Earth observation and environment: Mineral resources",
+                    "Earth observation and environment: Production and industrial facilities",
+                    "Earth observation and environment: Climate",
+                    "Earth observation and environment: Air",
+                    "Earth observation and environment: Natural risk zones",
+                    "Earth observation and environment: Species distribution",
+                    "Earth observation and environment: Environmental monitoring facilities",
+                    "Earth observation and environment: Protected sites",
+                    "Earth observation and environment: Soil",
+                    "Earth observation and environment: Orthoimagery",
+                    "Earth observation and environment: Land use",
+                    "Earth observation and environment: Area management / restriction / regulation zones & reporting units",
+                    "Earth observation and environment: Land cover",
+                    "Earth observation and environment: Oceanographic geographical features",
+                    "Earth observation and environment: Energy resources",
+                    "Earth observation and environment: Nature preservation and biodiversity",
+                    "Earth observation and environment: Habitats and biotopes",
+                    "Earth observation and environment: Bio-geographical regions",
+                    "Earth observation and environment: Geology",
+                    "Earth observation and environment: Noise",
+                    "Earth observation and environment: Sea regions",
+                    "Statistics: Poverty",
+                    "Statistics: EU International trade in goods statistics - exports and imports breakdowns simultaneously by partner, product and flow",
+                    "Statistics: Potential labour force",
+                    "Statistics: Industrial producer price index breakdowns by activity",
+                    "Statistics: Population, Fertility, Mortality",
+                    "Statistics: Industrial production",
+                    "Statistics: Current healthcare expenditure",
+                    "Statistics: Government expenditure and revenue",
+                    "Statistics: Mortality",
+                    "Statistics: National accounts - key indicators on households",
+                    "Statistics: Fertility",
+                    "Statistics: Environmental accounts and statistics",
+                    "Statistics: National accounts - key indicators on corporations",
+                    "Statistics: Employment",
+                    "Statistics: Tourism flows in Europe",
+                    "Statistics: Volume of sales by activity",
+                    "Statistics: Inequality",
+                    "Statistics: National accounts - GDP main aggregates",
+                    "Statistics: Harmonised Indices of consumer prices",
+                    "Statistics: Consolidated government gross debt",
+                    "Statistics: Population",
+                    "Statistics: Unemployment"
+                ]
+            }
+        },
+        "hvd_category_url": {
+            "title": "HVD Categorie",
+            "description": "Categorie URL",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "http://data.europa.eu/bna/asd487ae75"
+            ]
+        },
+        "download_url": {
+            "title": "Toegangs-URL",
+            "description": "Een URL die toegang geeft tot een distributie van de dataset.",
+            "type": "string",
+            "format": "uri",
+            "pattern": "^(https?|ftp)://[^\\s/$.?#].[^\\s]*$",
+            "minLength": 5
+        },
+        "distribution_title": {
+            "title": "Titel distributie",
+            "description": "De titel van de distributie",
+            "type": "string",
+            "minLength": 1
+        },
+        "byte_size": {
+            "title": "Bestandsgrootte",
+            "description": "De omvang van de distributie in bytes",
+            "type": "string",
+            "minLength": 1
+        },
+        "format": {
+            "title": "Bestandsformaat",
+            "description": "Het bestandformaat van het bestand in de distributie",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "title": "Format naam",
+                    "description": "",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "version": {
+                    "title": "Format versie",
+                    "description": "",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "specification": {
+                    "title": "Format specificatie",
+                    "description": "",
+                    "type": "string",
+                    "minLength": 1
+                }
+            },
+            "additionalProperties": false
+        },
+        "version": {
+            "title": "Versie",
+            "description": "",
+            "type": "object",
+            "properties": {
+                "number": {
+                    "title": "Versie: Nummer",
+                    "description": "Het versienummer van de dataset.",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "date": {
+                    "title": "Versie: Datum",
+                    "description": "De datum van deze versie van de dataset.",
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "format": "date"
+                }
+            },
+            "additionalProperties": false
+        },
+        "status": {
+            "title": "Status",
+            "description": "De status van de dataset in de levenscyclus.",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "Voltooid",
+                "Verouderd",
+                "In ontwikkeling",
+                "Stopgezet",
+                "Voorlopige gegevens",
+                "Ingetrokken"
+            ]
+        },
+        "modification_date": {
+            "title": "Wijzigingsdatum",
+            "description": "Tijdstip (unix-tijd) van de laatste wijziging van de metadata",
+            "type": "string",
+            "minLength": 1
+        },
+        "availability": {
+            "title": "Beschikbaarheid",
+            "description": "De status van de beschikbaarheid van de dataset.",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "Ja",
+                "Nee"
+            ]
+        },
+        "process_information": {
+            "title": "Bewaartermijn",
+            "description": "Procesgegevens, informatie over het proces zoals beschreven in de VWS selectielijst",
+            "type": "object",
+            "properties": {
+                "url_selection_list": {
+                    "title": "Selectielijst URL",
+                    "description": "Handleiding om te bepalen welke informatie een organisatie moet bewaren of vernietigen. Ga naar de URL om een volledige versie met alle items en uitleg in te zien of te downloaden.",
+                    "type": "string",
+                    "format": "uri",
+                    "pattern": "^(https?|ftp)://[^\\s/$.?#].[^\\s]*$",
+                    "minLength": 5,
+                    "enum": [
+                        "https://www.nationaalarchief.nl/archiveren/kennisbank/concernbrede-selectielijst-van-het-ministerie-van-volksgezondheid-welzijn-1"
+                    ]
+                },
+                "retention_processcategory": {
+                    "title": "Bewaartermijn proces",
+                    "description": "Het proces waar de dataset betrekking op heeft.",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "1. Het maken en uitvoeren van afspraken inzake de inrichting en besturing van de organisatie",
+                            "2. Het maken, verantwoorden en uitdragen van beleid",
+                            "3. Het maken van wet- en regelgeving",
+                            "4. Het (mede) opstellen van de rijksbegroting en de ramingen voor de volgende jaren",
+                            "5. Het geven van voorlichting en verstrekken van informatie aan burgers, bedrijven, instellingen en andere overheden",
+                            "6. Het uitoefenen van toezicht op overheidsorganisaties",
+                            "7. Het controleren op naleving van wet- en regelgeving en handhaving ervan",
+                            "8. Het (laten) verrichten van onderzoek en het rapporteren hierover",
+                            "9. Het verlenen van ondersteunende diensten (PIOFACH)",
+                            "10. Het leveren van producten en diensten aan personen, bedrijven, instellingen of andere overheden",
+                            "12. Het vertegenwoordigen van de minister of Staat in bestuursrechtelijke procedures voor (inter)nationale gerechtelijke instanties",
+                            "13. Het onderhouden van (internationale) betrekkingen en samenwerkingsverbanden",
+                            "14. Het leveren van overheidsdiensten bij crises en calamiteiten",
+                            "*4. Ondersteunen uitvoering van beleid en onderzoek"
+                        ]
+                    },
+                    "maxItems": 1
+                },
+                "retention_process": {
+                    "title": "Bewaartermijn proces",
+                    "description": "Het proces waar de dataset onder valt.",
+                    "type": "string",
+                    "enum": [
+                        "1.1 (GWR 1.1) Het inrichten van de organisatie",
+                        "1.2 (GWR 1.1) Het benoemen, schorsen of ontslaan van voorzitters, secretarissen, leden en ambtelijke adviseurs van formeel ingestelde adviesorganen, stuurgroepen en organisaties, alsook het toekennen van vergoedingen voor de verrichte diensten",
+                        "1.3 (GWR 1.1) Het sturen van de organisatie op het hoogste ambtelijke en bestuurlijke niveau (strategisch niveau)",
+                        "1.4 (GWR 1.4) Het sturen van de organisatie op niveaus onder het hoogste ambtelijke en bestuurlijke niveau (tactisch en operationeel niveau)",
+                        "1.5 (GWR 1.5) Het beheersen van de organisatie",
+                        "2.1 (GWR 2.1 en 2.2) Het maken, verantwoorden, uitdragen en evalueren van beleid",
+                        "2.2 (GWR 2.3) Het adviseren van andere overheidsorganisaties en internationale organisaties over het maken van beleid",
+                        "2.3 (GWR 2.3) Het adviseren van andere overheidsorganisaties over het uitvoeren van beleid",
+                        "2.4 Het voorbereiden van, deelnemen aan en terugkoppelen uit overlegstructuren op rijksbreed en interdepartementaal niveau",
+                        "3.1 (GWR 3.1) Het maken van wet- en regelgeving",
+                        "3.2 (GWR 3.2) Het adviseren over het maken van wet- en regelgeving aan departementen en internationale organisaties",
+                        "4.1 Het (mede) opstellen van de rijksbegroting en de ramingen voor de volgende jaren",
+                        "5.1 (GWR 5.1) Het verrichten van woordvoering en publieksvoorlichting",
+                        "5.2 (GWR 5.2) Klachten en meldingen over mogelijke misstanden",
+                        "5.3 Het afhandelen van verzoeken om informatie op grond van de Wet openbaarheid van bestuur (Wob) en de Wet open overheid (Woo)",
+                        "5.4 Het behandelen van een verzoek in het kader van de Algemene Verordening Gegevensbescherming (AVG)",
+                        "6.1 (GWR 6.2) Het houden van standaard toezicht op organisatieonderdelen en ZBO\u2019s vanuit het kerndepartement",
+                        "7.4 Het registreren en onderzoeken van klachten en meldingen op het gebied van volksgezondheid en milieu",
+                        "8.1 (GWR 8.1 en 8.2) Het uitvoeren of laten uitvoeren van (wetenschappelijk) onderzoek",
+                        "8.2 Het uitvoeren van routinematig onderzoek",
+                        "8.3 Het (periodiek) verzamelen en verwerken van gegevens voor onderzoek in opdracht",
+                        "8.4 Het (periodiek) verzamelen en verwerken van medische gegevens ten behoeve van dossiervorming pati\u00ebnt-/cli\u00ebntcontact",
+                        "8.5 Het (periodiek) verzamelen en verwerken van gegevens en materialen die dienen als referentiegegevens en -materialen",
+                        "8.6 Het beheren van documentatie over materialen ten behoeve van (toekomstig) onderzoek op het gebied van volksgezondheid en milieu (niet zijnde referentiemateriaal)",
+                        "8.7 Het uitvoeren van surveillance",
+                        "8.8 Het ontwikkelen van vaccins (onderzoek en receptuur)",
+                        "8.9 Het uitvoeren van klinisch geneesmiddelenonderzoek",
+                        "8.10 Het uitvoeren van onderzoek naar advanced therapeutic medicinal products (ATMPs)",
+                        "9.1 (GWR 9.1) Het uitvoeren van intern beleid op het gebied van personeel",
+                        "9.2 Het (schriftelijk) melden of aanvragen van vrijstelling of ontheffing of melden van voornemens inzake arbeid met gevaarlijke stoffen en de wijzigingen daarin of gevaarlijke arbeidsomstandigheden",
+                        "9.3 Het inventariseren en evalueren van de gevaren van arbeid waarbij werknemers worden blootgesteld aan gevaarlijke stoffen of gevaarlijke omstandigheden",
+                        "9.4 Het uitvoeren van intern beleid op het gebied van duurzame informatievoorziening en -huishouding",
+                        "9.5 Het uitvoeren van intern beleid op het gebied van automatisering en ICT",
+                        "9.6 Het uitvoeren van intern beleid op grond van redundant zekerstellen van inkomende en uitgaande primair proces gegevens",
+                        "9.7 (GWR 9.3) Het uitvoeren van intern beleid op het gebied van organisatie",
+                        "9.8 (GWR 9.4) Het uitvoeren van intern beleid op het gebied van financi\u00ebn",
+                        "9.9 (GWR 9.5) Het uitvoeren van intern beleid op het gebied van algemene zaken",
+                        "9.10 (GWR 9.6) Het uitvoeren van intern beleid op het gebied van communicatie",
+                        "9.11 (GWR 9.7) Het uitvoeren van intern beleid op het gebied van huisvesting",
+                        "9.12 (GWR 9.8) Het opstellen, wijzigen en intrekken van interne kaders en regelgeving op het gebied van ondersteunende functies (PIOFACH)",
+                        "10.31 Het (ondersteunen van) het uitvoeren van controles op geneesmiddelen en vaccins en het verrichten van onderzoek hiertoe voor vrijgifte op de markt",
+                        "10.44 Het niet in behandeling nemen van aanvragen of verzoeken",
+                        "10.47 Het voorbereiden en uitvoeren van productie en aflevering van vaccins",
+                        "10.48 Het verlenen van onderscheidingen en ereblijken",
+                        "12.1 (GWR 12.1) Het vertegenwoordigen van de minister of Staat in internationale procedures",
+                        "12.3 (GWR 12.2) Het vertegenwoordigen van de minister of Staat in nationale procedures",
+                        "13.1 (GWR 13.1) Het verzorgen van gastheerschap voor vertegenwoordiging van landen en internationale organisaties",
+                        "13.2 (GWR 13.2) Het inhoudelijk bijdragen aan staatsbezoeken",
+                        "13.3 (GWR 13.3) Het uitvoeren van belangenbehartiging",
+                        "13.4 (GWR 13.4) Het verzorgen van het gastheerschap voor individuele personen",
+                        "13.5 (GWR 13.5) Het verzorgen van (de logistiek van) staatsbezoeken, bezoeken van regeringsleiders, hoge ambtenaren, handelsmissies en uitwisselingsprogramma\u2019s",
+                        "13.6 (GWR 13.6) Het verrichten van representatieve taken en diplomatieke uitingen",
+                        "13.7 (GWR 13.7) Het aangaan van samenwerkingsverbanden",
+                        "13.8 (GWR 13.8) Het deelnemen aan (internationale) organisaties, commissies en samenwerkingsverbanden",
+                        "14.1 (GWR 14.1) Het co\u00f6rdineren en het treffen van maatregelen bij een crisis of calamiteit",
+                        "14.2 (GWR 14.2) Het rapporteren over signalen die duiden op mogelijke aanstaande crises en rampen",
+                        "14.3 Het opstellen van overzichten en prognoses en het uitvoeren van metingen ter bepaling van crisissituaties en de gevolgen ervan op termijn",
+                        "14.4 Het voorbereiden en uitvoeren van calamiteitenmanagement op het gebied van bedrijfscontinu\u00efteit, veiligheid en reputatie/imago",
+                        "14.5 Het (operationeel) voorbereiden van een crisis of calamiteit"
+                    ]
+                }
+            },
+            "additionalProperties": false
+        },
+        "retention_information": {
+            "title": "Termijngegevens",
+            "description": "Termijngegevens, horend bij het proces dat gekozen is uit de VWS selectielijst (zie URL bij Selectielijst URL)",
+            "type": "object",
+            "properties": {
+                "period": {
+                    "title": "Bewaartermijn periode",
+                    "description": "De bewaartermijn van de gegevens. Of de reden waarom de gegevens onbeperkt bewaard moeten blijven.",
+                    "type": "string",
+                    "minLength": 1,
+                    "enum": [
+                        "B1: Processen die betrekking hebben op kerntaken en op inrichting en sturing op de organisatie",
+                        "B2: Processen die betrekking hebben op de besluitvorming die de organisatie overstijgt",
+                        "B3: Processen die betrekking hebben op (tijdelijke) cruciale ontwikkelingen c.q. procedures",
+                        "B4: Processen die betrekking hebben op verslaglegging en planvorming",
+                        "B5: Processen die betrekking hebben op waardevolle en unieke registraties",
+                        "V 3 maanden",
+                        "V 1 jaar",
+                        "V 2 jaar",
+                        "V 5 jaar",
+                        "V 7 jaar",
+                        "V 10 jaar",
+                        "V 15 jaar",
+                        "V 20 jaar",
+                        "V 25 jaar",
+                        "V 30 jaar",
+                        "V 40 jaar",
+                        "V 75 jaar"
+                    ]
+                },
+                "trigger": {
+                    "title": "Bewaartermijn trigger",
+                    "description": "De trigger van de bewaartermijn.",
+                    "type": "string",
+                    "minLength": 1,
+                    "enum": [
+                        "Niet van toepassing",
+                        "B2 in het geval het organisatieonderdeel het secretariaat voert of als het secretariaat gevoerd wordt door een organisatie die niet onder de Nederlandse Archiefwet valt. V 10 in het geval het secretariaat elders wordt gevoerd",
+                        "B3 in het geval het advies is opgesteld door GR, RVS of NLsportraad",
+                        "B3 voor beleid op het beleidsterrein van het ministerie",
+                        "B3 voor een aantal gespecificeerde eindproducten, V 10 na afhandeling dossier voor de overige informatie in het proces",
+                        "B3 voor het beantwoorden van Kamervragen, vragen van Europese instellingen en het voorbereiden van een standpunt ter inbrenging in de ministerraad, onderraden of de Staten-Generaal",
+                        "B3 voor het onderzoeksvoorstel en -plan, tussenrapportages, eindrapportages en eindresultaten, verklaring van decharge",
+                        "B4 voor eindproducten, V 5 voor overige informatie in het proces na publicatie van het eindproduct",
+                        "V 1 na afhandeling dossier",
+                        "V 5 na afhandeling dossier",
+                        "V 5 na afhandeling verzoek",
+                        "V 5 voor overige informatie in het proces na publicatie van het eindproduct",
+                        "V 7 na afhandeling dossier",
+                        "V 7 na afhandeling dossier voor financiering",
+                        "V 7 na vaststelling begroting",
+                        "V 7 na vervallen benoeming, schorsing, ontslag of terugtreding",
+                        "V 10 na afhandeling dossier",
+                        "V 10 na afhandeling dossier voor de overige informatie in het proces",
+                        "V 10 na afhandeling verzoek",
+                        "V 10 na afronden onderzoek",
+                        "V 10 na expiratiedatum",
+                        "V 10 na uitbrengen advies",
+                        "V 10 na vaststellen nieuw plan",
+                        "V 10 na vervallen belang (runs kunnen meerdere jaren worden voortgezet)",
+                        "V 10 voor de overige informatie in het proces",
+                        "V 20 na afhandeling dossier",
+                        "V 20 na afronding surveillance",
+                        "V 20 na uitbrengen advies",
+                        "V 20 voor intern beleid op ondersteunende functies",
+                        "V 25 voor transcripten van ruwe data"
+                    ]
+                },
+                "start": {
+                    "title": "Bewaartermijn startdatum",
+                    "description": "De startdatum van de bewaartermijn",
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "format": "date"
+                }
+            },
+            "additionalProperties": false
+        },
+        "publish_to_external": {
+            "title": "Publiceren in externe RIVM-catalogus",
+            "description": "Dataset wordt gepubliceerd in de externe catalogus van het RIVM",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "Ja",
+                "Nee"
+            ]
+        },
+        "external_connection_ngr": {
+            "title": "Publiceren op NGR",
+            "description": "Dataset wordt gepubliceerd op het Nationaal GeoRegister (NGR) (ja/nee)",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "Ja",
+                "Nee"
+            ]
+        },
+        "external_connection_inspire": {
+            "title": "Publiceren op INSPIRE",
+            "description": "Dataset wordt gepubliceerd op INSPIRE (ja/nee)",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "Ja",
+                "Nee"
+            ]
+        },
+        "metadata_location": {
+            "title": "Metadata locatie",
+            "description": "De locatie van de metadata in de bron",
+            "type": "string",
+            "minLength": 1
+        },
+        "dataset_location": {
+            "title": "Dataset locatie",
+            "description": "De locatie van de dataset",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 0,
+            "maxItems": 1
+        },
+        "source": {
+            "title": "Bron",
+            "description": "De identifier van de bron van de dataset",
+            "type": "string",
+            "minLength": 1
+        },
+        "metadata_author": {
+            "title": "Metadata-auteur",
+            "description": "Het RIVM-mailadres van de maker van de metadata",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "maxItems": 1
+        },
+        "skip_review": {
+            "title": "Sla review over",
+            "description": "Of het record gepubliceerd mag worden zonder review",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "Ja",
+                "Nee"
+            ]
+        },
+        "allow_skip_review": {
+            "title": "Sta overslaan van review toe",
+            "description": "Of de source van de metadata het overslaan van de review bij publicatie toestaat",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+                "Ja",
+                "Nee"
+            ]
+        }
+    },
+    "required": [
+        "title",
+        "author",
+        "description",
+        "subject",
+        "keyword",
+        "access_rights",
+        "publish_to_external",
+        "contact"
+    ],
+    "additionalProperties": false
+}

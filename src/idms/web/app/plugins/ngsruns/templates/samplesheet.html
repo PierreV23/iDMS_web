@@ -1,0 +1,6 @@
+<div id="samplesheet"></div>
+<script>
+$.get("{{ url_for('ngsruns.run_barcodes', idrequest=data.runid) }}", function(data) {
+    $('#samplesheet').html(data)
+});
+</script>

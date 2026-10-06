@@ -1,0 +1,205 @@
+{% extends 'base2.html' %}
+
+  
+{% block header %}
+
+
+<h2>{% block title %}Data validation report{% endblock %}</h2>
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .panel-resizable {
+        resize: vertical;
+      overflow: auto;
+    }
+
+    #panel-report {
+        height: 40%
+    }
+
+    #panel-parsed-data {
+        height: 40%
+    }
+</style>
+
+<script>
+
+var collection="{{ collection }}"
+
+function load_validation_result_content(collectionObj) {
+    $.get("{{ url_for('upload.validate_results') }}", collectionObj, function(content) {
+        $('#report').html(content.report)
+        $('#result').html(content.result)
+        $('#parsed-data').html(content.parsedData)
+        if (content.result == true) {
+            $('#upload-btn').show()
+        }
+    });
+}
+
+function prepareMissingVariablesForm() {
+    //always prevent the hidden submit button from actually submitting the form content.
+    $('#missing-variables-form').on( 'submit', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }, false );
+
+    $("#set_missing_variables-button").on('click', function(event){
+        event.preventDefault();
+        var form = $('#missing-variables-form')[0];
+        if ( !form.checkValidity()) {
+            // If the form is invalid, submit it. The form won't actually submit;
+            // this will just cause the browser to display the native HTML5 error messages.
+            $( "#missing-variables-form" ).find("#form-submit-hidden").click();
+            $( '#missing-variables-form input' ).removeClass('is-invalid')
+            var invalidList = document.querySelectorAll(':invalid');
+            $( '#missing-variables-form input' ).addClass('is-valid')
+            if ( typeof invalidList !== 'undefined' && invalidList.length > 0 ) {
+                for (var item of invalidList) {
+                    console.log(item)
+                    $( item ).removeClass('is-valid')
+                    $( item ).addClass('is-invalid')
+                }
+            }
+            return false
+        }
+        else {  
+            $.ajax({
+                type:'POST',
+                url:"{{ url_for('upload.set_missing_variables') }}",
+                contentType: 'application/json;charset=UTF-8',
+                data: JSON.stringify( $('#missing-variables-form').serializeArray() ), //$('#missing-variables-form').serialize(),
+                success: function(result){
+                    console.log(result)
+                    //check for error messages, if there are: display in open popup,
+                    //otherwise close popup and render the parsed data.
+                    if( $.isEmptyObject(result) ) {
+                        $('#missingVariablesPopup').modal('hide')
+                        load_validation_result_content(collectionObj)
+                    }
+                    else {
+                        //stay in the popup. Display error messages.
+                        $( ".alert" ).removeClass( "alert-danger" )
+                        $( ".alert" ).removeClass( "alert-light" )
+                        $( ".alert-row").addClass( "d-none" )
+                        Object.keys(result).forEach(function(key,index) {
+                            $( `#${key}-message` ).html( result[key] )
+                            $( `#${key}-alert` ).addClass( "alert-danger" )
+                            $( `#${key}-alert` ).removeClass( "alert-light" )
+                            $( `#${key}-alert-row` ).removeClass( "d-none" )
+                            //console.log(`changed ${key}`)
+                        });
+
+                    }
+                }
+            }) 
+        }
+    });
+}
+
+
+function load_missing_variables_content(collectionObj) {
+    $.get( "{{ url_for('upload.missing_variables') }}", 
+           collectionObj, 
+           function( result ) {
+                if( result.hasMissingVariables ) {
+                    $('#missingVariablesPopupBody').html( result.missingVariablesForm )
+                    prepareMissingVariablesForm()
+                    $('#missingVariablesPopup').modal()
+                }
+                else {
+                    load_validation_result_content(collectionObj)
+                }
+        }
+    );
+}
+
+function load_contents() {
+    $('#upload-btn').hide()
+    //$("#set_missing_variables-button").hide()
+    //$("#missingVariables").hide()
+    collectionObj = {
+      collection: collection
+    }
+
+    $.get("{{ url_for('upload.seq_list') }}", collectionObj, function(data) {
+      $('#seqlist').html(data)
+    });
+
+    load_missing_variables_content(collectionObj)
+}
+
+
+
+$(window).on('load', function() {
+  load_contents();
+});
+
+</script>
+
+<br>
+
+<!-- <div class="seqlist" id="seqlist">
+    <center>Please wait while loading data ...</center>
+</div> -->
+<div class="container-wide">
+    <div class="card">
+        <div class="card card-header">
+            <h3>Data upload validation result: <emp><span id="result"> ... </span></emp>
+                <div class ="float-right">
+                <a href="{{ url_for('upload.upload_page') }}"><button class="button btn-secondary" id="back-button">Go back</button></a>
+                <a href="{{ url_for('upload.upload_batch') }}"><button class="button btn-primary float-right" id="upload-btn">Upload data</button></a>
+                </div>
+            </h3>
+        </div>
+        <div id="panel-report" class="card card-body panel-resizable">
+            <div class="seqlist" id="report">
+                <center>Please wait while loading validation results ...</center>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br>
+
+<div class="container-wide">
+    <div class="card">
+        <div class="card card-header">
+            <h3>Data to be uploaded:
+                <div class ="float-right">
+                    <div class="buttons-toolbar"></div>
+                </div>
+            </h3>
+        </div>
+        <div id="panel-parsed-data" class="card card-body">
+            <div class="" id="parsed-data">
+                <center>Please wait while loading the parsed data results ...</center>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="missingVariablesPopup" tabindex="-1" role="dialog" aria-labelledby="missingVariablesPopupLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="missingVariablesPopupLabel">Please provide missing variables:</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div id="missingVariablesPopupBody" class="modal-body">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <!--button type="button" class="btn btn-primary">Save changes</button-->
+          <a href="{{ url_for('upload.set_missing_variables') }}"><button class="button btn-primary" id="set_missing_variables-button">Save</button></a>
+           
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

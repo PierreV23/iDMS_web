@@ -1,0 +1,172 @@
+import os
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/ngsruns.db'.format(basedir)
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+# Configure cache storage
+
+#CACHE_TYPE = 'RedisCache'
+#CACHE_REDIS_HOST = 'redis'
+CACHE_TYPE = 'SimpleCache'
+CACHE_DEFAULT_TIMEOUT = 300
+CACHE_THRESHOLD = 10000
+CACHE_KEY_PREFIX = "idms_web"
+
+GRAPH_MAX_INPUTS = 3
+GRAPH_MAX_OUTPUTS = 11
+
+LOGCONFIG = {
+    'version': 1,
+    'formatters': {
+        'default': {
+            'format': '[%(asctime)s] %(levelname)s in %(name)s: %(message)s'
+        }
+    },
+    'handlers': {
+        'wsgi': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'default',
+            'level': 'DEBUG'
+        }
+    },
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    },
+    'loggers': {
+        'idms.web.app.utils.webuser': {
+            'level': 'DEBUG'
+        },
+        'idms.common.irods.irods_sessions': {
+            'level': 'DEBUG'
+        },
+        'idms.web.app.ngsweb': {
+            'level': 'DEBUG'
+        }
+    }
+}
+
+# This is the max file upload size in MB
+MAX_FILE_UPLOAD_SIZE=20000
+
+IRODS_ENVS = {
+    'Productie':   {
+        'host': 'rivm-bioir-l01p.rivm.ssc-campus.nl',
+        'zone': 'rivmZone',
+        'default': True,
+        'minilims_db': 'postgresql://<user>:<pass>@<host>/minilimsdb',
+        'jobs_db': 'postgresql://<user>:<pass>@<host>/ICAT',
+        'search_db': 'postgresql://<user>:<pass>@<host>/ICAT',
+        'external_url': 'https://irodsdata.rivm.nl/browser',
+        'refdata_collection': 'reference_dbs',
+        'accounting_api_url': 'http://rivm-bioir-l01p.rivm.ssc-campus.nl:8081/',
+        'features': [
+            'JOBS',
+            'MINILIMS',
+            'PROJECTS',
+            'REFERENCE',
+            'ACCOUNTING'
+        ],
+        'sites_and_clusters': {'sites': {'RIVM': {'primary': True}}, 'clusters': {'RIVM-LSF-PRD': {'type': 'lsf', 'module': 'lsf_2', 'cost': 100, 'head_node': 'rivm-biohn-l02p.rivm.ssc-campus.nl', 'workdir': '/mnt/irodsscratch/pipelines/prod', 'default_queue': 'bio-prio', 'site': 'RIVM', 'queues': ['bio', 'bio-prio', 'bio-gpu-v100', 'edu', 'bio-drmaa']}, 'SLURM-PROD': {'type': 'slurm', 'module': 'slurm', 'cost': 100, 'head_node': 'rivm-biohn-l03t.rivm.ssc-campus.nl', 'workdir': '/mnt/irodsscratch/pipelines/prod', 'default_queue': 'cpu-prio-test', 'site': 'RIVM', 'queues': ['cpu-medium-test', 'cpu-long-test', 'bio-gpu-v100']}}},
+        'lsf_queues': ['bio', 'bio-prio', 'bio-gpu-v100', 'edu', 'bio-drmaa'],
+        'webdav_server': 'rivm-bioir-l06p.rivm.ssc-campus.nl'
+    },
+    'Acceptatie':   {
+        'host': 'rivm-bioir-l05a.rivm.ssc-campus.nl',
+        'zone': 'rivmZone_acc_01',
+        'default': False,
+        'minilims_db': 'postgresql://<user>:<pass>@<host>/minilimsdb',
+        'jobs_db': 'postgresql://<user>:<pass>@<host>/ICAT',
+        'search_db': 'postgresql://<user>:<pass>@<host>/ICAT',
+        'external_url': 'http://rivm-biofl-l02a.rivm.ssc-campus.nl/browser',
+        'refdata_collection': 'reference_dbs',
+        'accounting_api_url': 'http://rivm-bioir-l01a.rivm.ssc-campus.nl:8081/',
+        'features': [
+            'JOBS',
+            'MINILIMS',
+            'PROJECTS',
+            'REFERENCE',
+            'ACCOUNTING'
+        ],
+        'webdav_server': 'rivm-bioir-l07a.rivm.ssc-campus.nl',
+        'sites_and_clusters': {'sites': {'RIVM': {'primary': True}, 'SURF': {'primary': False}}, 'clusters': {'RIVM-LSF-ACC': {'type': 'lsf', 'module': 'lsf_2', 'cost': 100, 'head_node': 'rivm-biohn-l03a.rivm.ssc-campus.nl', 'workdir': '/mnt/irodsscratch/pipelines', 'default_queue': 'bio-prio-acc', 'site': 'RIVM', 'queues': ['bio-acc', 'bio-prio-acc']}, 'SLURM-ACC': {'type': 'slurm', 'module': 'slurm', 'cost': 90, 'head_node': 'rivm-biohn-l03a.rivm.ssc-campus.nl', 'workdir': '/mnt/irodsscratch/pipelines', 'default_queue': 'cpu-prio-acc', 'site': 'RIVM', 'queues': ['cpu-medium-acc', 'cpu-long-acc', 'cpu-prio-acc']}, 'HNA1': {'type': 'host', 'module': 'single_host', 'cost': 100, 'head_node': 'rivm-biohn-l03a.rivm.ssc-campus.nl', 'workdir': '/mnt/irodsscratch/pipelines', 'site': 'RIVM'}, 'SNELLIUS-ACC': {'type': 'slurm', 'module': 'slurm', 'cost': 80, 'head_node': 'snellius.surf.nl', 'workdir': '/gpfs/scratch1/shared/{username}/pipelines', 'params': {'default_job_time': 60}, 'default_queue': 'rome', 'site': 'SURF', 'queues': ['rome', 'fat_rome', 'genoa', 'gpu_h100', 'gpu_a100'], 'default_resource': 'surfResc1_data2compute'}}},
+        'lsf_queues': ['bio-acc', 'bio-prio-acc']
+    },
+    'Validatie-omgeving': {
+        'host': 'rivm-bioir-l08a.rivm.ssc-campus.nl',
+        'zone': 'rivmZone_acc_03',
+        'default': False,
+        'minilims_db': 'postgresql://<user>:<pass>@<host>/minilimsdb3',
+        'jobs_db': 'postgresql://<user>:<pass>@<host>/ICAT',
+        'search_db': 'postgresql://<user>:<pass>@<host>/ICAT',
+        'features': ['PROJECTS', 'JOBS', 'MINILIMS', 'REFERENCE', 'ACCOUNTING', 'SHARING'],
+        'refdata_collection': 'reference_dbs',
+        'webdav_server': 'rivm-bioir-l10a.rivm.ssc-campus.nl',
+        'accounting_api_url': 'http://NONE/accounting/',
+        'sites_and_clusters': {'sites': {'RIVM': {'primary': True}, 'SURF': {'primary': False}}, 'clusters': {'RIVM-LSF-ACC': {'type': 'lsf', 'module': 'lsf_1', 'cost': 100, 'head_node': 'rivm-biohn-l03a.rivm.ssc-campus.nl', 'workdir': '/mnt/scratch_dir/svc-sscc-ira3/pipelines', 'default_queue': 'bio-prio-acc', 'site': 'RIVM', 'queues': ['bio-acc', 'bio-prio-acc']}, 'SLURM-ACC': {'type': 'slurm', 'module': 'slurm', 'cost': 90, 'head_node': 'rivm-biohn-l03a.rivm.ssc-campus.nl', 'workdir': '/mnt/scratch_dir/svc-sscc-ira3/pipelines', 'default_queue': 'cpu-prio-acc', 'site': 'RIVM', 'queues': ['cpu-medium-acc', 'cpu-long-acc', 'cpu-prio-acc']}, 'HNA1': {'type': 'host', 'module': 'single_host', 'cost': 100, 'head_node': 'rivm-biohn-l03a.rivm.ssc-campus.nl', 'workdir': '/mnt/scratch_dir/svc-sscc-ira/pipelines', 'site': 'RIVM'}}},
+        'lsf_queues': ['bio-acc', 'bio-prio-acc']
+    },
+    'Test_01':   {
+        'host': 'rivm-bioir-l04t.rivm.ssc-campus.nl',
+        'zone': 'rivmZone_test_01',
+        'default': False,
+        'minilims_db': 'postgresql://<user>:<pass>@<host>/minilimsdb',
+        'jobs_db': 'postgresql://<user>:<pass>@<host>/ICAT',
+        'search_db': 'postgresql://<user>:<pass>@<host>/ICAT',
+        'refdata_collection': 'reference_dbs',
+        'accounting_api_url': 'http://rivm-biofl-l01t.rivm.ssc-campus.nl:8081/',
+        'features': [
+            'JOBS',
+            'MINILIMS',
+            'PROJECTS',
+            'REFERENCE',
+            'ACCOUNTING'
+        ],
+        'webdav_server': 'rivm-bioir-l04t.rivm.ssc-campus.nl',
+        'sites_and_clusters': {'sites': {'RIVM': {'primary': True}}, 'clusters': {'RIVM-LSF-TEST': {'type': 'lsf', 'module': 'lsf_2', 'cost': 100, 'head_node': 'rivm-biohn-l03t.rivm.ssc-campus.nl', 'workdir': '/mnt/scratch_dir/svc-sscc-irt1/pipelines-test', 'default_queue': 'bio-prio', 'site': 'RIVM', 'queues': ['bio-tst']}, 'SLURM-TEST': {'type': 'slurm', 'module': 'slurm', 'cost': 90, 'head_node': 'rivm-biohn-l03t.rivm.ssc-campus.nl', 'workdir': '/mnt/scratch_dir/svc-sscc-irt1/pipelines-test', 'params': {'default_job_memory': '16G'}, 'default_queue': 'cpu-prio-test', 'site': 'RIVM', 'queues': ['cpu-medium-test', 'cpu-long-test']}, 'HNT1': {'type': 'host', 'site': 'RIVM', 'module': 'single_host', 'cost': 100, 'head_node': 'rivm-biohn-l03t.rivm.ssc-campus.nl', 'workdir': '/mnt/scratch_dir/svc-sscc-irt1/pipelines-test'}}},
+        'lsf_queues': ['bio-tst']
+    },
+    'MIL': {
+        'host': 'rivm-milir-l01p.rivm.ssc-campus.nl',
+        'zone': 'milZone',
+        'default': False,
+        'features': [
+
+        ]
+    }
+}
+
+
+# Branding
+BRANDING_DIRECTORY = '/opt/idms_web/instance/rivm_rijkshuisstyle'
+BRANDING = {
+    "APP_NAME_SHORT": "RIVM iDMS",     
+    "APP_NAME_LONG": "RIVM iDMS Web Portal",
+    "LOGO_URL": "rivm_rijkshuisstyle/beeldmerk-rijksoverheid-desktop_44.svg",
+    "FAVICON_URL": "rivm_rijkshuisstyle/favicons/favicon_D.ico",
+    "FOOTER_TEXT": "",
+    "CUSTOM_CSS": None, #"rivm_rijkshuisstyle/css/custom-rijkshuisstijl.css",
+    "CONTACT_EMAIL": "bir-list@rivm.nl"
+}
+
+# list of keys for a specific metadata form json file that should not have a required constraint
+METADATA_INFERED = {
+    "rivm.json": ['identifier', 'dataset_location']
+}
+
+# iRODS path to store metadata schemata
+SCHEMATA_BASE_PATH = 'system/schemata'
+DATASET_SCHEMATA_PATH = 'datasets'
+PROJECT_SCHEMATA_PATH = 'projects'
+REFERENCE_DATASET_SCHEMATA_PATH = 'referencedata'
+
+TMPDIR = 'tmp'
+
+SECRET_KEY = 'abcdefgabcdefg'
+SERVER_SIDE_ENCRYPTION = True
+SERVER_SIDE_ENCRYPTION_KEY = '123456789'
+
+# DEBUG Options
+DISABLE_PLUGINS = False

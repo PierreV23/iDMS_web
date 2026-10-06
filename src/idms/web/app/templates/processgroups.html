@@ -1,0 +1,227 @@
+<script>
+
+selected_processref = null
+mode = 'display'
+
+function waiting() {
+  $('#pg_graph').html("<div><img src={{ url_for('static', filename='img/loading.gif') }}></img></div>")
+}
+
+function load_pggraph() {
+  $.get('{{ url_for('projects.pg_graph') }}', {
+    project: project,
+    group: $('#groupselect option:selected').text(),
+    selected_processref: selected_processref,
+    mode: mode
+  }, function(data) {
+     $('#pg_graph').html(data)
+     let w=$("#pg_graph").width().toString() + 'px';
+     $('svg').width(w);
+  });
+
+};
+
+function load_pgdetails( optional_result_data ) {
+    $('#pg_action_msg').addClass('hidden')
+    if( optional_result_data ) {
+      if( optional_result_data.success == false ) {
+         $('#pg_action_msg_text').text(optional_result_data['message'])
+         $('#pg_action_msg').removeClass('hidden')
+      }
+    }
+    $.get('{{ url_for('projects.pg_details') }}', {
+    project: project,
+    group: $('#groupselect option:selected').text(),
+    selected_processref: selected_processref,
+    mode: mode
+  }, function(data) {
+
+     $('#pg_details').html(data)
+  });
+};
+
+
+function load_pgpage( optional_result_data ) {
+    waiting()
+    load_pggraph();
+    load_pgdetails( optional_result_data );
+};
+
+
+$(document).on('click', '.node', function(event){
+    event.stopPropagation();
+    object = this.id.split(',')
+    oldmode = mode
+    mode = 'display'
+    if (oldmode == 'display') {
+        if (object[0] == 'n') {
+            selected_processref = object[2];
+            load_pgpage();
+        }
+    } else if (oldmode == 'select_input') {
+            $.get('{{ url_for("projects.pgaction") }}', {
+                project: project,
+                group: $('#groupselect option:selected').text(),
+                action: 'set_input',
+                process: selected_processref,
+                input: object[1]
+            }, function(data) {
+                load_pgpage( data );
+            });       
+    } else if (oldmode == 'add_dependency') {
+        if (object[0] == 'n') {
+            $.get('{{ url_for("projects.pgaction") }}', {
+                project: project,
+                group: $('#groupselect option:selected').text(),
+                action: 'add_dependency',
+                process: selected_processref,
+                depend: object[1]
+            }, function(data) {
+                load_pgpage( data );
+            });
+        }
+    } else {
+        load_pgpage();
+    }
+})
+
+$(document).on('click', '.select-process', function() {
+  selected_processref=$(this).data('process');
+  load_pgpage();
+});
+
+$(window).on('load', function() {
+    load_page();
+});
+
+</script>
+
+<div>
+  <form>
+    <div class="form-row">
+      <div class="col-2 p-2">
+        <label for="groupselect">Processgroup</label>
+      </div>
+      <div class="col-4">
+        <select class="form-control" id="groupselect">
+          {% for pg in processgroups %}
+          <option {% if processgroup == pg %}SELECTED{% endif %}>{{ pg }}</option>
+          {% endfor %}
+        </select>        
+      </div>
+      <div class="col-2">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Select action
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          <a class="dropdown-item pgedit" data-action="add_processgroup" href="#">Add new group</a>
+          <a class="dropdown-item pgedit" data-action="remove_processgroup" href="#">Remove group</a>
+          <a class="dropdown-item pgedit" data-action="rename_processgroup" href="#">Rename group</a>
+        </div>        
+      </div>
+    </div>
+  </form>
+  <hr>
+  <div class="h30">
+      <center id="pg_graph">Loading process group graph ...</center>
+  </div>
+  <hr>
+  
+  <div id="pg_action_msg" class="alert alert-danger alert-dismissible show" role="alert">
+     <strong>Error: </strong> <span id="pg_action_msg_text"></span>
+     <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+   </div>
+  <div id="pg_details">
+      <center >Loading process group details ...</center>
+  </div>
+</div>
+
+<div class="modal" tabindex="-1" role="dialog" id="pgmodal">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit processgroup</h5>
+      </div>
+      <form id="modify-pg-form" action="{{ url_for('projects.update_projectsettings')}}" method="POST">
+        <div class="modal-body">
+          <input type="text" class="form-control" id="name" name="name" value="<Processgroup name>">
+          <input type="hidden" id="action" name="action">
+          <input type="hidden" id="oldname" name="oldname">
+          <input type="hidden" name="project" id="projectname" value="">    
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Submit</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Delete processgroup</h5>
+        </div>
+          <div class="modal-body">
+            <center>
+              Are you sure you want to remove:
+              <b class="groupname"></b>
+            </center>
+          </div>
+          <div class="modal-footer">
+            <form id="delete-pg-form" action="{{ url_for('projects.update_projectsettings')}}" method="POST">
+              <input type="hidden" id="name" name="name" value="">
+              <input type="hidden" id="action" name="action" value="remove_processgroup">
+              <input type="hidden" name="project" id="projectname" value="">
+              <button type="submit" class="btn btn-danger">Delete</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </form>
+          </div>
+      </div>
+  </div>
+</div>
+
+<script>
+
+$(document).ready(function() {
+  $('.pgedit').off()
+  $('.pgedit').on('click', function() {
+    action = $(this).data('action')
+    group = $('#groupselect option:selected').text()
+    $('#pgmodal').find('#action').val(action)
+    $('#pgmodal').find('#oldname').val(group)
+    $('#pgmodal').find('#projectname').val(project)
+    switch(action)
+    {
+      case "add_processgroup":
+        $('#pgmodal').find('.modal-title').html('Add new processgroup')
+        $('#pgmodal').find('#name').val('<Processgroup Name>')
+        $('#pgmodal').modal('show').find('#name').focus().select()
+        break
+      case "rename_processgroup":
+        $('#pgmodal').find('.modal-title').html('Rename processgroup')
+        $('#pgmodal').find('#name').val(group)
+        $('#pgmodal').modal('show').find('#name').focus().select()
+        break
+      case "remove_processgroup":
+        $('#confirm-delete').find('#name').val(group)
+        $('#confirm-delete').find('#projectname').val(project)             
+        $('#confirm-delete').find('.groupname').html(group)
+        $('#confirm-delete').modal('show')
+        break
+    }
+  })
+})
+
+
+$('#groupselect').on('change', function() {
+    load_pgpage();
+})
+
+$('#add_group_button').on('click', function() {
+  $('#projectname').val(project)
+})
+
+</script>

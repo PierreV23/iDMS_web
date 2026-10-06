@@ -1,0 +1,21 @@
+<table id="{{ data.id }}" 
+       data-toggle='table'
+       data-striped="true"
+       {% if no_page is not defined %} data-pagination="true" {% endif %}
+       data-height="500"  
+       data-show-columns-toggle-all="false"
+       data-show-pagination-switch="true"
+       data-show-toggle="false"
+       data-show-columns="true"
+       data-search="true"
+       xdata-buttons-prefix="btn-sm btn"
+       data-buttons-toolbar=".buttons-toolbar"></table>
+
+<script>
+$(function() {
+    $('#{{ data.id }}').bootstrapTable({
+      columns: {{ data.columnsJSON|safe }},  // here is where we use the column content from our Django View
+      data: {{ data.dataJSON|safe }} // we escape the content with the safe tag so the raw JSON isn't shown.
+    });
+  });
+</script>

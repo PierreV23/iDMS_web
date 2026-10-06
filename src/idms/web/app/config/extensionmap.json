@@ -1,0 +1,19 @@
+{
+    ".cfg": "textfile",
+    ".csv": "csv",
+    ".err": "textfile",
+    ".html": "html",
+    ".jpeg": "image",
+    ".jpg": "image",
+    ".json": "textfile",
+    ".log": "textfile",
+    ".md": "markdown",
+    ".metric": "textfile",
+    ".out": "textfile",
+    ".pdf": "pdf",
+    ".png": "image",
+    ".re": "textfile",
+    ".tsv": "csv",
+    ".txt": "textfile",
+    ".vcf": "textfile"
+}

@@ -1,0 +1,115 @@
+{% extends 'upload_pages.html' %}
+
+{% block heading %}
+<h2>Upload settings for: <b>{{ name }}</b></h2>
+{% endblock %}
+
+{%block menuname %}
+menuname='upload_settings'
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('upload.upload_settings') }}" id="upload-settings-form">
+            <input type="hidden" name="coll" value="{{ coll }}">
+            <div class="form-group">
+                <label for="project-select">Select project</label>
+                <select class="form-control" id="project-select" name="projectID" required>
+                    <option disabled selected value="">-- select a project --</option>
+                    {% for project in projects | sort %}
+                    <option value="{{ project }}" {% if project==data.get('projectID') %} selected{% endif %}>
+                        {{ project }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% for k in fields %}
+            {% if k != 'projectID' %}
+            <div class="form-group">
+                <label id="{{ k }}-label" for="{{ k }}">{{ fields[k] }}</label>
+                <input type="text" class="form-control" id="{{ k }}" name="{{ k }}" aria-describedby="{{ k }}-label" value="{{ data.get(k) }}">
+            </div>
+            {% endif %}
+            {% endfor %}
+            <div class="form-group float-right">
+                <button type="submit" name="submitbutton" value="save" class="btn btn-primary">
+                    Save
+                </button>
+                <button type="submit" name="submitbutton" value="next" class="btn btn-primary">
+                    Save & Continue
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- Modal - confirm change of projects for upload -->
+<div class="modal fade" id="confirm-change-upload-project" role="dialog" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm change of projects</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to change the project for this upload?
+                This will remove all metadata you have already filled in!
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="save-changes-button" data-dismiss="modal">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+
+function submitForm() {
+    $("#upload-settings-form").submit();
+}
+
+function openConfirmationModal() {
+    $('#confirm-change-upload-project').modal('toggle')
+}
+
+$('#button-save, #button-save-continue').on('click', function(event) {
+    var button = event.target;
+    $("#submitbutton").val(button.value);
+
+    // open confirmation modal if the project has changed
+    selected_project = document.getElementById('project-select').value
+    if ( "{{ data.get('projectID') }}" != '' && selected_project != "{{ data.get('projectID') }}") {
+        openConfirmationModal()
+    } else {
+        submitForm()
+    }
+});
+
+$("#save-changes-button").on("click", function () {
+    submitForm();
+});
+
+// To check for the project in the upload settings, which is required
+document.querySelectorAll('.formsubmit').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const form = document.getElementById('upload-settings-form');
+
+        if (!form.checkValidity()) {
+            form.reportValidity(); // shows browser validation UI
+            return;
+        }
+
+        document.getElementById('submitbutton').value = this.value;
+        form.submit();
+    });
+});
+</script>
+{% endblock %}

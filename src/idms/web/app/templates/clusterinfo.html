@@ -1,0 +1,123 @@
+{% extends 'base2.html' %}
+  
+{% block heading %}
+Cluster information items = {{ items }}
+{% endblock %}
+
+{% block content %}
+
+<div class="dropdown">
+<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+{{ request.args.get('items') }}
+  </button>
+ <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+ <a class="dropdown-item" href="{{ url_for('cluster.info') }}?items=all">All</a>
+ <a class="dropdown-item" href="{{ url_for('cluster.info') }}?items=bhosts">bhosts</a>
+ <a class="dropdown-item" href="{{ url_for('cluster.info') }}?items=busers">busers</a>
+ <a class="dropdown-item" href="{{ url_for('cluster.info') }}?items=bjobs">bjobs</a>
+ <a class="dropdown-item" href="{{ url_for('cluster.info') }}?items=load">Load servers</a>
+ </div>
+</div>
+
+
+{% if request.args.get('items') in ["all", "bhosts"] %}
+    <table class="table">
+        <thead>
+            <tr bgcolor=gray height=50>
+        {% for entry in bhostsh %}
+            <th>{{ entry }}</th>
+        {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+
+        {% for regel in bhosts %}
+           {% if regel[4]| int > 0 and regel[4]| int <= 5 %}
+                <tr bgcolor=#ffb3b3 >
+           {% elif regel[4]| int > 5 %}
+                <tr bgcolor=red >
+           {% else %}
+                <tr bgcolor="lightgreen">
+           {% endif %}
+           {% for item in regel %}
+                 <td> {{ item }} </td>
+           {% endfor %}
+           </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+{% endif %}
+
+{% if request.args.get('items') == "all" or request.args.get('items') == "busers" %}
+    <table class="table">
+        <thead> <tr bgcolor=gray height=50>
+        {% for entry in busersh %}
+            <th>{{ entry }}</th>
+        {% endfor %}
+        </tr> </thead>
+
+        <tbody>
+        {% for regel in busers %}
+           <tr>
+           {% for item in regel %}
+              <td> {{ item }} </td>
+           {% endfor %}
+           </tr>
+        {% endfor %}
+        </tbody>
+
+    </table>
+{% endif %}
+
+
+{% if request.args.get('items') == "all" or request.args.get('items') == "bjobs" %}
+    <table class="table">
+    <table class="table">
+        <thead> <tr bgcolor=gray height=50>
+        {% for entry in bjobsh %}
+            <th>{{ entry }}</th>
+        {% endfor %}
+        </tr> </thead>
+
+        <tbody>
+        {% for regel in bjobs %}
+           <tr>
+           {% for item in regel %}
+             {% if loop.index == 6 %}
+                <td bgcolor=lightgray> {{ item }} </td>
+             {% else %}
+                <td> {{ item }} </td>
+             {% endif %}
+           {% endfor %}
+           </tr>
+        {% endfor %}
+        </tbody>
+
+    </table>
+{% endif %}
+
+{% if request.args.get('items') == "all" or request.args.get('items') == "load" %}
+    <table class="table">
+        <thead> <tr bgcolor=gray height=50>
+        {% for entry in lsloadh %}
+            <th>{{ entry }}</th>
+        {% endfor %}
+        </tr> </thead>
+
+        <tbody>
+        {% for regel in lsload %}
+           <tr>
+           {% for item in regel %}
+              <td> {{ item }} </td>
+           {% endfor %}
+           </tr>
+        {% endfor %}
+        </tbody>
+
+    </table>
+{% endif %}
+
+
+{% endblock %}
+

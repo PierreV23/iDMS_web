@@ -1,0 +1,15 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3>{{ title }}</h3>
+{% endblock %}
+
+{% block menuname %} 
+menuname="{{ menu }}"
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 70vh; font-size: 2.5rem; text-align: center;">
+  {{ message }}
+</div>
+{% endblock %}

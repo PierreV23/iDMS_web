@@ -1,0 +1,67 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3><b>{{ pagetitle }}</b></h3>
+{% endblock %}
+
+{%block menuname %}
+menuname='{{ menuname }}'
+{% endblock %}
+
+{% block content %}
+
+<table id="{{ tablename }}" class="table"
+   data-toggle="table"
+   data-height="600"
+   data-virtual-scroll="true"
+   data-striped="true"
+   data-filter-control="true"
+   data-search="true"
+   data-show-toggle="false"
+   data-show-columns="true"
+   data-show-filter-control-switch="true"
+   data-url="{{ url }}">
+   <thead>
+      <tr>
+         {% for c in columns %}
+         <th data-field="{{ c['field'] }}" 
+             data-sortable="{{ c['sortable'] }}">
+               {{ c['title'] }}
+         </th>
+         {% endfor %}
+      </tr>
+   </thead>
+</table>
+
+<script>
+$(function() {
+    var $table = $('#{{ tablename }}');
+
+    // Function to calculate parent height
+    function autoHeight() {
+        return $('.content').height();
+    }
+
+    // Initialize/Update table height
+    $table.bootstrapTable('refreshOptions', {
+        height: autoHeight()
+    });
+
+    function tablesize(){
+        $table.bootstrapTable('resetView', {
+            height: autoHeight()
+        });      
+    }
+
+    // Recalculate on window resize
+    $(window).resize(function () {
+      tablesize();
+    });
+
+    $(document).ready(function () {
+      tablesize();
+    });
+});
+</script>
+
+{% endblock %}

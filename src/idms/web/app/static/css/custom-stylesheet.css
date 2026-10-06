@@ -1,0 +1,188 @@
+th.rotated-text {
+  height: 80px;
+  white-space: nowrap;
+  padding: 0 !important;
+}
+
+th.rotated-text>div {
+  transform:
+    translate(-2px, 0px) rotate(290deg);
+  width: 30px;
+}
+
+th.rotated-text>div>span {
+  padding: 5px 10px;
+}
+
+#loading-spinner {
+  position: absolute;
+  bottom: 10px;
+  /* adjust spacing from bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.7);
+  /* optional translucent background */
+  padding: 6px;
+  border-radius: 50%;
+  z-index: 10;
+  /* make sure it stays above IGV */
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #ccc9c9;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.irods-collection-wrapper {
+  display: flex;
+  justify-content: left;
+  /* to the left */
+  white-space: wrap;
+  text-overflow: ellipsis;
+  /* adds ... if too long */
+}
+
+.selectgrid {
+  display: grid;
+  width: 100%;
+  height: 100vh;
+  gap: 1rem;
+  align-items: stretch;
+  grid-template-columns: [left] 250px [middle] auto [right];
+  grid-template-rows: [top] 100% [bottom];
+  grid-template-areas:
+    "selectlist selectdetail"
+}
+
+/* LEFT card: natural width + 20% */
+.selectgrid .selectlist {
+  flex: 0 0 auto;
+  width: calc(max-content + 20%);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  grid-area: selectlist;
+  height: 100%;
+}
+
+/* RIGHT card fills all remaining space */
+.selectgrid .selectdetail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  grid-area: selectdetail;
+  height: 100%;
+}
+
+/* Body fills vertical space + scrolls */
+.selectgrid .card .card-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Footer stays pinned to bottom */
+.selectgrid .card .card-footer {
+  flex-shrink: 0;
+}
+
+.disabled-checkbox {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.disabled-link {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* to prevent linebreaks on - or / in the runtable */
+#runtable a {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  direction: ltr;
+  text-align: left;
+}
+
+.card-header-tabs ul {
+  display: flex;
+  justify-content: space-between;
+  align-content: stretch;
+  row-gap: 8px;
+}
+
+.card-header-tabs li {
+  flex-grow: 1;
+}
+
+.card-header-tabs button {
+  display: block;
+  width: 100%;
+}
+
+.fa-chevron-down {
+    transition: transform 0.3s ease;
+}
+.fa-chevron-down.rotate {
+    transform: rotate(180deg);
+}
+
+/* To adjust the position and style of select box in the json forms */
+select.form-select {
+    display: block;
+    height: calc(2.25rem + 2px);
+    width: 100%; 
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    box-shadow: inset 0 0 0 transparent;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+.userSelect + .dropdown-menu {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.user-controls {
+    height: 70vh;
+}
+
+.user-add:disabled,
+.user-delete:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.user-add:not(:disabled),
+.user-delete:not(:disabled) {
+    opacity: 1;
+    cursor: pointer;
+}

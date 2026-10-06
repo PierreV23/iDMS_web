@@ -1,0 +1,52 @@
+{% extends 'base2.html' %}
+  
+{% block heading %}
+<h2>
+Details of group <b>{{ group }}</b>
+</h2>
+{% endblock %}
+
+{% block content %}
+<div class="h-100 scroll">
+<table class="table">
+<thead class="thead-dark">
+
+<tr>
+   <th>Username</th>
+   <th>email address</th>
+   <th>Department</th>
+</tr>  
+<thead>
+{% for key, value in ginfo.items()|sort %}
+{% if value["serviceaccount"] == False %} 
+<tr>
+   <td> {{ key }} </td>
+   <td> {{ value["sys::ad::mail"] }} </td>
+   <td> {{ value["sys::ad::department"] }} </td>
+</tr>
+{% endif %}
+{% endfor %}
+</table>
+<hr>
+
+<h2>Service accounts in group {{ group }}:</h2><br>
+
+<table class="table">
+<thead class="thead-dark">
+
+<tr>
+   <th>Username</th>
+</tr>  
+<thead>
+{% for key, value in ginfo.items()|sort %}
+{% if value["serviceaccount"] == True %} 
+<tr>
+   <td> {{ key }} </td>
+</tr>
+{% endif %}
+{% endfor %}
+</table>
+
+</div>
+{% endblock %}
+

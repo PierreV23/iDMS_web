@@ -1,0 +1,507 @@
+
+{% import 'components/metadata_editor.html' as metadata_widget %}
+
+<script>
+var formaction = 'default';
+
+processgroup = '{{ processgroup }}'
+
+function load_pg() {
+  $.get("{{ url_for('projects.processgroups') }}", {
+    project: "{{ projectdetails.name }}",
+    group: processgroup
+  }, function(data) {
+     $('#processgroups').html(data);
+     console.log('load the contents...')
+     load_pgpage( data );
+  });
+}
+
+function load_colls() {
+  $.get( "{{ url_for('projects.projectcolltable') }}", {
+    project: "{{ projectdetails.name }}"
+  }, function(data) {
+     $('#collections').html(data);
+     console.log('load the collection list ...')
+  });
+}
+
+$('.nav2').on('shown.bs.tab', function(event){
+  target = event.target.getAttribute('href')
+  activetab = target
+  if (target == "#processgroups") {
+    load_pg();
+  }
+  if (target == "#collections") {
+    load_colls();
+  }
+})
+
+$(document).on('click', '.path-change', function() {
+    collection = $(this).data('path');
+    if (typeof collection == 'undefined') {
+      collection = $(this).attr('id')
+    }
+    window.location.replace("{{ url_for('collbrowser.collbrowser') }}?path=" + encodeURIComponent(collection));
+  });
+
+function update_process(sourceElem, destElem) {
+    $.post("{{ url_for('projects.get_process') }}",
+    { project: $(sourceElem+" option:selected").text() },
+        function(response) {
+            select = $(destElem)
+            if(select.prop) {
+                var options = select.prop('options');
+            }
+            else {
+                var options = select.attr('options');
+            }
+            $('option', select).remove();
+            $.each(response, function(index, val) {
+                options[options.length] = new Option(val, val);
+            });
+        }
+    );
+}
+
+</script>
+
+
+
+<!-- Tabs -->
+<div id="project-tabs" class="card h-100">
+  <div class="card-header">
+    <ul class="nav nav-tabs" id="projecttabs">
+      <li class="nav-item mx-2">
+        <a class="nav-link active" id="settings-tab"
+        data-toggle="tab" href="#settings" role="tab"
+        aria-controls="settings" aria-selected="false">Settings</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link projectmeta" id="projectmeta-tab"
+        data-toggle="tab" href="#projectmeta" role="tab"
+        aria-controls="projectmeta" aria-selected="false">Project Metadata</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link datasetmeta" id="datasetmeta-tab"
+        data-toggle="tab" href="#datasetmeta" role="tab"
+        aria-controls="datasetmeta" aria-selected="false">Dataset Default Metadata</a>
+      </li>
+      {% if current_user.feature('jobs') and projectdetails.pipelines %}
+      <li class="nav-item mx-2">
+        <a class="nav-link contactmanager" id="contacts-tab"
+        data-toggle="tab" href="#contacts" role="tab"
+        aria-controls="contacts" aria-selected="false">Contacts</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link nav2" id="processgroups-tab"
+        data-toggle="tab" href="#processgroups" role="tab"
+        aria-controls="processgroups" aria-selected="false">Processgroups</a>
+      </li>
+      {% endif %}
+      <li class="nav-item mx-2">
+        <a class="nav-link nav2" id="collections-tab"
+        data-toggle="tab" href="#collections" role="tab"
+        aria-controls="collections" aria-selected="false">Collections</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link usermanager" data-usertype="users" id="users-tab"
+        data-toggle="tab" href="#users-wrapper" role="tab"
+        aria-controls="users" aria-selected="false">Users</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link usermanager" data-usertype="managers" id="managers-tab"
+        data-toggle="tab" href="#managers" role="tab"
+        aria-controls="managers" aria-selected="false">Managers</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link" id="groups-tab"
+        data-toggle="tab" href="#groups" role="tab"
+        aria-controls="groups" aria-selected="false">Groups</a>
+      </li>
+      {% if current_user.is_admin %}
+      <li class="nav-item mx-2">
+        <a class="nav-link" id="info-tab"
+        data-toggle="tab" href="#info" role="tab"
+        aria-controls="info" aria-selected="false">System Info</a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <div class="card-body tab-content h-100">
+
+  <!-- Tab contents -->
+    <!-- Settings -->
+    <div class="tab-pane active" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+      {% if processing is sameas true %}
+      <div class="alert alert-warning" role="alert">
+        <center>Changes to project configuration are still being processed</center>
+      </div>
+      {% endif %}
+      <form id="project-settings-form" action="update_project" method="post">
+        <input type="hidden" id="action" name="action" value="update_project">
+        <input type="hidden" id="project" name="project" value="{{ projectdetails.name }}">
+        <div class="form-group">
+          <label for="project_desc_{{ projectdetails.name }}">Description</label>
+          <input type="text" class="form-control" name="description" id="project_desc_{{ projectdetails.name }}" placeholder="Description"
+            value="{{ projectdetails.description }}" {% if not project_permissions.managers %}disabled{% endif %}>
+        </div>
+
+        <div class="form-group">
+          <label for="default_collection_{{ projectdetails.name }}">Default Collection</label>
+          <input type="text" class="form-control" name="default_collection" id="default_collection_{{ projectdetails.name }}"
+            placeholder="Default collection" value="{{ projectdetails.default_collection }}" {% if not project_permissions.managers
+            %}disabled{% endif %}>
+        </div>
+
+        <div class="form-group">
+          <label>Department</label>
+
+          <!-- Dropdown container for Department selection-->
+          <div class="dropdown department-dropdown" data-target-input="department_{{ projectdetails.name }}">
+            <!-- Button to open dropdown -->
+            <button class="btn btn-light btn-block dropdown-toggle text-left" type="button" data-toggle="dropdown"
+              data-flip="false" {% if not project_permissions.managers %}disabled{% endif %}>
+              <span class="selected-text">
+                {% if projectdetails.department %}
+                {{ projectdetails.department }}
+                {% else %}
+                Select a department
+                {% endif %}
+              </span>
+            </button>
+
+            <!-- Dropdown menu -->
+            <div class="dropdown-menu w-100 p-2">
+              <!-- Search input -->
+              <input type="text" class="form-control mb-2 search-input" placeholder="Type to search...">
+
+              <!-- Options list -->
+              <div class="options-list" style="max-height: 200px; overflow-y: auto;">
+                <!-- Blank option -->
+                <div class="dropdown-item option-item" data-value="">
+                  -- Select a department --
+                </div>
+
+                <!-- Standard departments -->
+                {% for department in departments %}
+                <div class="dropdown-item option-item" data-value="{{ department }}">
+                  <span class="option-label">{{ department }}</span>
+                </div>
+                {% endfor %}
+
+                <!-- Disable entry if department not in list -->
+                {% if projectdetails.department not in departments and projectdetails.department %}
+                <div class="dropdown-item option-item" data-value="{{ projectdetails.department }}">
+                  <span class="option-label" disabled>{{ projectdetails.department }}</span>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Hidden input for form submission -->
+          <input type="hidden" name="department" id="department_{{ projectdetails.name }}"
+            value="{{ projectdetails.department }}">
+        </div>
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" name="public" id="public_{{ projectdetails.name }}" placeholder="Public Data"
+            value="1" {% if projectdetails.public %}checked {% endif %} {% if not project_permissions.managers %}disabled{% endif %}>
+          <label class="form-check-label m-1 ml-4" for="public_{{ projectdetails.name }}">Public Data</label>
+        </div>
+        <div class="form-check mb-3">
+          <input type="checkbox" class="form-check-input" data-enable="input-svc" name="pipelines"
+            id="pipelines_{{ projectdetails.name }}" placeholder="Use pipelines" value="1" {% if projectdetails.pipelines %}checked {% endif %} {% if
+            not project_permissions.managers %}disabled{% endif %}>
+          <label class="form-check-label m-1 ml-4" for="pipelines_{{ projectdetails.name }}">Use Pipelines</label>
+        </div>
+
+        <div class="form-group input-svc" {% if not projectdetails.pipelines %} hidden {% endif %}>
+          <label for="service_account_{{ projectdetails.name }}">Service Account (generated automatically)</label>
+          <input type="text" class="form-control" name="service_account" id="service_account_{{ projectdetails.name }}"
+            placeholder="Service Account" value="{{ projectdetails.service_account }}" disabled>
+        </div>
+        <hr>
+        {% if project_permissions.managers %}
+        <button type="submit" class="btn btn-primary">Submit</button>
+        {% endif %}
+        <!-- <button type="button" class="btn btn-primary" data-href="/remove_project?name={{ projectdetails.name }}" data-toggle="modal" data-target="#confirm-delete">
+              Remove project
+            </button> -->
+      </form>
+    </div>
+
+    <!-- Project Metadata -->
+    <div class="tab-pane h-100" id="projectmeta" role="tabpanel" aria-labelledby="projectmeta-tab">
+      {{
+        metadata_widget.render_metadata_editor(
+          id="comp_project_metadata_"+projectdetails.name,
+          prefix=metadata_prefix,
+          project_name=projectdetails.name,
+          collection=projectdetails.default_collection,
+          meta_default_values_collection='',
+          edit_allowed=project_permissions.managers,
+          schemata_data_url=url_for('metaedit.schemata_for_project', collection=projectdetails.default_collection, project_name=projectdetails.name),
+          attribute_type=attribute_type_project
+          )
+      }}
+    </div>
+
+
+    <!-- Dataset Default Metadata -->
+    <div class="tab-pane h-100" id="datasetmeta" role="tabpanel" aria-labelledby="datasetmeta-tab">
+      {{
+        metadata_widget.render_metadata_editor(
+            id="comp_default_dataset_metadata_"+projectdetails.name,
+            prefix=upload_default_prefix,
+            project_name=projectdetails.name,
+            collection=projectdetails.default_collection,
+            meta_default_values_collection=projectdetails.default_collection,
+            edit_allowed=project_permissions.managers,
+            schemata_data_url=url_for('metaedit.schemata_for_dataset_default', collection=projectdetails.default_collection, project_name=projectdetails.name),
+            attribute_type=attribute_type_dataset_default
+          )
+        }}
+    </div>
+
+    <!-- Contacts -->
+    <div class="tab-pane" id="contacts" role="tabpanel" aria-labelledby="contacts-tab">
+    </div>
+
+    <!-- Processgroups -->
+    <div class="tab-pane" id="processgroups" role="tabpanel" aria-labelledby="processgroups-tab">
+    </div>
+
+    <!-- Collections -->
+    <div class="tab-pane h-100 scroll" id="collections" role="tabpanel" aria-labelledby="collections-tab">
+    </div>
+
+    <!-- Groups -->
+    <div class="tab-pane" id="groups" role="tabpanel" aria-labelledby="groups-tab">
+      <h3>Project groups</h3>
+      <table class="table table-striped table-hover table-sm" >
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in projectdetails.groups %}
+            <tr>
+              <td>
+                {{ group.htmlshort | safe }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Managers -->
+    <div class="tab-pane" id="managers" role="tabpanel" aria-labelledby="managers-tab">
+    </div>
+
+    <!-- Users -->
+    <div class="tab-pane" id="users-wrapper" role="tabpanel" aria-labelledby="users-tab">
+      {% if projectdetails.extra_groups %}
+      <div class="container-wide">
+        <div class="row">
+          <div id="users" class="col-9"></div>
+          <div class="col-3">
+            <div class="card-header">
+              <div class="card-title">Extra groups with access to this project</div>
+            </div>
+            <div class="card-body">
+              <table class="table">
+                {% for group in projectdetails.extra_groups %}
+                <tr>
+                  <td>{{ group.htmlshort | safe }}</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div id="users"></div>
+      {% endif %}
+    </div>
+
+    <!-- Info -->
+    {% if current_user.is_admin %}
+    <div class="tab-pane h-100 scrollbar-y" id="info" role="tabpanel" aria-labelledby="info-tab">
+      <h2>Project system info</h2>
+      <h3>Project permissions info</h3>
+      <table class="table">
+        <tr><th>Attr</th><th>Value</th></tr>
+      {% for k, v in project_permissions.items() %}
+        <tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+      {% endfor %}
+      {% macro formatvar(value) -%}
+        {% if value is mapping %}
+          <table>
+            <tbody>
+              {% for key, val in value.items() %}
+                <tr>
+                  <td>{{ key }}</td>
+                  <td>{{ formatvar(val) }}</td>
+                </tr>
+          {% endfor %}
+            </tbody>
+          </table>
+        {% elif value is iterable and value is not string %}
+          {% for item in value %}
+          {{ item }}{% if not loop.last %},{% endif %}
+          {% endfor %}
+        {% else %}
+          {{ value }}
+        {% endif %}
+      {%- endmacro %}
+      </table>
+      <h3>Project details</h3>
+      <table class="table">
+        <tr><th>Attr</th><th>Value</th></tr>
+      {% for k, v in projectdetails.items() %}
+        <tr><td>{{ k }}</td><td>{{ formatvar(v) }}</td></tr>
+      {% endfor %}
+      </table>
+      <h3>Current User info</h3>
+      <table class="table">
+        <tr><th>Attr</th><th>Value</th></tr>
+        <tr><td>environment</td><td>{{ current_user.environment }}</td></tr>
+        <tr><td>features</td><td>{{ formatvar(current_user.features) }}</td></tr>
+        <tr><td>fullname</td><td>{{ current_user.fullname }}</td></tr>
+        <tr><td>groups</td><td>{{ formatvar(current_user.groups()) }}</td></tr>
+        <tr><td>irods_env</td><td>{{ formatvar(current_user.irods_env) }}</td></tr>
+        <tr><td>irods_server</td><td>{{ current_user.irods_server }}</td></tr>
+        <tr><td>irods_zone</td><td>{{ current_user.irods_zone }}</td></tr>
+        <tr><td>is_active</td><td>{{ current_user.is_active }}</td></tr>
+        <tr><td>is_admin</td><td>{{ current_user.is_admin }}</td></tr>
+        <tr><td>projects</td><td>{{ formatvar(current_user.projects()) }}</td></tr>
+        <tr><td>username</td><td>{{ current_user.username }}</td></tr>
+        </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+
+<!-- PROJECT DELETE CONFIMATION DIALOG -->
+
+<div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                Remove project
+            </div>
+            <div class="modal-body">
+                Are you sure you want to remove project {{ projectdetails.name }}
+            </div>
+            <div class="modal-footer">
+                <form method="post" action="update_project">
+                <input type="hidden" id="action_remove_project" name="action" value="remove_project">
+                <input type="hidden" id="project" name="project" value="{{ projectdetails.name }}">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger btn-ok">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  
+// Code used to control the department dropdown menu
+document.querySelectorAll('.department-dropdown').forEach(dropdown => {
+  const searchInput = dropdown.querySelector('.search-input');
+  const options = dropdown.querySelectorAll('.option-item');
+  const selectedText = dropdown.querySelector('.selected-text');
+  const hiddenInputId = dropdown.getAttribute('data-target-input');
+  const hiddenInput = document.getElementById(hiddenInputId);
+
+  // Filter options on typing
+  searchInput.addEventListener('keyup', function () {
+    const filter = this.value.toLowerCase();
+    options.forEach(option => {
+      const text = option.textContent.toLowerCase();
+      option.style.display = text.includes(filter) ? '' : 'none';
+    });
+  });
+
+  // Select option
+  options.forEach(option => {
+    option.addEventListener('click', function () {
+      const value = this.getAttribute('data-value');
+      const text = this.querySelector('.option-label') ? 
+                   this.querySelector('.option-label').textContent : 
+                   this.textContent;
+
+      selectedText.textContent = text;
+      hiddenInput.value = value;
+
+      // Close dropdown
+      dropdown.querySelector('.dropdown-toggle').click();
+    });
+  });
+
+  // Prevent dropdown from closing when typing
+  dropdown.querySelector('.dropdown-menu').addEventListener('click', e => e.stopPropagation());
+});
+
+function load_users() {
+    usertype = $("ul#projecttabs li a.active").data('usertype')
+    $.get("{{ url_for('projects.usermanager') }}", {
+      object: '{{ projectdetails.name }}',
+      objecttype: 'projects',
+      usertype: usertype
+    }, function(data) {
+      $('#' + usertype).html(data);
+    });
+  }
+
+  $('.usermanager').on('shown.bs.tab', function (event) {
+    load_users();
+  });
+
+  function load_contacts() {
+    $.get("{{ url_for('contacts.contactmanager') }}", {
+      object: '{{ projectdetails.name }}',
+      objecttype: 'projects'
+    }, function(data) {
+
+      $('#contacts').removeClass('pending')
+      $('#contacts').html(data);
+    });
+  }
+
+  $('.contactmanager').on('shown.bs.tab', function (event) {
+    $('#contacts').addClass('pending')
+    load_contacts();
+  });
+
+
+  $('#project-settings-form').on('submit', function(event) {
+    $('#settings').addClass('pending')
+  })
+
+  $( ".toggle_next" ).each(function() {
+    var check=$(this).prop('checked')
+    var proc=$(this).data('process')
+    $("[id^=nextpro][data-process=" + proc + "]").prop('disabled', function(){
+        return !check
+    })
+  });
+
+  $(document).ready(function(){
+    $('.form-select').addClass('custom-select')
+  })
+
+  $(document).on('click', '.rjsf-array-item-add', function() {
+    $('.form-select').addClass('custom-select')
+  })
+
+
+</script>
+

@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm[toml]>=7"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "idms-web"
+license = { text = "EUPL-1.2"}
+dynamic = ["version"]
+requires-python = ">=3.12"
+description = "iDMS Web Interface"
+dependencies = [
+   "apscheduler",
+   "flask>=3.0.0",
+   "flask-caching",
+   "flask-login",
+   "flask-marshmallow",
+   "flask-migrate",
+   "flask-script",
+   "flask-session",
+   "flask-sqlalchemy",
+   "interop",
+   "markdown",
+   "marshmallow",
+   "marshmallow-sqlalchemy",
+   "numpy",
+   "randomname",
+   "pandas",
+   "plotly",
+   "psycopg2-binary",
+   "pycryptodome",
+   "pygments",
+   "python-dateutil",
+   "pyyaml",
+   "python-irodsclient==3.2.0",
+   "redis",
+   "requests",
+   "sqlalchemy<2.0.0",
+   "graphviz",
+   "jsonschema",
+   "irods_avu_json",
+   "werkzeug",
+   "idms-common-irods>=0.0.8",
+   "idms-common-filesys>=0.0.3",
+   "idms-common-constants>=0.0.5"
+]
+
+[project.optional-dependencies]
+docs = [
+   "mkdocs",
+   "mkdocs-material",
+   "mkdocstrings[python]",
+]
+
+[project.urls]
+#"Documentation" = "https://yidms.common.constants/readthedocs.io/"
+#"Repository" = "https://gitlab.rivm.nl/bioinformatics/idms_web"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["idms*"]
+
+[project.scripts]
+idms-web = "idms.web.wsgi:main"

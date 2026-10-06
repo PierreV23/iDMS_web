@@ -1,0 +1,72 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3>About</h3>
+{% endblock %}
+{% block menuname %}
+menuname='about'
+{% endblock %}
+{% block content %}
+<div class="container-fluid h100 autoscroll">
+<div class="card">
+    <div class="card-header">
+        Contact
+    </div>
+    <div class="card-body">
+        <p class="lead">
+            {{ branding.CONTACT_EMAIL }}
+        </p>
+        <P>Authors:</P>
+        <ul>
+            <li>Erwin van Wieringen (erwin.van.wieringen@rivm.nl)</li>
+            <li>Jan-Erek Thiede (jan.erek.thiede@rivm.nl)</li>
+            <li>Robert Verhagen (robert.verhagen@rivm.nl)</li>
+            <li>Eva Deutekom (eva.deutekom@rivm.nl)</li>
+            <li>Remie Janssen (remie.janssen@rivm.nl)</li>
+            <li>Stefan Lobner (stefan.lobner@rivm.nl)</li>
+            <li>Yuchen Huang (yuchen.huang@rivm.nl)</li>
+        </ul>
+    </div>
+</div>
+<div class="card">
+    <div class="card-header">
+        iRODS environment
+    </div>
+    <div class="card-body">
+        iRODS Server version : {{ irods_version }}
+    </div>
+</div>
+<div class="card">
+    <div class="card-header">
+        iDMS Current commit details
+    </div>
+    <div class="card-body">
+        <ul>
+            <li>git commit hash: <a href="https://gitlab.rivm.nl/bioinformatics/ngsweb/-/tree/{{ idms_web_details.commit }}">{{ idms_web_details.commit[:8] }}</a></li>
+            <li>git branch name: <a href="https://gitlab.rivm.nl/bioinformatics/ngsweb/-/tree/{{ idms_web_details.branch }}">{{ idms_web_details.branch }}</a></li>
+            <li>git commit author: <b>{{ idms_web_details.author }}</b></li>
+            <li>git commit date: <b>{{ idms_web_details.date }}</b></li>
+        </ul>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        iDMS Commit history
+    </div>
+    <div class="card-body">
+        <table class="table">
+        <tr><th>Commit</th><th>date</th><th>Message</th></tr>
+            {% for line in idms_web_history %}
+            <tr>
+            <td>{{ line.commit }}</td>
+            <td>{{ line.date }}</td>
+            <td>{{ line.message }}</td>
+            </tr>
+            {% endfor %}            
+        </table>
+    </div>
+</div>
+</div>
+
+{% endblock %}

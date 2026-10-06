@@ -1,0 +1,36 @@
+{% extends 'base2.html' %}
+ 
+{% block heading %}
+document viewer : {{ path }}
+{% endblock %}
+
+{% block content %}
+
+<a class="btn-btn-primary" href="/collbrowser?action=up&path={{ path }} role="button">UP</a>
+
+<br><br><hr><br>
+
+<div class="card">
+{% if file_extension in [ ".xml" ] %}
+<pre>
+{{ doc }}
+</pre>
+{% elif file_extension in [ ".html", ".htm", ".xml", ".pdf", ".txt", ".csv", ".metrics", ".vcf" ] %}
+<div class="card">
+<embed src="{{ url_for('docviewer.serve_image') + '?path=' + path }}" width="1280" height="1024"></embed>
+</div>
+
+{% elif file_extension in [ ".jpg", ".jpeg", ".gif", ".png" ] %}
+<img src="{{ url_for('docviewer.serve_image') + '?path=' + path }}" width="1024"></img>
+   <br>
+
+{% else %}
+ONLEESBAAR
+{% endif %}
+</div>
+
+<br><hr><br>
+
+{% endblock %}
+
+

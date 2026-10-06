@@ -1,0 +1,522 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3><b>New NGS Run by {{ current_user.username }}</b></h3>
+{% endblock %}
+
+{%block menuname %}
+menuname='add_run'
+{% endblock %}
+
+{% block helptitle %}
+the New NGS Run form
+{% endblock %}
+
+{% block helptext %}
+This page allows you to create a samplesheet for ONT sequencers, like the MinION or the GridION.
+<p>
+The <b>flowcell</b> field should match the flowcell ID being used.
+</p>
+<p>
+Description of the columns in the barcode list:
+<style>
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 4px;
+    text-align: left;
+}
+
+th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+</style>
+<table>
+    <tr>
+        <th>Column</th><th>Description</th>
+    </tr>
+    <tr><td>Checkboxes</td><td>The checkboxes can be used to edit multiple entries at once. Shift-click or Ctrl-click can also be used here.</td></tr>
+    <tr><td>Enabled</td><td>ONLY when <b>editing</b> the samplesheet by selecting it in <a href="{{ url_for('ngsruns.run_list')}}">Run list</a>. Specific barcodes can be enabled or disabled. This is stored for the specific sample sheet, and can be reverted in another edit.</td></tr>
+    <tr><td>ID</td><td>Contains the sample ID. The <b>ID List</b> button can be used to paste a list of IDs from another document.</td>
+    <tr><td>Virus Target</td><td>Fill in the Virus Target. Usage depends on your downstream pipeline. Use <b>Copy down</b> to fill the first field and copy the value to the whole column. </b></td>
+    <tr><td>Primer Set</td><td>Fill in the Primer Set. Usage depends on your downstream pipeline.</td></tr>
+    <tr><td>Kit</td><td>Fill in the Kit. Usage depends on your downstream pipeline. There is a dropdown available for kits. If your value is not in the list you can add it to the field manually, and it will be added to the list for future selectivity.</td></tr>
+    <tr><td>Description</td><td>Optional description. Usage depends on your downstream pipeline.</td></tr>
+    <tr><td>Project</td><td>Select the iRODS project the sample data should be forwarded to.</td>
+</table>
+
+    <br>
+Note: In the <b>Project</b> field, you can only select projects you are a member of, 
+unless you are in a special authorization group that allows creation of sample sheets for all projects.
+If you think you should be added to this group, please contact the <b>Onderzoeks- en Dataloket</b> (onderzoeksendataloket@rivm.nl)
+
+{% endblock %}
+
+{% block content %}
+
+<script>
+    var barcodes = {{ barcodes | safe}}
+</script>
+
+<style>
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 4px;
+    text-align: left;
+}
+
+th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+/* lighter coloured placeholders */
+#new_run input::placeholder {
+    color: #d4d2d2;
+    opacity: 1;
+}
+</style>
+
+<form action="new" method="post" class="h-100" id="new_run" onsubmit="return confirmDisabledSubmit()">
+    <div class="card h-100">
+        <!-- Card Header with Run Information, Controls and Data Header-->
+        <div class="card-header">
+            <input type="hidden" id="id" name="id" value="{{ id }}">
+            <!-- Run and Flowcell related information -->
+            <div class="form-group row">
+                <label for="ngs_name" class="col-auto col-form-label text-right">Name:</label>
+                <input type="text" class="form-control col-sm-2 input-sm" autocomplete="off" name="name" id="ngs_name"
+                    placeholder="Run Name" value="{{ data.name }}"required>
+                <label for="ngs_flowcell" class="col-sm-1 col-form-label text-right">Flowcell:</label>
+                <input type="text" class="form-control col-sm-2" autocomplete="off" name="flowcell" id="ngs_flowcell"
+                    placeholder="Flowcell" value="{{ data.flowcell }}" required>
+                <label for="ngs_description" class="col-sm-1 col-form-label text-right">Description:</label>
+                <input type="text" class="form-control col-sm-3" autocomplete="off" name="description"
+                    id="ngs_description" placeholder="Description" value="{{ data.description }}">
+            </div>
+            <!-- Barcodes Header Information -->
+            <div class="form-group row bg-light">
+                <div class="col-auto" style="width: 2.0rem;"></div>
+                <div class="col-sm-1"></div>
+                <label class="col-sm-1 col-form-label">Barcode</label>
+                <label class="col-sm-1 col-form-label">ID</label>
+                <label class="col-sm-2 col-form-label">Virus Target</label>
+                <label class="col-sm-2 col-form-label">Primer Set</label>
+                <label class="col-sm-1 col-form-label">Kit</label>
+                <label class="col-sm-2 col-form-label">Description</label>
+                <label class="col-sm-1 col-form-label"
+                    title="Select a project from the available project list.&#013 If you are not a member of a project you can request access (See ? Help).">Project</label>
+            </div>
+            <!-- Barcodes Form Controls -->
+            <div class="form-group row align-items-center">
+                <div class="col-sm-1" data-barcode="ALL">
+                    <button type="button" class="btn btn-secondary selectall" id="allbutton">All</button>
+                    <button type="button" class="btn btn-secondary selectnone" id="allbutton">None</button>
+                </div>
+                <div class="col-auto" style="width: 2.0rem;"></div>
+                <label class="col-sm-1 col-form-label">
+                    <button type="button" class="btn btn-primary" id="import_button"
+                        data-toggle="modal" data-target="#import_list">Import</button>
+                </label>
+                <label class="col-sm-1 col-form-label"><button type="button" class="btn btn-secondary" id="databutton"
+                        data-toggle="modal" data-target="#sampleid_list">ID List</button></label>
+                <label class="col-sm-2 col-form-label"><button type="button" class="btn btn-secondary"
+                        id="targetbutton">Copy down</button></label>
+                <label class="col-sm-2 col-form-label"><button type="button" class="btn btn-secondary"
+                        id="primerbutton">Copy down</button></label>
+                <label class="col-sm-1 col-form-label"><button type="button" class="btn btn-secondary"
+                        id="kitbutton">Copy down</button></label>
+                <label class="col-sm-2 col-form-label"></label>
+                <label class="col-sm-1 col-form-label"><button type="button" class="btn btn-secondary"
+                        id="projectbutton">Copy down</button></label>
+            </div>
+        </div>
+        <!-- Card Data -->
+        <div class="card-body scroll h-100">
+            {% for barcode in barcodes %}
+            <div class="form-group form-row align-items-center">
+                <!-- Checkbox -->
+                <div class="col-auto barbox" data-barcode="{{ barcode }}">
+                    <input type="checkbox" class="checkbox barselect" id="check_{{ barcode }}"
+                        data-barcode="{{ barcode }}" tabindex="-1">
+                </div>
+                <!-- id = -1 for new entries, only show Enable button if barcode has sampleid -->
+                {% if data[barcode].sampleid %}
+                <!-- Enable/Disable button when editing row -->
+                <div class="col-sm-1 btn-group" role="group">
+                    <button type="button" id="toggleEnabled_{{ barcode }}"
+                        class="btn {% if data[barcode].enabled == 'true' %}btn-success{% else %}btn-danger{% endif %}"
+                        onclick="toggleEnabled('{{ barcode }}')">
+                        {% if data[barcode].enabled == 'true'%}Enabled{% else %}Disabled{% endif %}
+                    </button>
+                </div>
+                {% else %}
+                <div class="col-sm-1"></div>
+                {% endif %}
+                <input type="hidden" name="barcode" value="{{ barcode }}">
+                <!-- id = -1 for new runs, default value is true -->
+                <input type="hidden" name="enabled_{{ barcode }}" id="enabled_{{ barcode }}"
+                    value="{{ 'true' if not data[barcode].sampleid else data[barcode].enabled }}">
+
+                <!-- Barcode (readonly) -->
+                <div class="col-sm-1">
+                    <input type="text" class="form-control" name="bar_{{ barcode }}" id="bar_{{ barcode }}"
+                        value="{{ barcode }}" readonly tabindex="-1">
+                </div>
+
+                <!-- Sample ID -->
+                <div class="col-sm-1">
+                    <input type="text" class="form-control" name="sampleid_{{ barcode }}" id="sampleid_{{ barcode }}"
+                        placeholder="ID" value="{{ data[barcode].sampleid }}" autocomplete="off"
+                        tabindex="{{ loop.index }}">
+                </div>
+
+                <!-- Virus Target -->
+                <div class="col-sm-2">
+                    <input type="text" class="form-control targetAutocomplete targetfield" name="target_{{ barcode }}"
+                        id="target_{{ barcode }}" placeholder="Virus Target" value="{{ data[barcode].virus_target }}"
+                        data-barcode="{{ barcode }}" autocomplete="on" tabindex="{{ loop.index + 24 }}">
+                </div>
+
+                <!-- Primer Set -->
+                <div class="col-sm-2">
+                    <input type="text" class="form-control primerAutocomplete primerfield" name="primer_{{ barcode }}"
+                        id="primer_{{ barcode }}" placeholder="Primer Set" value="{{ data[barcode].primer_set }}"
+                        data-barcode="{{ barcode }}" autocomplete="off" tabindex="{{ loop.index + 48 }}">
+                </div>
+
+                <!-- Kit Datalist -->
+                <div class="col-sm-1">
+                    <input type="text" class="form-control kitfield" name="kit_{{ barcode }}" id="kit_{{ barcode }}"
+                        list="kit_list_{{ barcode }}" placeholder="Kit" value="{{ data[barcode].kit }}"
+                        data-barcode="{{ barcode }}" tabindex="{{ loop.index + 72 }}">
+                    <datalist id="kit_list_{{ barcode }}">
+                        {% for kit in kits %}
+                        <option value="{{ kit }}"></option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <!-- Description -->
+                <div class="col-sm-2">
+                    <input type="text" class="form-control" name="description_{{ barcode }}"
+                        id="description_{{ barcode }}" placeholder="Description" value="{{ data[barcode].description }}"
+                        autocomplete="off" tabindex="{{ loop.index + 96 }}">
+                </div>
+
+                <!-- Project Dropdown -->
+                <div class="col-sm-1">
+                    <select class="custom-select projectfield" name="project_{{ barcode }}" id="project_{{ barcode }}"
+                        title="Select a project from the available project list.&#013If you are not a member of a project you can request access (See ? Help)."
+                        data-barcode="{{ barcode }}">
+                        {% if action == 'new_form' %}
+                            {% for project in projects|sort %}
+                            <option {% if project==default_project %} selected {% endif %}>{{ project }}</option>
+                            {% endfor %}
+                        {% endif %}
+                        {% if action == 'edit_form' %}
+                            {% for project in projects|sort %}
+                            <option {% if project==data[barcode].project %} selected {% endif %}>{{ project }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary float-right">Submit</button>
+        </div>
+    </div>
+</form>
+
+<script>
+    // Function for toggle Enabled/Disabled barcodes
+    function toggleEnabled(barcode) {
+        const enabled = document.getElementById(`enabled_${barcode}`);
+        const btn = document.getElementById(`toggleEnabled_${barcode}`);
+        if (!enabled || !btn) return;
+
+        const newValue = enabled.value === "true" ? "false" : "true";
+
+        // Get all selected checkboxes
+        const selected = Array.from(document.querySelectorAll('.barselect:checked'))
+            .map(cb => cb.dataset.barcode);
+
+        // Combine selected with the clicked barcode (Set removes duplicates)
+        const targets = [...new Set([...selected, barcode])];
+
+        // Apply to all target barcodes
+        targets.forEach(b => {
+            const target = document.getElementById(`enabled_${b}`);
+            const button = document.getElementById(`toggleEnabled_${b}`);
+            if (!target || !button) return;
+
+            target.value = newValue;
+            button.classList.toggle("btn-success", newValue === "true");
+            button.classList.toggle("btn-danger", newValue !== "true");
+            button.textContent = newValue === "true" ? "Enabled" : "Disabled";
+        });
+    }
+        
+        function confirmDisabledSubmit() {
+        // Find all hidden inputs tracking enabled state
+        const all = document.querySelectorAll('[id^="enabled_"]');
+
+        // Collect any that are disabled
+        const disabled = Array.from(all)
+            .filter(h => h.value === "false")
+            .map(h => h.id.replace("enabled_", "")); // get the barcode numbers
+
+        if (disabled.length > 0) {
+            const message = `You are submitting ${disabled.length} disabled barcode row(s):\n` +
+                            disabled.join(", ") +
+                            "\n\nDo you want to continue?";
+            // Confirm — if user presses "Cancel", prevent submission
+            return confirm(message);
+        }
+
+        // No disabled rows, allow submission
+        return true;
+    }
+
+    $('.selectall').click(function(){
+        $('.barselect').prop('checked', true)
+        $('.barbox, .targetfield, .primerfield, .kitfield, .projectfield').addClass('bg-light').addClass('selected')
+    })
+
+    $('.selectnone').click(function(){
+        $('.barselect').prop('checked', false)
+        $('.barbox, .targetfield, .primerfield, .kitfield, .projectfield').removeClass('bg-light').removeClass('selected')
+        $('.selected').removeClass('selected')
+    })
+
+    function copy_down(fieldname) {
+        fieldclass = '.' + fieldname + 'field'
+        if ($(".barselect:checkbox:checked").length > 0)
+            {
+               $(fieldclass + ".selected").val($(fieldclass + ".selected").first().val())
+            }
+        else
+            {
+                $(fieldclass).val($("#" + fieldname + "_barcode01").val());
+            }
+    }
+
+    $('.barselect').click(function(event) {
+        $(this).prop('checked', !($(this).is(":checked")))
+    })
+
+    $('.barbox').click(function(event) {
+        if (event.shiftKey) {
+            // Undo text selection on page
+            if (window.getSelection) {
+                if (window.getSelection().empty) {  // Chrome
+                    window.getSelection().empty();
+                } else if (window.getSelection().removeAllRanges) {  // Firefox
+                    window.getSelection().removeAllRanges();
+                }
+            } else if (document.selection) {  // IE?
+                document.selection.empty();
+            }
+            if ($(".barselect:checkbox:checked").length > 0) {
+                topbar = $('.barselect.selected').first().attr('id').slice(13)
+                bottombar = $('.barselect.selected').last().attr('id').slice(13)
+                clickbar = $(this).data('barcode').slice(7)
+                start = Math.min(topbar, bottombar, clickbar)
+                end = Math.max(topbar, bottombar, clickbar)
+                for (let i = start; i <= end; i++) {
+                    barcode = 'barcode'
+                    if (i<10) {
+                        barcode = barcode + '0'
+                    }
+                    barcode = barcode + String(i)
+                    cbox = $('.barselect[data-barcode=' + barcode + ']')
+                    cbox.prop('checked', true)
+                    $('[data-barcode=' + barcode + ']').addClass('selected')
+                    $('.selected').addClass('bg-light')
+                }
+                return
+            }
+        }
+        cbox = $('.barselect[data-barcode=' + $(this).data('barcode') + ']')
+        cbox.prop('checked', !(cbox.is(":checked")))
+        if (cbox.is(":checked")) {
+            $('[data-barcode=' + $(this).data('barcode') + ']').addClass('selected')
+            $('.selected').addClass('bg-light')
+        } else {
+            $('[data-barcode=' + $(this).data('barcode') + ']').removeClass('selected').removeClass('bg-light')
+        }
+    })
+
+    $('#targetbutton').click(function(){copy_down("target")})
+    $('#primerbutton').click(function (){copy_down("primer")})
+    $('#kitbutton').click(function (){copy_down("kit")})
+    $('#projectbutton').click(function (){copy_down("project")})
+
+    $('.targetfield').on("input", function(){
+        if ($(".barselect:checkbox:checked").length > 0) {
+            $(".targetfield.selected").val($(this).val())
+        }
+    })
+
+    $('.targetfield').on('pick.bs.autocomplete', function(){
+        if ($(".barselect:checkbox:checked").length > 0) {
+            $(".targetfield.selected").val($(this).val())
+        }
+    })
+
+
+    $('.primerfield').on("input", function(){
+        if ($(".barselect:checkbox:checked").length > 0) {
+            $(".primerfield.selected").val($(this).val())
+        }
+    })
+
+    $('.kitfield').on("input", function(){
+        if ($(".barselect:checkbox:checked").length > 0) {
+            $(".kitfield.selected").val($(this).val())
+        }
+    })
+
+    $('.projectfield').change(function(){
+        if ($(".barselect:checkbox:checked").length > 0) {
+            $(".projectfield.selected").val($(this).val())
+        }
+    })
+
+    $('.targetAutocomplete').autoComplete({
+        resolverSettings: {
+            url: 'complete/virus_target'
+        }
+    });
+
+    $('.primerAutocomplete').autoComplete({
+        resolverSettings: {
+            url: 'complete/primer_set'
+        }
+    });
+
+    $('.kitAutocomplete').autoComplete({
+        resolverSettings: {
+            url: 'complete/kit'
+        }
+    });
+
+</script>
+
+<div class="modal" id="import_list" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="import_DocTitle">Copy your samplesheet data in TSV or CSV format (no header)</h5>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <textarea class="form-control" rows="24" name="import_file" id="import_text" /></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="import_modal_ok">OK</button>
+                    <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="sampleid_list" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="DocTitle">Paste or enter a list of IDs</h5>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <textarea class="form-control" rows="24" name="file" id="sampleid_text" /></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="modal_ok">OK</button>
+                    <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $('#modal_ok').click(function () {
+        var linearray = document.getElementById("sampleid_text").value.split(/\r?\n/)
+        linearray.forEach(copy_line)
+    });
+
+    function copy_line(value, index, array) {
+        var barcode = index + 1
+        var field_id = "sampleid_barcode" + ((barcode < 10) ? "0" : "") + barcode.toString()
+        $('#' + field_id).val(value)
+    }
+
+    $('#import_modal_ok').click(function () {
+        var linearray = document.getElementById("import_text").value.split(/\r?\n/)
+        // Do a check on all projectids
+        projectids = new Set()
+        my_projects = new Set({{ projects | list | tojson }})
+        for (var line_id = 0; line_id < linearray.length; line_id++) {
+            projectid = linearray[line_id].split(/[\t,;]/)[5];
+            if (projectid) {
+                projectids.add(projectid)
+            }
+        }
+        unauth_projects = projectids.difference(my_projects)
+        if (unauth_projects.length) {
+            alert('You are not authorized for projects ' + [...unauth_projects].join(', '))
+            return
+        }
+        // Authorized for all projects. Load the data
+        linearray.forEach(copy_fields)
+    });    
+
+    function copy_fields(value, index, array) {
+        IMPORT_FIELDS = [
+            'sampleid',
+            'target',
+            'primer',
+            'kit',
+            'description',
+            'project'
+        ]
+        var barcode = index + 1
+        var fields = value.split(/[\t,;]/) // Split on \t or ','
+        for (var field = 0; field < fields.length; field++) {
+            var field_id = IMPORT_FIELDS[field] + "_barcode" + ((barcode < 10) ? "0" : "") + barcode.toString()
+            $('#' + field_id).val(fields[field])
+        }
+    }
+
+    $('#databutton').click(function () {
+        var text = ""
+        var v = ""
+        for (barcode = 1; barcode < 25; barcode++) {
+            var field_id = "sampleid_barcode" + ((barcode < 10) ? "0" : "") + barcode.toString()
+            v = $('#' + field_id).val()
+            if (v != "") {
+                text = text + $('#' + field_id).val() + "\n"
+            } else {
+                break
+            }
+        }
+        $('#sampleid_text').val(text)
+    });
+</script>
+
+{% endblock %}

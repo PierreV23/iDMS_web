@@ -1,0 +1,28 @@
+{% extends 'base2.html' %}
+
+  
+{% block header %}
+<h2>{% block title %}Upload result{% endblock %}</h2>
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <div class="card border-primary">
+        <div class="card-header text-white bg-secondary">
+            <h2>Upload result</h2>
+        </div>
+        <div class="card-body">
+{% if upload_result == True %}
+<h3>Your dataset was successfully uploaded<p>
+</h3>
+
+{% else %}
+An error occurred while uploading your dataset: {{ upload_result['error'] }}
+{% endif %}
+        <hr>
+        <a href="{{ url_for('upload.upload_page') }}"><button class="button btn-primary">Upload more data</button></a>
+        </div>
+    </div>
+</div>
+{% endblock %}

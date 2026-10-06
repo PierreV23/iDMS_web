@@ -1,0 +1,121 @@
+:root {
+    /* Colors */
+    --json-tree-js-color-snow-white: #777777;
+    --json-tree-js-color-black: #222222;
+    --json-tree-js-color-light-gray: #888888;
+    --json-tree-js-color-blue-url: #0000cc;
+    --json-tree-js-color-red: #cc0000;
+    --json-tree-js-color-dark-black: #ededf0;
+    --json-tree-js-color-dark-gray: #444444;       
+    
+    
+    /* Interface */
+    --json-tree-js-container-background-color: #ffffff;
+    --json-tree-js-container-border-color: #ffffff;
+  
+    /* Data types */
+    --json-tree-js-color-string: var(--json-tree-js-color-black);
+    --json-tree-js-color-number: var(--json-tree-js-color-black);
+    --json-tree-js-color-boolean: var(--json-tree-js-color-black);
+    
+    --json-tree-js-color-array: var(--json-tree-js-color-dark-gray);
+    --json-tree-js-color-object: var(--json-tree-js-color-dark-gray);
+    --json-tree-js-color-map: var(--json-tree-js-color-black);
+    --json-tree-js-color-set: var(--json-tree-js-color-black);
+
+    --json-tree-js-color-float: var(--json-tree-js-color-black);
+    --json-tree-js-color-bigint: var(--json-tree-js-color-black);
+
+    --json-tree-js-color-date: var(--json-tree-js-color-black);
+    --json-tree-js-color-null: var(--json-tree-js-color-black);
+    --json-tree-js-color-undefined: var(--json-tree-js-color-black);
+
+    --json-tree-js-color-symbol: var(--json-tree-js-color-black);
+    --json-tree-js-color-function: var(--json-tree-js-color-black);
+    --json-tree-js-color-lambda: var(--json-tree-js-color-black);
+    --json-tree-js-color-unknown: var(--json-tree-js-color-black);
+
+    --json-tree-js-color-guid: var(--json-tree-js-color-black);
+    --json-tree-js-color-regexp: var(--json-tree-js-color-black);
+    --json-tree-js-color-url: var(--json-tree-js-color-blue-url);
+    --json-tree-js-color-email: var(--json-tree-js-color-blue-url);
+    --json-tree-js-color-link: var(--json-tree-js-color-blue-url);
+    --json-tree-js-color-html: var(--json-tree-js-color-black);
+
+    /* Fonts */
+    --json-tree-js-default-font: "Source Sans Pro",
+                                 -apple-system,
+                                 BlinkMacSystemFont,
+                                 "Segoe UI",
+                                 Roboto,
+                                 "Helvetica Neue",
+                                 Arial,
+                                 sans-serif,
+                                 "Apple Color Emoji",
+                                 "Segoe UI Emoji",
+                                 "Segoe UI Symbol";
+    --json-tree-js-bold-weight-light: 400;
+    --json-tree-js-spacing: 15px;
+    --json-tree-js-spacing-font-size: 1rem;
+    --json-tree-js-spacing-toggle-size: 12px;
+    --json-tree-js-spacing-font-weight: 400;    
+    
+    /* Adjust Scroll bars */
+    --json-tree-js-scroll-bar-size: 9px;
+    --json-tree-js-scroll-bar-border-style: inset 0 0 0 0 white;
+  }
+
+.jsontree-js-scroll-bars::-webkit-scrollbar-thumb {
+  background: var(--json-tree-js-color-light-gray);
+}
+.jsontree-js-scroll-bars::-webkit-scrollbar-thumb:hover {
+  background-color: var(--json-tree-js-color-light-gray);
+}
+.jsontree-js-scroll-bars::-webkit-scrollbar-thumb:active {
+  background-color: #666666
+}
+
+/* Hide context menu */
+.json-tree-js-context-menu {
+    display: none !important;
+}
+
+/* Override jsontree width defaults to 500px */
+div.json-tree-js {
+  height: 100% !important;
+  width: 100%;
+  max-width: 4000px !important;
+}
+
+/* Override jsontree-js-scroll-bars max-height defaults to 700px */
+.jsontree-js-scroll-bars {
+    height: 100%;
+    max-height: 3000px !important;
+    flex: 1;
+}
+
+/* Set json-tree height to parent heighth */
+div.json-tree-js div.contents {
+  height: 100%;
+}
+
+/* Set json-tree column height to parent heighth */
+div.json-tree-js div.contents-column {
+  height: 100%;
+}
+
+/* Hide title bar */
+div.json-tree-js div.title-bar {
+    max-height: 0px;
+    padding: 0px;
+    visibility: hidden;
+}
+
+/* Prevent clicking on specific data types */
+.object-type-value .url,
+.object-type-value .email,
+.object-type-value .link,
+.object-type-value .boolean {
+    pointer-events: none;
+    cursor: default;
+}

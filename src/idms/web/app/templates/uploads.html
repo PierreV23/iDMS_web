@@ -1,0 +1,86 @@
+{% extends 'base2.html' %}
+  
+{% block heading %}
+<h2>Upload collections</h2>
+{% endblock %}
+
+{%block menuname %}
+menuname='uploads'
+{% endblock %}
+
+{% block menuitems %}
+<li class="nav-header bg-warning text-center">ACTIONS</li>
+<li class="nav-item">
+    <a class="nav-link" href="{{ url_for('upload.new_upload') }}" >
+      <i class="fas fa-plus nav-icon"></i>
+      New Upload
+    </a>
+  </li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3>Pending uploads</h3>
+
+        <div class ="float-right">
+            <div class="buttons-toolbar"></div>
+        </div>
+    </div>
+    <div class="card-body">
+        <table id='pendingUploadTable'
+            data-classes='table table-bordered table-hover table-striped'
+            data-toggle='table'
+            data-url='{{ url_for("upload.pending_uploads", state='pending') }}'
+            data-striped="true"
+            data-pagination="true"
+            data-show-columns-toggle-all="false"
+            data-show-pagination-switch="true"
+            data-show-toggle="false"
+            data-show-columns="true"
+            data-search="true"
+            data-buttons-toolbar=".buttons-toolbar">
+            <thead>
+                <tr>
+                    <th data-sortable="true" data-field="name">Name</th>
+                    <th data-field="collection">Collection</th>
+                    <th data-field="projectID">Project</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Ready uploads</h3>
+
+        <div class ="float-right">
+            <div class="buttons-toolbar"></div>
+        </div>
+    </div>
+    <div class="card-body">
+        <table id='readyUploadTable'
+            data-classes='table table-bordered table-hover table-striped'
+            data-toggle='table'
+            data-url='{{ url_for("upload.pending_uploads", state="ready") }}'
+            data-striped="true"
+            data-pagination="true"
+            data-show-columns-toggle-all="false"
+            data-show-pagination-switch="true"
+            data-show-toggle="false"
+            data-show-columns="true"
+            data-search="true"
+            data-buttons-toolbar=".buttons-toolbar">
+            <thead>
+                <tr>
+                    <th data-sortable="true" data-field="name">Name</th>
+                    <th data-field="collection">Collection</th>
+                    <th data-field="projectID">Project</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

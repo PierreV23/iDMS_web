@@ -1,0 +1,75 @@
+{% extends 'base2.html' %}
+
+{% block title %}iDMS{% endblock %}
+
+{% block heading %}
+<h3>iDMS Web Portal</h3>
+{% endblock %}
+
+{% block content %}
+
+<script>
+  $(window).on('load', function () {
+    $.get('{{ url_for('projects.my_projectview') }}', {}, function (data) {
+      $('#myprojects').html(data)
+    });
+  });
+</script>
+<div class="container-fluid h-100">
+  <div class="row h-100" style="overflow-y: auto;">
+    <div class="col-4">
+      <div class="card border-primary ">
+        <div class="card-header">
+          Quick Links
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item"><a href={{ url_for('collbrowser.collbrowser') + '?path=/' +
+                current_user.irods_zone + '/home/' + current_user.username }}>Home collection</a></li>
+            <li class="list-group-item"><a href={{ url_for('collbrowser.collbrowser') + '?path=/' +
+                current_user.irods_zone + '/projects' }}>Project Data</a></li>
+          </ul>
+        </div>
+      </div>
+      {% if current_user.feature('projects') %}
+      <div class="card border-primary">
+        <div class="card-header">
+          My Projects
+        </div>
+        <div class="card-body" id="myprojects">
+          <div class="overlay">
+            <i class="fas fa-2x fa-sync-alt fa-spin"></i>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="col-4">
+      <div class="card border-primary">
+        <div class="card-header">
+          My Uploaded Datasets
+        </div>
+        <div class="card-body">
+          <table data-toggle="table" data-pagination="true" data-page-size="10"
+            data-url="{{ url_for('collbrowser.mydatasets') }}">
+            <thead>
+              <tr>
+                <th data-field="collection">Collection</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-4">
+      {% for newsitem in newsitems %}
+      <div class="card">
+        <div class="card-body {{ newsitem.class }}">
+          {{ newsitem.msg | safe }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

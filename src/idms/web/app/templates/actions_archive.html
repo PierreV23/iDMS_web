@@ -1,0 +1,68 @@
+<div class="flash_bar bg-warning" id="notify-resource" hidden><b>Some resources are unavailable:</b><div id="resource-list"></div></div>
+
+<h4>
+    {% if coll_state.status == 'OFFLINE' %}
+    <span class="badge badge-danger">OFFLINE</span>
+    {% elif coll_state.status == 'RETRIEVE_REQUESTED' %}
+    <span class="badge badge-info">RETRIEVE PENDING</span>
+    {% elif coll_state.status == 'RETRIEVE_IN_PROGRESS' %}
+    <span class="badge badge-warning">RETRIEVING</span>
+    {% elif coll_state.status == 'ONLINE' %}
+    <span class="badge badge-success">ONLINE</span>
+    {% else %}
+    <span class="badge badge-dark">STATUS UNKNOWN</span>
+    {% endif %}
+</h4>
+<hr>
+<form>
+    <div class="form-group">
+        <label class="col-form-label">
+            {% if coll_state.is_offline is sameas true %}
+            Bring
+            {% else %}
+            Keep
+            {% endif %}
+            online for:
+        </label>
+    </div>
+    <div class="form-group row">
+        <div class="col-sm-4">
+            <select class="custom-select" id="inputSelectDate" onChange="updateUntilDate()">
+                <option selected>Choose...</option>
+                <option value="7">1 Week</option>
+                <option value="14">2 Weeks</option>
+                <option value="30">1 Month</option>
+                <option value="90">3 Months</option>
+                <option value="182">6 Month</option>
+            </select>
+        </div>
+        <div class="col-sm-3">
+            <button class="btn btn-outline-secondary" type="button" onClick="bringDatasetOnline()">bring online</button>
+        </div>
+        <div class="col-sm-3 vertical-down">
+            <span id="untilDate"></span>
+        </div>
+    </div>
+</form>
+<hr>
+{% if coll_state.keep_online_till.value > 0 %}
+Dataset will be {% if coll_state.is_offline %}brought{% else %}kept{% endif %} online until {{
+coll_state.keep_online_till }}
+{% endif %}
+
+<script>
+
+$.get('{{ url_for("admin.resource_data_cached") }}', function(data) {
+    unavailable_resources = []
+    for (const [key, value] of Object.entries(data)) {
+        if (value.group && (value.available != "true" || value.enabled != "true")) {
+            unavailable_resources.push(key)
+        }
+    }
+    if (unavailable_resources.length > 0) {
+        $('#notify-resource').attr('hidden', false)
+        $('#resource-list').html(unavailable_resources.join(','))
+    }
+})
+
+</script>

@@ -1,0 +1,26 @@
+<table class="table table-sm table-striped table-bordered">
+    <thead>
+        <tr>
+            <!-- <td>Select</td> -->
+            <td>Sequence ID</td>
+            {% for h in headers %}
+                <td>{{ h }}</td>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+{% for id in ids %}
+        {% if id['PassedQC'] == 'No' %}
+        <tr class="table-danger">
+        {% else %}
+        <tr>
+        {% endif %}
+            <td>{{ id }}</td>
+            {% for h in headers %}
+                <td>{{ ids[id][h] }}</td>
+            {% endfor %}            
+        </tr>
+{% endfor %}
+
+    </tbody>
+</table>

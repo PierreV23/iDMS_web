@@ -1,0 +1,143 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3>Reference dataset details : <div class="activereferencedataset" style="display:inline"></div>
+</h3>
+{% endblock %}
+
+{%block menuname %}
+menuname='reference-datasets'
+{% endblock %}
+
+{% block menuitems %}
+<li class="nav-header bg-warning text-center">ACTIONS</li>
+<li class="nav-item">
+  <a class="nav-link" data-toggle="modal" data-target="#referenceModal">
+    <i class="fas fa-plus nav-icon"></i>
+    Add new reference dataset
+  </a>
+</li>
+
+
+{% endblock %}
+
+{% block content %}
+<script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-jsonschema-form@1.8.1/dist/react-jsonschema-form.js" crossorigin></script>
+<script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
+<script>
+
+$(document).on('click', '.referencename', function() {
+  reference=$(this).data('referencename');
+  $('.referencename').removeClass('active')
+  $('.processname').removeClass('active')
+  $('.activereferencedataset').html(reference)
+  $(this).addClass("active")
+  $('#details').html('<center><img src="{{ url_for('static', filename='img/loading.gif') }}" width="30%"></img><center>')
+  $.get('{{ url_for("reference.show_reference_details") }}', {
+    name: reference,
+    processgroup: "{{ processgroup }}"
+  }, function(data) {
+    $('#details').html(data);
+    $("button[id='{{ activetabname }}-tab']").trigger('click')
+  });
+});
+
+$(window).on('load', function() {
+  $("li[data-referencename='{{ reference_dataset }}']").trigger('click');
+});
+
+
+</script>
+
+<div class="modal fade" id="referenceModal">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">
+          Add reference dataset
+        </div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form class="form" action="{{ url_for('reference.update_reference_settings') }}" method="post">
+        <div class="form-group">
+          <div class="modal-body">
+            <label for="new_rname" class="col-form-label">Reference dataset identifier (no spaces)</label>
+            <input type="text" class="form-control menuexpand" id='new_rname' name="reference">
+            <label for="new_rcategory" class="col-form-label">Category</label>
+            <select class="form-control"  class="form-control menuexpand" id='new_rcategory' name="reference_category">
+                <option value=" " selected>Unknown</option>
+                <option value="Reference Genome">Reference Genome</option>
+                <option value="Container/Tools">Container/Tools</option>
+                <option value="Test">Test</option>
+            </select>
+            <input type="hidden" name="action" value="add_reference">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type=submit class="btn btn-primary">Submit</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<div class="selectgrid h-100">
+
+  <div class="card selectlist">
+    <div class="card-body nopadding scroll">
+      <table class="table-borderless" id="refdata-table" 
+               data-toggle="table" data-search="true">
+       <thead>
+          <tr>
+            <th>Datasets</th>
+          </tr>
+       </thead>
+      <tbody>
+        {% for category in referencedatasets | sort  %}
+        <tr class="bg-dark"><td>{{ category }}</td></tr>
+        {% for reference in referencedatasets[category] | sort  %}
+        {%   set ref_data = referencedatasets[category][reference] %}
+        {%   set days_since_update_str = ref_data["days_since_update_str"] %}
+        {%   set style = "list-group-item referencename" %}
+        {%   if ref_data["is_active"] != 1 %}
+        {%       set style = style + " list-group-item-secondary" %}
+        {%   else %}
+        {%      if ref_data["status"] == "WARNING" %}
+        {%          set style = style + " list-group-item-warning" %}
+        {%      endif %}
+        {%      if ref_data["status"] == "ERROR" %}
+        {%          set style = style + " list-group-item-danger" %}
+        {%      endif %}
+        {%   endif %}
+        <tr>
+          
+          <td class="{{ style }}" data-referencename="{{ reference  }}" data-searchable="true">
+            <div class="d-flex w-100 justify-content-between">
+               <h5 class="mb-1">{{ reference  }}</h5>
+               <span class="badge badge-secondary badge-light">{{ ref_data["number_of_valid_versions"] }}</span>
+            </div>
+            <small>{{ days_since_update_str }}</small><span class="hidden">{{ category }}</span>
+          </td>
+         
+        </tr>
+        {% endfor %}
+        {% endfor %}
+
+        </tbody>
+        </table>    
+    </div>
+  </div>
+
+  <div class="card selectdetail scroll" id="details">
+
+  </div>
+</div>
+
+
+{% endblock %}

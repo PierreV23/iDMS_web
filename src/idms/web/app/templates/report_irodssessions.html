@@ -1,0 +1,32 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3>iRODS Sessions</h3>
+{% endblock %}
+
+{%block menuname %}
+menuname='irodssessions'
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <table id="irodssessions" class="table" data-toggle="table" data-striped="true" data-pagination="true"
+            data-page-size="25" data-page-list=[25,50,100] data-filter-control="true" data-show-toggle="false"
+            data-show-columns="true" data-show-filter-control-switch="true"
+            data-url="{{ url_for('reports.irods_sessionreport') }}" data-buttons-prefix="btn-sm btn"
+            data-buttons-toolbar=".runtable-toolbar">
+            <thead>
+                <tr>
+                    {% for c in columns %}
+                    <th data-field="{{ c['field'] }}" data-sortable="{{ c['sortable'] }}">
+                        {{ c['title'] }}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+        </table>
+
+    </div>
+</div>
+{% endblock %}

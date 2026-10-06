@@ -1,0 +1,231 @@
+<script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
+
+<style>
+/* Popover styles */
+    #unique-popover {
+    position: absolute;
+    margin: 0;
+    margin-bottom: 8px;
+
+    /* Styling */
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    background-color: #fef08a; /* Soft warning yellow */
+    color: #854d0e;
+    max-width: 200px;
+    }
+</style>
+
+ReferenceData
+<table class="table" id="refdata_table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col" title="identifier in pipeline">Label</th>
+        <th scope="col">ReferenceDataset</th>
+        <th scope="col">Version</th>
+        <th scope="col">Action</th>
+      </tr>
+      <tr class="table-primary">
+          <td></td>
+          <td width="200"><input id="refDataSetLabel" required pattern="[0-9a-zA-Z\-]+" placeholder="a_unique_label"></td>
+          <td><select class="form-control form-control-sm" id="refDataSetSelect">
+              <option disabled selected value> -- select a reference dataset -- </option>
+          </select></td>
+          <td>    
+            <select class="form-control form-control-sm disabled invisible" id="refDataSetVersionSelect">
+          </select></td>
+          <td><button class="btn-success disabled invisible" id="btnAddRefData"><i class="fas fa-plus-circle"></i></button></td>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<div id="unique-popover" popover="manual">
+    <div class="popover-title">Label must be unique</div>
+  </div>
+
+<script>
+
+function addEventDeleteBtn(id) {
+  document.getElementById('btn-delete-'+id).addEventListener('click', function() {
+       $.get('{{ url_for("projects.process_del_referencedataversion") }}', { 
+            referencedataid: id,
+            processid: '{{ processid }}'
+        }, function(data) {
+            $('#refdata-row-'+id).remove()
+        })
+  });
+}
+
+
+function addEventChangeVersion(id) {
+  document.getElementById('refDataSetVersion-'+id).addEventListener('change', function() {
+       $.get('{{ url_for("projects.process_set_referencedataversion") }}', { 
+            referencedataid: id,
+            referencedataversionid:  $( '#refDataSetVersion-'+id).val(),
+            processid: '{{ processid }}'
+        }, function(data) {
+        })
+  });
+}
+
+
+function build_line( ref_data, versions ) {
+    versionidstr = "Latest (dynamic)"
+    selected_versionid = -1
+    if( ref_data.referencedataversion != null ){
+        versionidstr = ref_data.referencedata.version
+        selected_versionid    = ref_data.referencedataversionid
+    }
+     html = '<tr id="refdata-row-'+ref_data.id +'">'
+     html += '  <td scope="row"></td>'
+     html += '  <td>'+ref_data.label+'</td>'
+     html += '  <td>' + ref_data.referencedata.name + '</td>'
+     html += '  <td><select class="form-control form-control-sm" id="refDataSetVersion-' + ref_data.id + '">'
+     html += '      <option value="-1">Latest (dynamic)</option>'
+     for ( const v of versions ) {
+        selected=""
+        if (v.id == selected_versionid ) {
+           selected="selected"
+        }
+        display_version = v.version + ': ' + v.version_name + ' (' + v.creation_date.substring(0,10) + ')'
+        if( v.version_name == '' )
+            display_version = v.version + ' (' + v.creation_date.substring(0,10) + ')'
+        html += '    <option value="'+ v.id +'"' + selected + '>'+ display_version +' </option>'
+     }
+     html += '      </select></td>'
+     html += '  <td><button class="btn-danger" id="btn-delete-'+ ref_data.id +'"><i class="fas fa-trash"></i></button></td>'
+     html += '</tr>'
+     return html
+}
+
+function build_reference_data_table(reference_datas_for_process, ref_versions) {
+    $('#refdata_table > tbody').empty()
+    for ( ref_data_fp of reference_datas_for_process ){
+        let versions  = ref_versions[ref_data_fp.referencedataid]
+        $('#refdata_table > tbody:last-child').append( build_line( ref_data_fp, versions ) )
+        addEventDeleteBtn(ref_data_fp.id)
+        addEventChangeVersion(ref_data_fp.id)
+    }; 
+}
+
+function checkUnique() {
+    // Make sure refdata labels are unique
+    var existing_labels = $('#refdata_table tr td:nth-child(2)').map(function() {
+            return $(this).text().trim();
+        }).get().filter(Boolean);
+    let new_value = $('#refDataSetLabel').val().trim().toLowerCase()
+    if (!new_value) return false;
+    return !existing_labels.some(function(val) {
+        return val.toLowerCase() === new_value;
+    });
+}
+
+$('document').ready(function(){
+    reference_data_sets = {{reference_data_sets|tojson}}
+    reference_datas_for_process = {{reference_data_for_process|tojson}}
+    ref_versions = {{ref_versions|tojson}}
+    for( ref of reference_data_sets ) {
+        $('#refDataSetSelect').append( new Option(ref.name, ref.id ) ) 
+    };
+
+    build_reference_data_table(reference_datas_for_process, ref_versions)
+
+    function getElementAbsolutePosition(element) {
+        const rect = element.getBoundingClientRect();
+        
+        return {
+            top: rect.top + window.scrollY,
+            left: rect.left + window.scrollX,
+            width: rect.width,
+            height: rect.height,
+            right: rect.right + window.scrollX,
+            bottom: rect.bottom + window.scrollY
+        };
+    }
+
+    function setAddButton() {
+        let inputVal = $('#refDataSetLabel').val().trim();
+        let popoverEl = document.getElementById('unique-popover');
+        let isUnique = checkUnique();
+
+        // Show popover ONLY if there is text AND it is a duplicate
+        if (inputVal !== '' && !isUnique) {
+            // Must use native JS method instead of jQuery .show()
+            popoverEl.showPopover();
+            popoverDim = popoverEl.getBoundingClientRect()
+            inputEl = document.getElementById('refDataSetLabel');
+            pos = getElementAbsolutePosition(inputEl)
+            popoverEl.style.top = (pos.top - popoverDim.height - 10) + 'px';
+            popoverEl.style.left = (pos.left - 10) + 'px';
+        } else {
+            // Hide native popover safely
+            if (popoverEl.matches(':popover-open')) {
+                popoverEl.hidePopover();
+            }
+        }
+
+
+        if (isUnique && $('#refDataSetVersionSelect').val() != null) {
+            $('#btnAddRefData').removeClass('invisible disabled')
+        } else {
+            $('#btnAddRefData').addClass('invisible disabled')         
+        }
+    }
+
+    $('#refDataSetLabel').on('input', setAddButton)
+
+    $('#refDataSetVersionSelect').on('change', setAddButton)
+
+
+    $('#btnAddRefData').on('click', function() {
+        $.get("{{ url_for('projects.process_add_referencedataversion') }}", {
+            referencedataid: $('#refDataSetSelect').val(),
+            referencedataversionid:  $('#refDataSetVersionSelect').val(),
+            processid: '{{ processid }}',
+            label: $('#refDataSetLabel').val(),
+        }, function(refdata_conn) {
+            $.get('{{ url_for("projects.referencedataversions") }}', { 
+                referencedataid: refdata_conn.referencedata.id
+            }, function( versions ) {
+                $('#refdata_table > tbody:last-child').append( build_line( refdata_conn, versions ) )
+                addEventChangeVersion(refdata_conn.id)
+                addEventDeleteBtn( refdata_conn.id)
+            })
+        });
+
+        $('#btnAddRefData').addClass('invisible disabled') 
+        $('#refDataSetVersionSelect').addClass('invisible')
+        $('#refDataSetVersionSelect').empty()
+        $('#refDataSetLabel').val('')
+        $("#refDataSetSelect").prop("selectedIndex", 0 ) 
+    }) 
+
+    $('#refDataSetSelect').on('change', function() {
+        $('#refDataSetVersionSelect').empty()
+        $('#refDataSetVersionSelect').removeClass('invisible')
+        setAddButton()
+        $.get('{{ url_for("projects.referencedataversions") }}', { 
+            referencedataid: this.value
+        }, function(data) {
+            o = new Option( " -- select a version -- ", null, true, true )
+            o.setAttribute("disabled", "disabled")
+            $('#refDataSetVersionSelect').append( o )
+            $('#refDataSetVersionSelect').append( new Option( "Latest (dynamic)", -1 ))
+        for( version of data ) {
+               display_version = version.version + ': ' + version.version_name + ' (' + version.creation_date.substring(0,10) + ')'
+               if( version.version_name == '' )
+                  display_version = version.version + ' (' + version.creation_date.substring(0,10) + ')'
+               $('#refDataSetVersionSelect').append( new Option(display_version, version.id ) ) 
+            };
+        })
+        
+    })
+
+});
+
+</script>

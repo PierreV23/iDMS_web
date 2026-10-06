@@ -1,0 +1,37 @@
+{
+  "title": "project metadata",
+  "description": "project schema for metadata on project level",
+  "type": "object",
+  "required": [
+  ],
+  "properties": {
+	"project::description": {
+      "type": "string",
+      "title": "project description"
+    },
+	"project::projectresponsible": {
+      "type": "string",
+      "title": "project responsible"
+    },
+	"project::archive": {
+      "type": "string",
+      "title": "Will the project be archived"
+    },
+	"project::retention_period": {
+      "type": "string",
+      "title": "retention period"
+    },
+	"project::SAP_code": {
+      "type": "string",
+      "title": "SAP code"
+    },
+	"project::start_date": {
+      "type": "string",
+      "title": "project start date"
+    },
+	"project::harvest_to_catalog": {
+      "type": "string",
+      "title": "harvest to catalog"
+    }
+  }	
+}

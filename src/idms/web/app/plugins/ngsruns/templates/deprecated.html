@@ -1,0 +1,19 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3>Deprecated</h3>
+{% endblock %}
+{%block menuname %}
+menuname={{ menuname }}
+{% endblock %}
+{% block content %}
+
+<div class="card">
+    <div class="card-header">
+        {{ header }}
+    </div>
+    <div class="card-body">
+{{ text | safe }}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+<div class="container-fluid">
+
+  <form id="missing-variables-form" method="POST">
+    {% for key in data %}
+    <div class="form-row">
+        <label class="col-lg-3 col-form-label font-weight-bold" for="{{key}}">{{key}}</label>
+        {%  set variableMeta = data[key] %}
+        {%  set isRequiredAttr = '' %}
+        {%  if "is_required" in variableMeta and variableMeta.is_required %}
+        {%     set isRequiredAttr = 'required' %}
+        {%  endif  %}
+        {%   
+            if "enum" in variableMeta.schema
+        %}
+                <div class="col-lg-8">
+                  <select id="{{key}}" name="{{key}}" class="form-select form-select-sm" {{isRequiredAttr}}>
+                  {% for optionValue in variableMeta['schema']['enum']|sort %}
+
+                    {% set selectedAttr = '' %}
+                    {% if "default" in variableMeta and variableMeta.default is not none and optionValue == variableMeta.default %}
+                    {%   set selectedAttr = 'selected'  %}
+                    {% endif  %}
+                    <option value="{{optionValue}}" {{selectedAttr}}>{{optionValue}}</option>
+                  {% endfor %}
+                  </select>
+                </div>
+        {%
+            else
+        %}  
+            {% set maxlengthAttr = '' %}
+            {% if "maxLength" in variableMeta.schema %}
+            {%   set maxlengthAttr = 'maxlength=' ~ variableMeta.schema.maxLength  %}
+            {% endif  %}
+            {% set patternAttr = '' %}
+            {% set pattern = '' %}
+            {% if "pattern" in variableMeta.schema %}
+            {%   set pattern = variableMeta.schema.pattern %}
+            {%   set patternAttr = 'pattern=' ~ variableMeta.schema.pattern  %}
+            {% endif  %}
+            {% set defaultValueAttr = '' %}
+            {% if "default" in variableMeta and variableMeta.default is not none %}
+            {%   set defaultValueAttr = 'value=' ~variableMeta.default  %}
+            {% endif  %}
+               <div class="col-lg-8">
+                <input id="{{key}}" name="{{key}}" placeholder="{{pattern}}" type="text" 
+                      class="form-control" 
+                      {{maxlengthAttr}} {{patternAttr}}
+                      {{defaultValueAttr}} {{isRequiredAttr}} >
+                <!--
+                  for testing server-side validation you need to remove these:
+                  {{maxlengthAttr}} {{patternAttr}} {{isRequiredAttr}}
+                -->
+                </div> 
+              
+       {%
+            endif
+        %}
+        <div class="col-lg-1"><div class="alert alert-light"><small class="form-text text-muted">{{isRequiredAttr}}</small></div></div>
+    </div>
+    <div id="{{key}}-alert-row" class="form-row d-none alert-row">
+      <div class="offset-lg-3 col-lg-8"> 
+          <div  id="{{key}}-alert" class="alert alert-light" role="alert"><small id="{{key}}-message" class="form-text"></small></div>
+      </div>
+    </div>
+    {% endfor %}
+    <input id="form-submit-hidden" type="submit" style="display: none" />
+  </form>
+  </div>

@@ -1,0 +1,60 @@
+{% extends 'base2.html' %}
+
+{%block menuname %}
+menuname='archiveissues'
+{% endblock %}
+
+{% block heading %}
+<h3>Archive issues</h3>
+{% endblock %}
+
+{% block content %}
+
+<script>
+
+</script>
+<div class="card card-body autoscroll h-100">
+    <table class="table">
+        <thead>
+            <tr>
+                <td>Collection</td>
+                <td>Status</td>
+                <td>Message</td>
+                <td>Actions</td>
+            </tr>
+        </thead>
+        {% for item in items %}
+        <tr>
+            <td>{{ item['collection'].htmlstring | safe }}</td>
+            <td>{{ item['status'] }}</td>
+            <td>{{ item['statusmsg'] }}</td>
+            <td>
+                <button class="button btn-primary archive-action" data-path='{{ item["collection"].value }}'
+                    data-action='clear_status'>Clear status</button>
+                {% if item["allow_remove"] is sameas True %}
+                <button class="button btn-danger archive-action" data-path='{{ item["collection"].value }}'
+                    data-action='remove_archive'>Remove Manifest & Archive</button>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+
+<script>
+$('.archive-action').on('click', function() {
+   $.post("{{ url_for('admin.archive_action') }}", {
+       collection: $(this).data("path"),
+       action: $(this).data("action")
+   }, function (data) {
+        if (typeof data.message != 'undefined') {
+            alert(data.message)
+        }
+        location.reload()
+   })
+})
+
+</script>
+
+{% endblock %}

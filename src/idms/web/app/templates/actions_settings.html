@@ -1,0 +1,172 @@
+{% macro override_checkbox(name, data, attr) %}
+<td>
+  <div class="custom-control custom-switch">
+    <input class="data-toggle custom-control-input" id="{{ name }}" type="checkbox" data-attr="{{ attr }}" {% if
+      data[0]=='true' %}checked{% endif %} {% if data[2]==False %}disabled{% endif %}>
+    <label class="custom-control-label" for="{{ name }}"></label>
+  </div>
+</td>
+<td>
+  <div class="custom-control custom-switch">
+    <input class="data-override-toggle custom-control-input" id="override_{{ name }}" type="checkbox"
+      data-attr="{{ attr }}" data-setting="{{ name }}" {% if data[2]==True %}checked{% endif %}>
+    <label class="custom-control-label" for="override_{{ name }}"></label>
+  </div>
+</td>
+<td id="base_{{ name }}">{% if data[2] == False %}{{ data[1].htmlshort | safe }}{% endif %}</td>
+{% endmacro %}
+
+{% macro override_number(name, data, attr) %}
+<td>
+  <input id="{{ name }}" class="form-control narrow data-number" type="number" data-attr="{{ attr }}"
+    value="{{ data[0] }}" {% if data[2]==False %} disabled {% endif %}>
+</td>
+<td>
+  <div class="custom-control custom-switch">
+    <input class="data-override-number custom-control-input" id="override_{{ name }}" type="checkbox"
+      data-attr="{{ attr }}" data-setting="{{ name }}" {% if data[2]==True %}checked{% endif %}>
+    <label class="custom-control-label" for="override_{{ name }}"></label>
+  </div>
+</td>
+<td id="base_{{ name }}">{% if data[2] == False %}{{ data[1].htmlshort | safe }}{% endif %}</td>
+{% endmacro %}
+<div class="autoscroll-y h-100">
+  <table class="table table-sm">
+    <thead>
+      <tr>
+        <th>Setting</th>
+        <th>Value</th>
+        <th>Override</th>
+        <th>From</th>
+      </tr>
+    </thead>
+    <tr>
+      <tr>
+        <th>Enable data management</th>
+        {{ override_checkbox("enable_dm", coll_state.enabled, "sys::archive::enable") }}
+      </tr>
+    <tr>
+      <th>Store locally</th>
+      {{ override_checkbox("keep_local", coll_state.keep_local, "sys::archive::local") }}
+    </tr>
+    <tr>
+      <th>Keep online</th>
+      {{ override_checkbox("keep_online", coll_state.keep_online, "sys::archive::keep_online") }}
+    </tr>
+    <tr>
+      <th>Generate object_ids</th>
+      {{ override_checkbox("object_ids", coll_state.object_ids, "sys::rules::object_ids") }}
+    </tr>
+    <tr>
+      <th>Copies stored</th>
+      {{ override_number("min_copies", coll_state.min_copies, "sys::archive::min_copies") }}
+    </tr>
+    <tr>
+      <th>Create retention (d)</th>
+      {{ override_number("create_retention", coll_state.create_retention, "sys::archive::create_retention") }}
+    </tr>
+    <tr>
+      <th>Last use retention (d)</th>
+      {{ override_number("lastuse_retention", coll_state.lastuse_retention, "sys::archive::lastuse_retention") }}
+    </tr>    
+  </table>
+</div>
+<script>
+
+  function set_switch(switch_id) {
+    $.get('{{ url_for("collbrowser.metatree") }}', {
+      collection: collection,
+      attr: $('#' + switch_id).data('attr')
+    }, function (data) {
+      $('#override_' + switch_id).prop('checked', data.override);
+      $('#' + switch_id).prop('disabled', !data.override);
+      $('#' + switch_id).prop('checked', data.value == 'true');
+      $('#base_' + switch_id).html(data.override ? '' : data.source)
+    })
+  }
+
+  function set_number(switch_id) {
+    $.get('{{ url_for("collbrowser.metatree") }}', {
+      collection: collection,
+      attr: $('#' + switch_id).data('attr')
+    }, function (data) {
+      $('#override_' + switch_id).prop('checked', data.override);
+      $('#' + switch_id).prop('disabled', !data.override);
+      $('#' + switch_id).val(data.value ?? 0);
+      $('#base_' + switch_id).html(data.override ? '' : data.source)
+    })
+  }
+
+  $('a[data-toggle="tab"]').on('click', function (event) {
+    activeSettingsTab = event.target.getAttribute('href')
+  })
+
+  $('input.data-toggle').on('change', function () {
+    attr = $(this).data('attr')
+    val = $(this).is(':checked') ? 'true' : 'false'
+    switch_id = $(this).attr('id')
+    $.get("{{ url_for('collbrowser.setmeta') }}", {
+      attr: attr,
+      collection: collection,
+      value: val
+    }, function () {
+      load_meta();
+      set_switch(switch_id)
+    })
+  })
+
+  $('input.data-override-toggle').on('change', function () {
+    attr = $(this).data('attr')
+    override = $(this).is(':checked') ? 'true' : 'false'
+    value_selector = $(this).data('setting')
+    val = $('#' + value_selector).is(':checked') ? 'true' : 'false'
+    $.get("{{ url_for('collbrowser.setoverride') }}", {
+      attr: attr,
+      collection: collection,
+      override: override,
+      value: val
+    }, function () {
+      load_meta();
+      set_switch(value_selector)
+    })
+  })
+
+  $('input.data-number').on('change', function () {
+    attr = $(this).data('attr')
+    val = $(this).val()
+    switch_id = $(this).attr('id')
+    $.get("{{ url_for('collbrowser.setmeta') }}", {
+      attr: attr,
+      collection: collection,
+      value: val
+    }, function () {
+      load_meta();
+      set_number(switch_id);
+    })
+  })
+
+
+  $('input.data-override-number').on('change', function () {
+    attr = $(this).data('attr')
+    override = $(this).is(':checked') ? 'true' : 'false'
+    value_selector = $(this).data('setting')
+    val = $('#' + value_selector).val() ?? 1
+    if (val == '') {
+      val = 1
+    }
+    $.get("{{ url_for('collbrowser.setoverride') }}", {
+      attr: attr,
+      collection: collection,
+      override: override,
+      value: val
+    }, function () {
+      load_meta();
+      set_number(value_selector)
+    })
+  })
+
+{% if not current_user.is_admin or not current_user.feature('admin') %}
+$('#settings').find('input').prop("disabled", true)
+{% endif %}
+
+</script>

@@ -1,0 +1,48 @@
+{
+  "title": "upload registration form",
+  "description": "",
+  "type": "object",
+  "required": [
+    "sequencing::brand",
+    "sequencing::platform",
+    "sequencing::provider"
+  ],
+  "properties": {
+    "sequencing::brand": {
+      "type": "string",
+      "title": "Sequencing brand",
+      "default": "Illumina"
+    },
+    "sequencing::platform": {
+      "type": "string",
+      "title": "Sequencing platform",
+      "default": "NextSeq 550"
+    },	
+    "sequencing::provider": {
+      "type": "string",
+      "title": "Sequencing provider"
+    },
+    "user::origin": {
+      "type": "string",
+      "title": "Origin"
+    },
+    "user::pipeline::gitrepo": {
+      "type": "string",
+      "title": "Pipeline git repository"
+    },
+    "user::pipeline::tag": {
+      "type": "string",
+      "title": "Pipeline tag"
+    },
+    "user::include_in_surveillance": {
+      "type": "boolean",
+      "title": "Include in surveillance",
+      "default": true
+    },
+    "user::validation_set": {
+      "type": "boolean",
+      "title": "Validation set",
+      "default": false
+    }
+  }
+  }

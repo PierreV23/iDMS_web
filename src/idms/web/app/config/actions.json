@@ -1,0 +1,38 @@
+{
+    "archive": {
+        "title": "Archive",
+        "template": "actions_archive.html",
+        "dataset": true
+    },
+    "pipeline": {
+        "title": "Processes",
+        "template": "actions_pipeline.html",
+        "dataset": true
+    },
+    "validity": {
+        "title": "Validity",
+        "template": "actions_validity.html",
+        "dataset": true
+    },
+    "provenance": {
+        "title": "Provenance",
+        "template": "actions_provenance.html",
+        "dataset": true
+    },
+    "settings": {
+        "title": "Settings",
+        "template": "actions_settings.html",
+        "admin": true
+    },
+    "admin": {
+        "title": "Admin",
+        "template": "actions_admin.html",
+        "admin": true,
+        "dataset": true
+    },
+    "noactions": {
+        "title": "No Actions",
+        "template": "actions_noactions.html",
+        "no_dataset": true      
+    }
+}

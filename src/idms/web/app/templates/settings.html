@@ -1,0 +1,479 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h2>User settings</h2>
+{% endblock %}
+
+{%block menuname %}
+menuname='settings'
+{% endblock %}
+
+{% block content %}
+<script>
+    selectedView = null
+    selectedViewName = null
+</script>
+<div class="card card-primary card-outline card-outline-tabs h100">
+    <div class="card-header card-header-tabs">
+        <ul class="nav nav-tabs" id="user-settings-tabs-tab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="user-settings-tabs-general-tab" data-toggle="pill" data-hash="tab"
+                    href="#user-settings-tabs-general" role="tab" aria-controls="user-settings-tabs-general"
+                    aria-selected="true">General</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="user-settings-tabs-collection-browser-tab" data-toggle="pill" data-hash="tab"
+                    href="#user-settings-tabs-collection-browser" role="tab"
+                    aria-controls="user-settings-tabs-collection-browser" aria-selected="false">Collection browser</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="user-settings-tabs-cluster-tab" data-toggle="pill" data-hash="tab"
+                    href="#user-settings-tabs-cluster" role="tab" aria-controls="user-settings-tabs-cluster"
+                    aria-selected="false">Cluster configuration</a>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body h100 scrollbar-y">
+        <div class="tab-content" id="user-settings-tabs-tabContent">
+            <div class="tab-pane fade show active" id="user-settings-tabs-general" role="tabpanel"
+                aria-labelledby="user-settings-tabs-general-tab">
+                {% if current_user.is_admin %}
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Admin Features</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="custom-control custom-switch form-check-inline">
+                                <input class="custom-control-input usersetting" data-attr="feature::admin"
+                                    type="checkbox" id="featuresadmin" {% if current_user.feature('admin') %} checked {%
+                                    endif %}>
+                                <label class="custom-control-label col-form-label" for="featuresadmin">Enable
+                                    administrative
+                                    actions</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Web Application Features and Plugins</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            {% for feature in features %}
+                            <div class="custom-control custom-switch form-check-inline">
+                                <input class="custom-control-input usersetting" data-attr="feature::{{ feature.label }}"
+                                    type="checkbox" id="features{{ feature.label }}" {% if feature.value %} checked {%
+                                    endif %}>
+                                <label class="custom-control-label col-form-label" for="features{{ feature.label }}">{{
+                                    feature.description }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="tab-pane fade" id="user-settings-tabs-collection-browser" role="tabpanel"
+                aria-labelledby="user-settings-tabs-collection-browser-tab">
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Collection Browser settings</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="custom-control custom-switch form-check-inline">
+                                <input class="custom-control-input usersetting" data-attr="sysmeta" type="checkbox"
+                                    id="sysMeta" {% if current_user.settings.get("sysmeta", "true" )=="true" %} checked
+                                    {% endif %}>
+                                <label class="custom-control-label col-form-label" for="sysMeta">Show sys
+                                    metadata</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            Custom view configuration
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <div class="table-responsive">
+                                        <table id="views-table" class="table" data-toggle="table">
+                                            <thead>
+                                                <tr>
+                                                    <th data-field="label" data-visible=false>ID</th>
+                                                    <th data-field="name" data-class="customview-name">View Name</th>
+                                                    <th data-field="delete"></th>
+                                                </tr>
+                                            </thead>
+                                        </table>
+                                    </div>
+                                </div>
+                                <form>
+                                    <input type="text" class="form-control font-italic new-data"
+                                        placeholder="New custom view" id="new-cv-name">
+                                    <button type="button" class="btn btn-success btn-block"
+                                        id="add-cv-button">+</button>
+                                </form>
+                            </div>
+                            <div class="col-md-8">
+                                <form id="attribute-form">
+                                    <div id="customview-rows">
+                                    </div>
+                                    <div class="form-row mb-4" hidden id="add-attr-form">
+                                        <div class="col-md-4">
+                                            <input type="text" class="form-control font-italic new-data"
+                                                placeholder="New Attribute..." id="new-attr">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="text" class="form-control font-italic new-data"
+                                                placeholder="New Regex (optional) ..." id="new-value">
+                                        </div>
+                                        <div class="col-md-1">
+                                            <button type="button"
+                                                class="btn btn-success btn-block add-button">+</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="user-settings-tabs-cluster" role="tabpanel"
+                aria-labelledby="user-settings-tabs-cluster-tab">
+                {% for site in current_user.irods_env.get("sites_and_clusters",{}).get("sites", {}) %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            {{ site }}
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        {% for cluster, cluster_dict in current_user.irods_env.get("sites_and_clusters", {}).get("clusters", {}).items() if cluster_dict["site"] == site %}
+                        <a class="btn btn-light card-header d-flex justify-content-between align-items-center collapsable-content-button"
+                            id="collapse-{{ cluster }}-btn" data-toggle="collapse" href="#collapse-{{ cluster }}" role="button" aria-expanded="true"
+                            aria-controls="collapse-{{ cluster }}" style="cursor: pointer;">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-chevron-down rotate mr-2" id="collapseIcon"></i>
+                                <span class="card-title mb-0">{{ cluster }}</span>
+                            </div>
+                            <span class="badge px-3 py-2 h5 font-weight-bold ml-auto mb-0
+                                {% if cluster_config[cluster]['autoconfig_request'] == 'true' -%} badge-primary">REQUESTED
+                                {% elif cluster_config[cluster]['sshkey_path'] == None -%} badge-danger">UNCONFIGURED
+                                {% else -%} badge-success">CONFIGURED
+                                {%endif %}
+                            </span>                            
+                        </a>
+                        <div class="collapse" id="collapse-{{ cluster }}">
+                            <form method="POST" action="#" data-cluster="{{ cluster }}"
+                                class="user-cluster-settings-form">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">User name</label>
+                                    <input type="text" class="form-control" id="username" name="username" value="{% if cluster_config[cluster]['username'] %}{{ cluster_config[cluster]['username'] }}{% endif %}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="sshkey" class="form-label">Private SSH Key</label>
+                                    <textarea class="form-control" id="sshkey" name="sshkey" rows="6"
+                                        placeholder="Paste your private SSH key here (currently{{ ' not' if cluster_config[cluster]['sshkey_path'] == None  }} set{{' in '+cluster_config[cluster]['sshkey_path'] if cluster_config[cluster]['sshkey_path'] != None}})" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save</button>
+                                {% if cluster_dict['autoconfig'] == True %}
+                                <button data-cluster="{{ cluster }}" class="btn btn-secondary autoconfig"{% if cluster_config[cluster]['autoconfig_request'] == 'true' %} disabled>Autoconfig requested {% else %}>Auto config{% endif %}</button>
+                                {% endif %}
+                            </form>
+                        </div>
+                        {% if not loop.last %}
+                        <hr>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        const newRowUrl = (rowIndex, attr, value) => `<div id="customview-row-${rowIndex}" data-rowid="${rowIndex}" class="form-row mb-3 align-items-center customview-row">
+                    <div class="col-md-4">
+                        <label class="sr-only">Attribute</label>
+                        <input type="text" class="form-control customview-attr" value="${attr}" placeholder="Attribute Name">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="sr-only">Value</label>
+                        <input type="text" class="form-control customview-value" value="${value}" placeholder="Attribute Regex">
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-outline-secondary btn-block up-button" title="Up" id="cv_up_${rowIndex}">&#x21E7;</button>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-outline-secondary btn-block down-button" title="Down" id="cv_down_${rowIndex}" disabled>&#x21E9;</button>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-outline-danger btn-block remove-button" data-rowid="${rowIndex}" title="Remove" id="cv_del_${rowIndex}">&times;</button>
+                    </div>
+                </div>`;
+
+        var all_settings = {{ current_user.settings.items() | tojson }};
+
+        function load_table() {
+            data = []
+            for (var i = 0; i < all_settings.length; i++) {
+                if (all_settings[i][0].startsWith('customview::')) {
+                    data.push({
+                        'label': all_settings[i][0].substring(12),
+                        'name': all_settings[i][1]['name'],
+                        'delete': '<button type="button" class="btn btn-outline-danger btn-block remove-cv-button" title="Remove">&times;</button>'
+                    })
+                }
+            }
+            $('#views-table').bootstrapTable({
+                data: data,
+                onClickRow: function (row, $element, field) {
+                    if (field == 'name') {
+                        $element.addClass('highlight').siblings().removeClass('highlight')
+                        load_customview(row.label)
+                        selectedView = row.label
+                        selectedViewName = row.name
+                    }
+                    if (field == 'delete') {
+                        $.ajax({
+                            url: '{{ url_for("userinfo.usersetting") }}',
+                            type: 'DELETE',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ attr: 'customview::' + row.label }),
+                            success: function (response) {
+                                // Example: remove the row from your Bootstrap Table visually
+                                $element.fadeOut();
+                            }
+                        });
+                    }
+                }
+            })
+        }
+
+        load_table();
+
+        function load_customview(label) {
+            $.get(encodeURI('{{ url_for("userinfo.usersetting", )}}?attr=customview::' + label), function (data) {
+                cvform = $('#customview-rows')
+                cvform.empty()
+                attrlist = data.value.attrs
+                for (var i = 0, len = attrlist.length; i < len; i++) {
+                    cvform.append(newRowUrl(i, attrlist[i][0], attrlist[i][1]))
+                }
+                $('#add-attr-form').attr('hidden', false)
+            })
+        }
+
+        function save_customview() {
+            const keys = $("input.customview-attr").map(function () { return $(this).val(); }).get();
+            const values = $("input.customview-value").map(function () { return $(this).val(); }).get();
+            const result = keys.reduce((obj, key, index) => {
+                if (key) obj.push([key, values[index]]);
+                return obj;
+            }, []);
+            $.ajax({
+                url: '{{ url_for('userinfo.usersetting') }}',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    'attr': `customview::${selectedView}`,
+                    'value': {
+                        name: selectedViewName,
+                        attrs: result
+                    }
+                }),
+                dataType: 'json'
+            })
+        }
+        // arbitrary large number
+        var rowIndex = 100
+
+        $('#add-cv-button').on('click', function () {
+            name = $('#new-cv-name').val()
+            tableData = $('#views-table').bootstrapTable('getData')
+            nextid = 0
+            tableData.forEach(item => {
+                if (!isNaN(item.label)) {
+                    nextid = Math.max(nextid, item.label) + 1
+                }
+            });
+            if (name) {
+                $.ajax({
+                    url: '{{ url_for('userinfo.usersetting') }}',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        'attr': `customview::${nextid}`,
+                        'value': {
+                            name: name,
+                            attrs: []
+                        }
+                    }),
+                    dataType: 'json'
+                }).done(function () {
+                    // TODO: Reload not required, just insert a row in the table and select it
+                    window.location.reload();
+                })
+            }
+        })
+
+        $('.add-button').on('click', function (event) {
+            $('.down-button').prop('disabled', false)
+            attr = $('#new-attr').val()
+            value = $('#new-value').val()
+            if (attr != "") {
+                const newRow = `<div id="customview-row-${rowIndex}" data-rowid="${rowIndex}" class="form-row mb-3 align-items-center customview-row">
+                    <div class="col-md-4">
+                        <label class="sr-only">Attribute</label>
+                        <input type="text" class="form-control customview-attr" value="${attr}" placeholder="Attribute Name">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="sr-only">Value</label>
+                        <input type="text" class="form-control customview-value" value="${value}" placeholder="Attribute Regex">
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-outline-secondary btn-block up-button" title="Up" id="cv_up_${rowIndex}">&#x21E7;</button>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-outline-secondary btn-block down-button" title="Down" id="cv_down_${rowIndex}" disabled>&#x21E9;</button>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-outline-danger btn-block remove-button" data-rowid="${rowIndex}" title="Remove" id="cv_del_${rowIndex}">&times;</button>
+                    </div>
+                </div>`
+                rowIndex += 1
+                $('#customview-rows').append(newRow)
+                $('.new-data').val('')
+                save_customview()
+            }
+        })
+
+        $(document).on('click', '.remove-button', function (event) {
+            $('.customview-row[data-rowid="' + $(event.target).data('rowid') + '"]').remove()
+            save_customview()
+        })
+
+        $(document).on('click', '.up-button', function () {
+            var current = $(this).parent().parent();
+            var previous = current.prev();
+
+            if (previous.length !== 0) {
+                current.insertBefore(previous);
+            }
+            $('.up-button').prop('disabled', false)
+            $('.down-button').prop('disabled', false)
+            $('#customview-rows .customview-row').first().find('button.up-button').prop('disabled', true)
+            $('#customview-rows .customview-row').last().find('button.down-button').prop('disabled', true)
+            save_customview()
+        });
+
+        $(document).on('click', '.down-button', function () {
+            var current = $(this).parent().parent();
+            var next = current.next()
+
+            if (next.length !== 0) {
+                current.insertAfter(next);
+            }
+            $('.up-button').prop('disabled', false)
+            $('.down-button').prop('disabled', false)
+            $('#customview-rows .customview-row').first().find('button.up-button').prop('disabled', true)
+            $('#customview-rows .customview-row').last().find('button.down-button').prop('disabled', true)
+            save_customview()
+        })
+
+        $(document).on('change', '.customview-attr', function () {
+            save_customview()
+        })
+
+        $(document).on('change', '.customview-value', function () {
+            save_customview()
+        })
+
+        $('.usersetting').on('change', function () {
+            attr = $(this).data('attr')
+            value = $(this).is(':checked') ? 'true' : 'false'
+            $.post('{{ url_for("userinfo.usersetting") }}', {
+                attr: attr,
+                value: value
+            })
+        })
+
+        $('a[data-hash="tab"]').on('shown.bs.tab', function (e) {
+            var hash = $(e.target).attr('href');
+            window.location.hash = hash;
+        });
+
+        $(document).ready(function () {
+            var hash = window.location.hash;
+            if (hash) {
+                $('a[href="' + hash + '"]').tab('show');
+            }
+            $('a[id="{{ activetab }}-tab"]').trigger('click')
+            $('#collapse-{{ cluster }}').collapse('show')
+        });
+
+        $('.collapse').on('show.bs.collapse', function () {
+            var header = $('a[href="#' + this.id + '"]');
+            header.find('.fa-chevron-down').removeClass('rotate');
+        });
+
+        $('.collapse').on('hide.bs.collapse', function () {
+            var header = $('a[href="#' + this.id + '"]');
+            header.find('.fa-chevron-down').addClass('rotate');
+        });
+
+        $(document).on('click', '.autoconfig', function(e) {
+            e.preventDefault();
+            cluster = $(this).data('cluster')
+            $.get('{{ url_for("userinfo.request_cluster_config") }}',
+                    { cluster: cluster },
+                    function (response) {
+                        window.location.href = '{{ url_for("main.settings") }}?activetab=user-settings-tabs-cluster&cluster=' + cluster
+                    }
+            )
+        });
+
+        $(document).on('submit', '.user-cluster-settings-form', function (e) {
+            const keys = $("input.customview-attr").map(function () { return $(this).val(); }).get();
+            e.preventDefault();
+
+            var $form = $(this);
+            var cluster = $form.data('cluster');
+            var username = $form.find('[name="username"]').val();
+            var sshkey = $form.find('[name="sshkey"]').val();
+
+            $.ajax({
+                url: '{{ url_for("userinfo.save_cluster_config") }}',
+                method: 'POST',
+                data: {
+                    cluster: cluster,
+                    username: username,
+                    sshkey: sshkey
+                },
+                success: function (response) {
+                    $form.append('<div class="alert alert-success mt-2">SSH key saved!</div>');
+                },
+                error: function (xhr) {
+                    $form.append('<div class="alert alert-danger mt-2">Error saving SSH key.</div>');
+                }
+            });
+        });
+
+
+
+    </script>
+    {% endblock %}

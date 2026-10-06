@@ -1,0 +1,1536 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<div id="block_heading" class="d-flex justify-content-between align-items-center mb-2">
+  <h3 class="mb-0">
+    <span>
+      <b>Collection:</b> <span id="title_coll_path"></span>
+    </span>
+    <span class="ml-4">
+      <b id="title_object_label">Object:</b><span id="title_object" class="ml-1"></span>
+    </span>
+  </h3>
+
+  <div class="btn-group">
+    <button id="path_copy" type="button" data-toggle="tooltip" data-placement="bottom"
+      class="btn btn-sm btn-outline-secondary" title="Copy WebDav path to clipboard">
+      <i class="fa fa-clipboard"></i>
+    </button>
+    <button id="path_open" type="button" data-toggle="tooltip" data-placement="bottom"
+      class="btn btn-sm btn-outline-secondary" title="Open collection in new tab">
+      <i class="fa fa-folder"></i>
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{%block menuname %}
+menuname='collectionbrowser'
+{% endblock %}
+
+{% block menuitems %}
+{% if current_user.feature('provenance') %}
+<div class="dataset-only">
+<li class="nav-header  bg-warning text-center">ACTIONS</li>
+<li class="nav-item">
+  <a href="#" class="nav-link" onClick="uploadDownstream()">
+    <i class="fas fa-plus nav-icon"></i>
+    Upload downstream data
+  </a>
+</li>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block control_sidebar %}
+<div class="control-sidebar-header p-3">
+  <i class="fas fa-arrow-right pointer" data-widget="control-sidebar"></i>
+</div>
+<div class="control-sidebar-content p-0 collgraph-item" id="sidebar-coll">
+  <div class="control-sidebar-title p-0"><b>
+      <center>Graph Options</center>
+    </b></div>
+  <!-- Simplify -->
+  <div class="p-3">
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <input type="checkbox" id="graph_simplify_coll" data-toggle="tooltip"
+        title="Simplify the collection graph, by combining multiple edges into one." {% if graph_simplify_coll=="1"
+        %}checked{% endif %}>
+      <label for="graph_simplify_coll">Simplify</label>
+    </div>
+
+    <!-- Upstream only -->
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <input type="checkbox" id="show_upstream_coll" data-toggle="tooltip"
+        title="Show upstream provenance of the selected collection." {% if show_upstream_coll=="1" %}checked{% endif %}>
+      <label for="show_upstream_coll">Upstream</label>
+    </div>
+
+    <!-- Downstream only -->
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <input type="checkbox" id="show_downstream_coll" data-toggle="tooltip"
+        title="Show only downstream provenance of the selected collection." {% if show_downstream_coll=="1" %}checked{%
+        endif %}>
+      <label for="show_downstream_coll">Downstream</label>
+    </div>
+
+    <!-- Graph Levels-->
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <span class="ml-8"></span>
+      <label for="graph_levels_coll" data-toggle="tooltip"
+        title="Set the number of collection levels to show in the collection graph (min: 0, max: 10).">Graph
+        Levels:</label>
+      <input type="number" class="form-control" min="0" max="10" name="graph_levels_coll" id="graph_levels_coll"
+        value="{{ graph_levels_coll }}" data-toggle="tooltip" title="Enter a number between 0 and 10">
+    </div>
+
+    <!-- Zoom -->
+    <div class="form-group d-flex align-items-center" style="gap: 10px;">
+      <label for="zoomlevel_coll" class="form-label" data-toggle="tooltip"
+        title="Adjust the collection graph zoom level.">Zoom:</label>
+      <input type="range" id="zoomlevel_coll" class="form-range zoom-slider" min="10" max="150"
+        value="{{ zoomlevel_coll }}" style="width: 60px;" data-toggle="tooltip"
+        title="Slide to zoom in or out (min: 10%, max: 150%).">
+      <span class="zoom-display" id="zoomDisplay_coll" style="width: 50px;">100%</span>
+    </div>
+  </div>
+  <div class="p-0 control-sidebar-title"><b>
+      <center>Graph Legend</center>
+    </b></div>
+  <div id="graph-legend-coll" class="control-legend p-3">
+  </div>
+</div>
+</div>
+
+<div class="control-sidebar-content p-3 objectgraph-item" id="sidebar-obj">
+  <div class="control-sidebar-title p-0"><b>
+      <center>Graph Options</center>
+    </b></div>
+  <div class="p-3">
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <input type="text" oninput="searchGraph(this.value)" placeholder="Search nodes..." data-toggle="tooltip"
+        title="Case sensitive search for node names (including the name of the path)" style="width: 100px;">
+    </div>
+
+    <!-- Include all files from selected collection -->
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <input type="checkbox" id="include_all_from_coll" data-toggle="tooltip"
+        title="Include all files from the currently selected collection in the object graph." {% if
+        include_all_from_coll=="1" %}checked{% endif %}>
+      <label for="include_all_from_coll">All files</label>
+    </div>
+
+    <!-- Show Collections -->
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <input type="checkbox" id="show_collections" data-toggle="tooltip"
+        title="Show all collections in the object graph." {% if show_collections=="1" %}checked{% endif %}>
+      <label for="show_collections">Show Collections</label>
+    </div>
+
+    <!-- Provenance labels -->
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <input type="checkbox" id="provenance_labels_obj" data-toggle="tooltip"
+        title="Display provenance (PROV) labels on edges in the object graph." {% if provenance_labels_obj=="1"
+        %}checked{% endif %}>
+      <label for="provenance_labels_obj">Provenance labels</label>
+    </div>
+
+    <!-- Upstream only -->
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <input type="checkbox" id="show_upstream_obj" data-toggle="tooltip"
+        title="Show upstream provenance of the selected object." {% if show_upstream_obj=="1" %}checked{% endif %}>
+      <label for="show_upstream_obj">Upstream</label>
+    </div>
+
+    <!-- Downstream only -->
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <input type="checkbox" id="show_downstream_obj" data-toggle="tooltip"
+        title="Show downstream provenance of the selected object." {% if show_downstream_obj=="1" %}checked{% endif %}>
+      <label for="show_downstream_obj">Downstream</label>
+    </div>
+
+    <!-- Display Top -> Bottom -->
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <input type="checkbox" id="graph_direction_tb_obj" data-toggle="tooltip" title="Show graph from top to bottom." {%
+        if graph_direction_tb_obj=="1" %}checked{% endif %}>
+      <label for="graph_direction_tb_obj">Top -> Bottom</label>
+    </div>
+
+    <!-- Graph Levels -->
+    <div class="form-group d-flex align-items-center" style="gap: 8px;">
+      <span class="ml-8"></span>
+      <label for="graph_levels_obj" data-toggle="tooltip"
+        title="Set the number of object levels to show in the object graph (min: 0, max: 20).">
+        Graph Levels:
+      </label>
+      <input type="number" class="form-control" min="0" max="20" name="graph_levels_obj" id="graph_levels_obj"
+        value="{{ graph_levels_obj }}" data-toggle="tooltip" title="Enter a number between 0 and 20.">
+    </div>
+
+    <!-- Zoom -->
+    <div class="form-group d-flex align-items-center" style="gap: 10px;">
+      <label for="zoomlevel_obj" class="form-label" data-toggle="tooltip"
+        title="Adjust the object graph zoom level.">Zoom:</label>
+      <input type="range" id="zoomlevel_obj" class="form-range zoom-slider" min="10" max="150"
+        value="{{ zoomlevel_obj }}" style="width: 60px;" data-toggle="tooltip"
+        title="Slide to zoom in or out (min: 10% max: 150%)">
+      <span class="zoom-display" id="zoomDisplay_obj" style="width: 50px;">100%</span>
+    </div>
+  </div>
+  <div class="p-0 control-sidebar-title"><b>
+      <center>Graph Legend</center>
+    </b></div>
+  <div id="graph-legend-obj" class="control-legend p-3">
+  </div>
+</div>
+
+{% endblock %}
+
+{% block content %}
+<script>
+  var collection = "{{ path }}";
+  var selected_project = "{{ project }}"
+  var selected_projectpath = ""
+  var graph_simplify_coll = "{{ graph_simplify_coll }}"
+  var graph_levels_coll = "{{ graph_levels_coll }}";
+  var graph_levels_obj = "{{ graph_levels_obj }}";
+  var provenance_labels_obj = "{{ provenance_labels_obj }}"
+  var include_all_from_coll = "{{ include_all_from_coll }}"
+  var show_collections = "{{ show_collections }}"
+  var show_upstream_obj = "{{ show_upstream_obj }}"
+  var show_upstream_coll = "{{ show_upstream_coll }}"
+  var show_downstream_obj = "{{ show_downstream_obj }}"
+  var show_downstream_coll = "{{ show_downstream_coll }}"
+  var graph_direction_tb_obj = "{{ graph_direction_tb_obj }}"
+
+  var sortkey = "";
+  var reverse = "";
+  var selected_object = "{{ selected_object }}";
+  var waiting = '<div class="overlay"><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>'
+  activetab = localStorage.getItem('activetab')
+  
+  // Events to trigger the function that centers the graphs on the selected element
+  const graph_coll_loaded_event = new Event("graph_coll_loaded");
+  const graph_obj_loaded_event = new Event("graph_obj_loaded");
+
+  // Set whitelist for popover, allow all table elements, div, and span elements with attribute 'data-path'
+  $(function () {
+    var whiteList = $.fn.popover.Constructor.Default.whiteList;
+
+    whiteList.table = [];
+    whiteList.thead = [];
+    whiteList.tbody = [];
+    whiteList.tr = [];
+    whiteList.td = [];
+    whiteList.div = [];
+    whiteList.span = ['data-path'];
+  });
+
+
+  function downloadURI(uri, name) {
+    var link = document.createElement("a");
+    link.download = name;
+    link.href = uri;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    link.remove();
+  }
+
+  function uploadDownstream() {
+    window.location.href = "{{ url_for('upload.new_upload')}}?parent=" + encodeURIComponent(collection)
+  }
+
+  function download_wrapper(path) {
+    $.get("{{ url_for('docviewer.test_access') }}?path=" + encodeURIComponent(path), function (result) {
+      if (result["access"] == "GRANTED") {
+        source = "{{ url_for('docviewer.download_object') }}?path=" + encodeURIComponent(path)
+        filename = path.replace(/^.*[\\\/]/, '')
+        downloadURI(source, filename)
+      } else {
+        $('#alertTitle').html('Access Denied')
+        $('#alertBody').html("<center>You don't have permissions to access " + decodeURIComponent(path) + "</center>")
+        $('#modalAlert').modal()
+      }
+    })
+  }
+
+  function showModal(path, name) {
+    $.get("{{ url_for('docviewer.test_access') }}?path=" + encodeURIComponent(path), function (result) {
+      if (result["access"] == "GRANTED") {
+        $('#DocTitle').html(name)
+        source = "{{ url_for('docviewer.serve_object') }}?path=" + encodeURIComponent(path)
+        newEmbed = '<embed src="' + source + '" width="100%" height="100%" id="DocText" ></embed>'
+        $('#mBody').html(newEmbed)
+        $('#myOutput').modal()
+      } else {
+        $('#alertTitle').html('Access Denied')
+        $('#alertBody').html("<center>You don't have permissions to access " + decodeURIComponent(path) + "</center>")
+        $('#modalAlert').modal()
+      }
+    });
+  }
+
+  function build_title() {
+    path_elem_list = collection.split('/')
+    title_object = selected_object.split('/').pop()
+    var i;
+    title_coll = ''
+    path = ''
+    for (i = 1; i < path_elem_list.length; i++) {
+      path += '/' + path_elem_list[i];
+      title_coll += '/' + '<span class="path-change" data-path="' +
+        path + '">' + path_elem_list[i] + '</span>'
+    }
+    $("#title_coll_path").html(title_coll)
+    $("#title_object").html(title_object)
+    $('#path_copy').on('click', copy_to_clipboard);
+    $('#path_open').on('click', open_in_browser);
+  }
+
+  function get_webdav_path(irods_path, protocolPrefix, add_ssl, seperator) {
+    var path_elem = irods_path.split('/')
+    path_elem.shift()
+    path_elem.shift()
+    var path_without_zone = path_elem.join(seperator)
+    var path = protocolPrefix + "{{ config.get('IRODS_ENVS',{}).get(current_user.environment, {}).get('webdav_server', '') }}"
+    if (add_ssl) path += "@SSL"
+    path += seperator + path_without_zone;
+    return path
+  }
+
+  // solution for copy to clipboard for unsecure pages:
+  // https://stackoverflow.com/questions/71873824/copy-text-to-clipboard-cannot-read-properties-of-undefined-reading-writetext
+  function unsecuredCopyToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    textArea.setSelectionRange(0, 99999);
+    try {
+      document.execCommand('copy')
+    }
+    catch (err) {
+      console.error('Unable to copy to clipboard', err)
+    }
+    document.body.removeChild(textArea)
+  };
+
+  /**
+   * Copies the text passed as param to the system clipboard
+   * Check if using HTTPS and navigator.clipboard is available
+   * Then uses standard clipboard API, otherwise uses fallback
+  */
+  function copy_to_clipboard() {
+    var seperator = "/";
+    var addSSL = false;
+    var protocolPrefix = "davs://"
+    if (navigator.appVersion.indexOf("Win") != -1) {
+      seperator = "\\";
+      var protocolPrefix = "\\\\"
+      addSSL = true;
+    }
+    var path = get_webdav_path(collection, protocolPrefix, addSSL, seperator)
+    if (window.isSecureContext && navigator.clipboard) {
+      navigator.clipboard.writeText(path)
+    } else {
+      console.log("unsecure connection, try workaround for clipboard access")
+      unsecuredCopyToClipboard(path);
+    }
+  }
+
+  function open_in_browser() {
+    var path = get_webdav_path(collection, "https://", false, "/")
+    //window.open( "davs:"+path, '_blank');  would open xdg on linux or win scp
+    window.open(path, '_blank');
+    //window.open( "webdavs:"+path, '_blank');
+  }
+
+
+  function update_item_visibility() {
+    if (activegraphtab == "#graph_coll") {
+      $('.collgraph-item').attr('hidden', false)
+      $('.objectgraph-item').attr('hidden', true)
+    }
+    else {
+      $('.collgraph-item').attr('hidden', true)
+      $('.objectgraph-item').attr('hidden', false)
+    }
+  }
+
+  function load_graph() {
+    {% if current_user.feature('provenance') %}
+    // selected_object determines the graph type
+    if (selected_object === '' || selected_object == null) {
+      load_graph_coll();
+      $('#graph_obj_tab').addClass('d-none');
+      $('#title_object_label').addClass('d-none');
+      activegraphtab = '#graph_coll';
+    } else {
+      load_graph_obj();
+      $('#graph_obj_tab').removeClass('d-none');
+      $('#title_object_label').removeClass('d-none');
+      activegraphtab = '#graph_obj';
+    }
+    update_item_visibility();
+    $('.graphTabs li a[href="' + activegraphtab + '"]').tab('show');
+    {% endif %}
+  }
+
+  function load_graph_coll() {
+    {% if current_user.feature('provenance') %}
+    // pending2 class makes this element semi-transparent to show it is being updated
+    $('#graphdiv_coll').addClass('pending2');
+    $.get('{{ url_for('collbrowser.generate_graph_coll') }}', {
+      path: collection,
+      selected_object: selected_object,
+      graph_levels_coll: graph_levels_coll,
+      graph_simplify_coll: graph_simplify_coll,
+      show_upstream_coll: show_upstream_coll,
+      show_downstream_coll: show_downstream_coll
+    }, function (data) {
+      $('#graphimg_coll').html(data.coll_graph);
+      $('#graph-legend-coll').html(data.coll_legends);
+      $('#graphdiv_coll').removeClass('pending2');
+      document.querySelector('#graphdiv_coll').dispatchEvent(graph_coll_loaded_event)
+    })
+    {% endif %}
+  }
+
+  function load_graph_obj() {
+    {% if current_user.feature('provenance') %}
+    $('#graphdiv_obj').addClass('pending2');
+    $.get('{{ url_for('collbrowser.generate_graph_dataobj') }}', {
+      path: collection,
+      selected_object: selected_object,
+      graph_levels_obj: graph_levels_obj,
+      provenance_labels_obj: provenance_labels_obj,
+      include_all_from_coll: include_all_from_coll,
+      show_collections: show_collections,
+      show_upstream_obj: show_upstream_obj,
+      show_downstream_obj: show_downstream_obj,
+      graph_direction_tb_obj: graph_direction_tb_obj
+    }, function (data) {
+      $('#graphimg_obj').html(data.obj_graph);
+      $('#graph-legend-obj').html(data.obj_legends);
+      $('#graphdiv_obj').removeClass('pending2');
+      document.querySelector('#graphdiv_obj').dispatchEvent(graph_obj_loaded_event);
+      load_graph_coll() // if path changed with selected object (TODO maybe check first?)
+    })
+    {% endif %}
+  }
+
+  function load_list(new_path) {
+    $('#collapse-contents').html(waiting)
+    $.get('{{ url_for('collbrowser.collist') }}', {
+      path: collection,
+      sortkey: sortkey,
+      reverse: reverse,
+      new_path: new_path,
+      download_btn: "true"
+    }, function (data) {
+      $('#collapse-contents').html(data)
+    });
+  }
+
+  function load_leftpane() {
+    view = $('#viewselect').val()
+    if (view == 'tree') {
+      load_tree()
+    } else if (view == 'projects') {
+      load_projects()
+    } else {
+      load_custom(view)
+    }
+  }
+
+  function load_projects() {
+    $.get('{{ url_for('projects.my_projects') }}',
+      function (data) {
+        $('#treeview').empty().removeClass('treeview').removeClass('customview')
+        for (const [project, path] of Object.entries(data)) {
+          const classname = selected_project == project ? "projectselect" : "projectlabel"
+          selected_projectpath = selected_project == project ? path : selected_projectpath
+          if (selected_projectpath != "") {
+            $('#project-home-button').attr('hidden', false)
+          }
+          $('#project-home-button').data('path', selected_projectpath)
+          $('#treeview').append(
+            `<div class="path-change ${classname}" data-path="${path}" data-project="${project}">${project}</div>`
+          )
+        };
+      }
+    )
+  }
+
+  function load_tree() {
+    $.get('{{ url_for('collbrowser.colltree') }}', {
+      active: collection
+    }, function (data) {
+      $('#treeview').html(data).addClass('treeview').removeClass('customview')
+      // Move the active collection to the center of the view
+      if ($('.path-active').length !== 0) {
+        centertop = $('.path-active').offset().top
+      }
+      else {
+        centertop = 0
+      }
+      let top = centertop - $('#treediv').height() / 2 + $('#treediv').scrollTop()
+      $('#treediv').scrollTop(top)
+    });
+  }
+
+  function load_custom(label) {
+    var data = {
+      'path': [],
+      'active': collection,
+      'label': label
+    }
+    $.ajax({
+      url: '{{ url_for('collbrowser.customview') }}',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(data),
+      dataType: 'json',
+      success: function (data) {
+        $('#treeview').html(data.result).removeClass('treeview').addClass('customview')
+        // Move the active collection to the center of the view
+        if ($('.path-active').length !== 0) {
+          centertop = $('.path-active').offset().top
+        }
+        else {
+          centertop = 0
+        }
+        let top = centertop - $('#treediv').height() / 2 + $('#treediv').scrollTop()
+        $('#treediv').scrollTop(top)
+      }
+    })
+  };
+
+
+  function tree_active() {
+    $('.path-active').removeClass('path-active');
+    $(".tree-label[data-path='" + collection + "']").addClass('path-active');
+  }
+
+  function load_actions() {
+    $('#collapse-actions').html(waiting)
+    $.get('{{ url_for('collbrowser.coll_actions') }}', {
+      path: collection
+    }, function (data) {
+      $('#collapse-actions').html(data)
+      $('#collection').val(collection)
+      $('.action-tabs li a[href="' + activetab + '"]').tab('show')
+      // If no tab is active, activate 'archive' or 'noactions'
+      if ($('ul.action-tabs li a.active').length == 0) {
+        $('.action-tabs li a#archive-tab, .action-tabs li a#noactions-tab').tab('show');
+      }
+    });
+  }
+
+  function handle_datasets() {
+    $.get('{{ url_for('collbrowser.is_dataset') }}', {
+      path: collection
+    }, function (data) {
+      if (data.result) {
+        $('.dataset-only').attr('hidden', false)
+      } else  {
+        $('.dataset-only').attr('hidden', true)
+      }
+    });    
+  }
+
+  function set_path() {
+    $('.collist').popover('dispose')
+    load_list(true);
+    load_leftpane();
+    load_meta();
+    tree_active();
+    load_actions();
+    handle_datasets();
+  }
+
+  function load_meta() {
+    $('#meta-card').html(waiting)
+    $.get('{{ url_for('collbrowser.coll_meta') }}', {
+      path: collection,
+      selected_object: selected_object,
+    }, function (data) {
+      $('#meta-card').html(data)
+    })
+    load_graph();
+    build_title()
+  };
+
+  $(document).on('click', '.dataobject-change', function () {
+    $('.flash-error').remove()
+    selected_project = $(this).data('project') || selected_project;
+    selected_object = (this.nodeName == "g" ? this.id : $(this).data('path')); //selected_object = path
+    collection = selected_object.substring(0, selected_object.lastIndexOf('/')); //collection of the selected object before the last '/'
+    history.pushState({ "selected_object": selected_object }, 'Browse ' + selected_object, '/collbrowser?path=' + selected_object);
+    set_path();
+  });
+
+  // Handle left-click and middle click
+  $(document).on('click', '.path-change', handle_path_change)
+  $(document).on('auxclick', '.path-change', handle_path_change)
+
+  function handle_path_change(event) {
+    $('.flash-error').remove()
+    selected_project = $(this).data('project') || selected_project;
+    selected_object = '';
+    collection = (this.nodeName == "g" ? this.id : $(this).data('path'));
+    new_url = '/collbrowser?path=' + collection
+    // Check for ctrl-click
+    const isCtrlClick = (event.ctrlKey || event.metaKey) && event.button === 0;
+    // Check for middle mouse click
+    const isMiddleClick = event.button === 1; 
+    if (isCtrlClick || isMiddleClick) {
+      // Open target in new tab on ctrl-click or middle click
+      window.open(new_url, '_blank')
+    } else {
+      history.pushState({ "coll": collection }, 'Browse ' + collection, new_url);
+      set_path();
+      $.post('{{ url_for("userinfo.usersetting") }}', {
+        attr: 'path',
+        value: collection
+      })
+    }
+  };
+
+  // Graph simplify
+  $(document).on('change', '#graph_simplify_coll', function () {
+    graph_simplify_coll = (+ $(this).is(':checked')).toString()
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'graph_simplify_coll',
+      value: graph_simplify_coll
+    })
+    load_graph_coll()
+  })
+
+  // Provenance Labels
+  $(document).on('change', '#provenance_labels_obj', function () {
+    provenance_labels_obj = (+ $(this).is(':checked')).toString()
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'provenance_labels_obj',
+      value: provenance_labels_obj
+    })
+    load_graph_obj()
+  })
+
+  // Graph levels
+  $(document).on('change', '#graph_levels_coll', function () {
+    graph_levels_coll = $(this).val();
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'graph_levels_coll',
+      value: graph_levels_coll
+    })
+    load_graph_coll()
+  })
+  $(document).on('change', '#graph_levels_obj', function () {
+    graph_levels_obj = $(this).val();
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'graph_levels_obj',
+      value: graph_levels_obj
+    })
+    load_graph_obj()
+  })
+
+  // Include all files from collection
+  $(document).on('change', '#include_all_from_coll', function () {
+    include_all_from_coll = (+ $(this).is(':checked')).toString()
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'include_all_from_coll',
+      value: include_all_from_coll
+    })
+    load_graph_obj()
+  })
+
+  // Show all collections
+  $(document).on('change', '#show_collections', function () {
+    show_collections = (+ $(this).is(':checked')).toString()
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'show_collections',
+      value: show_collections
+    })
+    load_graph_obj()
+  })
+
+  // Upstream only
+  $(document).on('change', '#show_upstream_obj', function () {
+    show_upstream_obj = (+ $(this).is(':checked')).toString()
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'show_upstream_obj',
+      value: show_upstream_obj
+    })
+    load_graph_obj()
+  })
+  $(document).on('change', '#show_upstream_coll', function () {
+    show_upstream_coll = (+ $(this).is(':checked')).toString()
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'show_upstream_coll',
+      value: show_upstream_coll
+    })
+    load_graph_coll()
+  })
+
+  // Downstream only
+  $(document).on('change', '#show_downstream_obj', function () {
+    show_downstream_obj = (+ $(this).is(':checked')).toString()
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'show_downstream_obj',
+      value: show_downstream_obj
+    })
+    load_graph_obj()
+  })
+  $(document).on('change', '#show_downstream_coll', function () {
+    show_downstream_coll = (+ $(this).is(':checked')).toString()
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'show_downstream_coll',
+      value: show_downstream_coll
+    })
+    load_graph_coll()
+  })
+
+  // Graph direction top bottom
+  $(document).on('change', '#graph_direction_tb_obj', function () {
+    graph_direction_tb_obj = (+ $(this).is(':checked')).toString()
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'graph_direction_tb_obj',
+      value: graph_direction_tb_obj
+    })
+    load_graph_obj()
+  })
+
+  // Load
+  $(window).on('load', function () {
+    set_path();
+  });
+
+  $(document).on('click', '.sort-change', function () {
+    sortkey = $(this).data('key');
+    reverse = $(this).data('dir');
+    load_list(false);
+  });
+
+  $(document).on('click', function (e, f, g) {
+    $('.collist').popover('hide');
+  });
+
+  $(document).on('click', '.collist', function (e) {
+    myid = e.currentTarget.id
+    query = myid.substring(0, 2)
+    coll = myid.substring(3)
+    $myel = $(this)
+    $.get('{{ url_for('collbrowser.multi_list_coll') }}', {
+      collection: coll,
+      q: query
+    }, function (data) {
+      $myel.popover('dispose');
+      $myel.popover({
+        trigger: 'focus',
+        placement: 'bottom',
+        html: true,
+        title: 'Collections',
+        content: data
+      })
+      $myel.popover('show');
+    })
+  });
+
+  window.onpopstate = function (event) {
+    if (event.state && 'coll' in event.state) {
+      collection = event.state.coll;
+      set_path();
+    }
+  }
+
+  // to initialize tooltip functionality in graphs
+  $(function () {
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+
+    // Hide tooltip when input value changes or receives interaction
+    $('[data-toggle="tooltip"]').on('input change', function () {
+      $(this).tooltip('hide');
+    });
+
+    // Also hide on blur or mouseleave as fallback
+    $('[data-toggle="tooltip"]').on('blur mouseleave', function () {
+      $(this).tooltip('hide');
+    });
+  });
+</script>
+
+<!-- Transformation Map Placeholder -->
+<div id="transform_map"></div>
+
+<!-- Main Layout Grid -->
+<div class="container-fluid">
+<div class="browsergrid h100" id="main-window">
+  <div class="card browser-contents h-100">
+
+    {% if current_user.feature('graph') is sameas false %}
+    <div class="card-header">
+      <div class="card-title"><b>Collection Contents</b></div>
+      <button class="button btn-secondary float-right path-change dataobject-change" id="project-home-button"
+        hidden>Project Home</button>
+    </div>
+    {% endif %}
+    <div class="card-body nopadding" id="collapse-contents">
+    </div>
+    <div class="card-footer" id="content-footer">
+    </div>
+  </div>
+  {% if current_user.feature('actions') %}
+  <div id="collapse-actions" class="card card-tabs browser-actions h-100">
+    <div class="overlay">
+      <i class="fas fa-2x fa-sync-alt fa-spin"></i>
+    </div>
+  </div>
+  {% endif %}
+  <div class="card browser-meta h-100" id="meta-card"></div>
+  <div class="browser-hmove"></div>
+  <div class="browser-vmove1 browser-vmove"></div>
+  <div class="browser-vmove2 browser-vmove"></div>
+
+  <!-- Sidebar: Tree View, Project List or Custom View -->
+  <div class="card border-primary browser-sidebar">
+    <div class="card-header">
+      <div class="card-title">
+        <select class="form-control" id="viewselect">
+          <option value="tree" {% if customview=='tree' %}selected{% endif %}>Collection Tree</option>
+          <option value="projects" {% if customview=='projects' %}selected{% endif %}>Project List</option>
+          {% for label, name in customviews.items() %}
+          <option value="{{ label }}" {% if customview==label %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="card-body scrollbar-y small-font h-100" id="treediv">
+      <div id="treeview">
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph Area -->
+  <!-- Define filters for object and collection -->
+  {% set is_obj = (selected_object != '' and selected_object is not none) %}
+  {% set is_coll = (not is_obj) %}
+
+  {% if current_user.feature('provenance') %}
+  <div class="card browser-graph h100" id="graph-card">
+
+    <!-- Header: Tabs -->
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <ul class="nav nav-tabs graphTabs flex-grow-1" id="graphTabs" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link {% if is_coll %}active{% endif %}" id="graph_coll_tab" data-toggle="tab" href="#graph_coll"
+            role="tab" aria-controls="graph_coll">
+            Collection Graph
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if is_obj %}active{% else %}d-none{% endif %}" id="graph_obj_tab" data-toggle="tab"
+            href="#graph_obj" role="tab" aria-controls="graph_obj">
+            Object Graph
+          </a>
+        </li>
+      </ul>
+      <div class="btn-group" id="btn-group-graph">
+
+        <button id="fitGraph_obj" type="button" class="btn btn-sm btn-outline-secondary objectgraph-item"
+          data-toggle="tooltip" title="Fit the object graph to the display window (Also double-click).">
+          <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+        </button>
+        <button id="fitGraph_coll" type="button" class="btn btn-sm btn-outline-secondary collgraph-item"
+          data-toggle="tooltip" title="Fit the collection graph to the display window (Also double-click).">
+          <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+        </button>
+        <button id="maximize-button" type="button" class="btn btn-sm btn-outline-secondary" data-card-widget="maximize"
+          data-toggle="tooltip" title="Maximize the collection graph display window.">
+          <i class="fa fa-expand"></i>
+        </button>
+        <button id="sidebar-button" type="button" data-widget="control-sidebar" data-controlsidebar-slide="true"
+          class="btn btn-sm btn-outline-secondary" title="Open settings menu">
+          <i class="fa fa-cog"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Contents -->
+    <div class="card-body h-100 padding4">
+      <div class="tab-content h-100 nopadding" id="graph-tab">
+
+        <!-- Collection Graph Tab -->
+        <div class="tab-pane fade show {% if is_coll %}active{% endif %} h-100 nopadding" id="graph_coll"
+          role="tabpanel" aria-labelledby="graph_coll_tab">
+
+          <!-- Collection Graph Display -->
+          <div id="graphdiv_coll" class="d-flex justify-content-center align-items-center"
+            style="overflow: hidden; position: relative; height: 100%; user-select: none">
+            <!-- Legend Overlay -->
+            <div id="graphimg_coll" style="transition: transform 0.3s ease, transform-origin 0.3s ease;">
+              <h3>Collection Graph</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Object Graph Tab -->
+        <div class="tab-pane fade show {% if is_obj %}active{% endif %} h-100 nopadding" id="graph_obj" role="tabpanel"
+          aria-labelledby="graph_obj_tab">
+
+          <!-- Object Graph Controls -->
+
+          <!-- Search nodes -->
+          <!-- Object Graph Display -->
+          <div id="graphdiv_obj" class="d-flex justify-content-center align-items-center"
+            style="overflow: hidden; position: relative; height: 100%; user-select: none">
+            <!-- Legend Overlay -->
+            <div id="graphimg_obj" style="transition: transform 0.3s ease, transform-origin 0.3s ease;">
+              <h3>Object Graph</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+</div> <!-- browsergrid-->
+
+<!-- This part of the code is for handling the Collection graph interaction -->
+<script>
+  function searchGraph(query) {
+    const nodes = document.querySelectorAll('g.node'); // Select all nodes
+    nodes.forEach(node => {
+      const searchtext = node.textContent; // define search text
+      if (query.trim() == '') {
+        node.style.stroke = ''; // no highlights on empty search field
+      }
+      else if (searchtext.includes(query)) {
+        node.style.stroke = 'red';
+      }
+      else {
+        node.style.stroke = '';
+      }
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const graphDivColl = document.querySelector("#graphdiv_coll"); // The bounding box for the graph container
+    const graphImgColl = document.querySelector("#graphimg_coll"); // The zoomable graph element
+    const zoomSliderColl = document.querySelector("#zoomlevel_coll"); // Zoom slider input
+    const zoomDisplayColl = document.querySelector("#zoomDisplay_coll"); // Display the zoom percentage
+    const fitGraphBtnColl = document.querySelector("#fitGraph_coll"); // Fit Graph button
+
+    let zoomLevelColl = Number("{{ zoomlevel_coll }}") || 100 ; // Default zoom level in percentage (as a variable)
+    let zoomSettingIdColl = 0; // Timeout Request for storing zoom level
+    let isDragging = false; // Track whether the user is currently dragging
+    let dragStart = { x: 0, y: 0 }; // Store the starting mouse position during the drag operation
+    let currentTranslateColl = { x: 0, y: 0 }; // Current translation offset for the graph
+
+
+    // Update the transformation (translate + scale); correct for sidebar in fullscreen window
+    const updateTransformColl = () => {
+      const scaleColl = zoomLevelColl / 100;
+      graphImgColl.style.transform = `translate(${currentTranslateColl.x - sidebarSize / 2}px, ${currentTranslateColl.y}px) scale(${scaleColl})`;
+    };
+
+    // Reset the transformation (translate x and y to 0)
+    const resetTransformColl = () => {
+      currentTranslateColl = { x: 0, y: 0 };
+      updateTransformColl();
+    };
+
+    // Store zoomlevel in usersettings
+    const storeZoomLevelColl = () => {
+      $.post('{{ url_for("userinfo.usersetting") }}', {
+        attr: 'zoomlevel_coll',
+        value: zoomLevelColl
+      });
+    };
+
+    // Update zoom level dynamically
+    const updateZoomColl = (newZoomLevelColl) => {
+      zoomLevelColl = newZoomLevelColl;
+      zoomDisplayColl.textContent = `${zoomLevelColl}%`; // Update the zoom display
+      updateTransformColl(); // Apply the zoom level
+      // store zoomlevel after 1 second to prevent a lot of requests
+      if (zoomSettingIdColl !== 0) clearTimeout(zoomSettingIdColl);
+      zoomSettingIdColl = setTimeout(storeZoomLevelColl, 1000);
+    };
+
+    // Fit the graph within the container
+    const fitGraphColl = () => {
+      const graphBoundsColl = graphImgColl.getBoundingClientRect(); // Get the size of the graph content
+      const containerBoundsColl = graphDivColl.getBoundingClientRect(); // Get the size of the card container
+
+      // Calculate the scaling factor needed to fit the graph content into the container
+      const scaleWidthColl = (containerBoundsColl.width - sidebarSize) / graphBoundsColl.width * zoomLevelColl / 100;
+      const scaleHeightColl = containerBoundsColl.height / graphBoundsColl.height * zoomLevelColl / 100;
+      // Choose the smaller scaling factor to ensure it fits both dimensions
+      const fitScaleColl = Math.min(scaleWidthColl, scaleHeightColl);
+      // Convert scale to a percentage for zoom adjustment (make graph 0.97% smaller than max, to avoid border overlap)
+      zoomLevelColl = Math.floor(0.97 * Math.min(Math.max(Math.floor(fitScaleColl * 100), 10), 150));
+      updateZoomColl(zoomLevelColl); // Apply the calculated zoom level
+      zoomSliderColl.value = zoomLevelColl; // Sync slider value
+      resetTransformColl();
+    };
+
+    // Move the graph so the center collection is in the center (size of coll = (70, 16))
+    const centerGraphColl = () => {
+      const $centerColl = $(graphDivColl).find('.center-coll'); // Find the position of center-coll
+      const $upstreamOnlyColl = document.getElementById('show_upstream_coll').checked; // Upstream only checked?
+      const $downstreamOnlyColl = document.getElementById('show_downstream_coll').checked; // Downstream only checked?
+
+      if ($centerColl.length === 0) return; // check center-coll exists
+
+      // X position: Depending upstream_only checkbox; True: position on the left middle, False: center graph
+      if ($upstreamOnlyColl == true && $downstreamOnlyColl == false) { fitGraphColl() }
+      else if ($upstreamOnlyColl == false && $downstreamOnlyColl == true) { fitGraphColl() }
+      else { currentTranslateColl.x += $('#graphdiv_coll').width() / 2 - $centerColl.position().left + $('#graphdiv_coll').offset().left - zoomLevelColl };
+
+      // Y position always centered
+      currentTranslateColl.y += $('#graphdiv_coll').height() / 2 - $centerColl.position().top + $('#graphdiv_coll').offset().top - 0.2 * zoomLevelColl;
+      updateTransformColl(); // Update the XY center-coll position
+    };
+
+    // Dragging functionality
+    graphDivColl.addEventListener("mousedown", (event) => {
+      isDragging = true;
+      dragStart = { x: event.clientX, y: event.clientY };  // Store the starting mouse position
+      graphDivColl.style.cursor = "grabbing";  // Change cursor to indicate dragging (little hand)
+    });
+
+    window.addEventListener("mousemove", (event) => {
+      if (!isDragging) return; // Only operate if dragging is active
+      const deltaX = event.clientX - dragStart.x; // Calculate how far the mouse moved on X
+      const deltaY = event.clientY - dragStart.y; // Calculate how far the mouse moved on Y
+      dragStart = { x: event.clientX, y: event.clientY }; // Update the new starting point
+      // Update the current translation offsets
+      currentTranslateColl.x += deltaX;
+      currentTranslateColl.y += deltaY;
+      updateTransformColl(); // Apply the new translation offsets
+    });
+
+    window.addEventListener("mouseup", () => {
+      isDragging = false; // Disable dragging mode
+      graphDivColl.style.cursor = "default"; // Reset cursor style
+    });
+    // Handle zoom slider changes
+    zoomSliderColl.addEventListener("input", (e) => {
+      const newZoomLevelColl = Number(e.target.value); // Update zoom value from the slider
+      updateZoomColl(newZoomLevelColl);
+    });
+
+    // Zoom on middle mouse wheel changes
+    graphDivColl.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const zoomStep = 4;
+      const delta = Math.sign(e.deltaY);
+      svgRect = document.getElementById('graphimg_coll').getBoundingClientRect();
+      svgMouseX = e.clientX - svgRect.left - svgRect.width / 2;
+      svgMouseY = e.clientY - svgRect.top - svgRect.height / 2;
+      oldZoomLevelColl = zoomLevelColl
+      zoomLevelColl = Math.min(Math.max(zoomLevelColl - delta * zoomStep, 10), 150);
+      zoomSliderColl.value = zoomLevelColl;
+      scaleFactor = (zoomLevelColl / oldZoomLevelColl - 1)
+      currentTranslateColl.x = currentTranslateColl.x - scaleFactor * svgMouseX;
+      currentTranslateColl.y = currentTranslateColl.y - scaleFactor * svgMouseY;
+      updateTransformColl();
+    });
+
+    fitGraphBtnColl.addEventListener("click", fitGraphColl); // Fit graph when button clicked
+    graphDivColl.addEventListener("graph_coll_loaded", centerGraphColl); // Center graph when loaded
+    graphDivColl.addEventListener("dblclick", fitGraphColl); // Double click to fit graph
+
+    updateZoomColl(zoomLevelColl);
+  });
+
+
+  // part to control the interaction with the Object graph
+  document.addEventListener("DOMContentLoaded", () => {
+    const graphDivObj = document.querySelector("#graphdiv_obj"); // The bounding box for the graph container
+    const graphImgObj = document.querySelector("#graphimg_obj"); // The zoomable graph element
+    const zoomSliderObj = document.querySelector("#zoomlevel_obj"); // Zoom slider input
+    const zoomDisplayObj = document.querySelector("#zoomDisplay_obj"); // Display the zoom percentage
+    const fitGraphBtnObj = document.querySelector("#fitGraph_obj"); // Fit Graph button
+
+    let zoomLevelObj = Number("{{ zoomlevel_obj }}") || 100; // Default zoom level in percentage (as a variable)
+    let zoomSettingIdObj = 0; // Timeout Request for storing zoom level
+    let isDragging = false; // Track whether the user is currently dragging
+    let dragStart = { x: 0, y: 0 }; // Store the starting mouse position during the drag operation
+    let currentTranslateObj = { x: 0, y: 0 }; // Current translation offset for the graph
+
+
+    // Update the transformation (translate + scale); correct for sidebar in fullsize window.
+    const updateTransformObj = () => {
+      const scaleObj = zoomLevelObj / 100;
+      graphImgObj.style.transform = `translate(${currentTranslateObj.x - sidebarSize / 2}px, ${currentTranslateObj.y}px) scale(${scaleObj})`;
+    };
+
+    // Reset the transformation (translate x and y to 0),
+    const resetTransformObj = () => {
+      currentTranslateObj = { x: 0, y: 0 };
+      updateTransformObj();
+    };
+    // Store zoomlevel in usersettings
+    const storeZoomLevelObj = () => {
+      $.post('{{ url_for("userinfo.usersetting") }}', {
+        attr: 'zoomlevel_obj',
+        value: zoomLevelObj
+      });
+    };
+    // Update zoom level dynamically
+    const updateZoomObj = (newZoomLevelObj) => {
+      zoomLevelObj = newZoomLevelObj;
+      zoomDisplayObj.textContent = `${zoomLevelObj}%`; // Update the zoom display
+      updateTransformObj(); // Apply the zoom level
+      // store zoomlevel after 1 second to prevent a lot of requests
+      if (zoomSettingIdObj !== 0) clearTimeout(zoomSettingIdObj);
+      zoomSettingIdObj = setTimeout(storeZoomLevelObj, 1000);
+    };
+    // Fit the graph within the container
+    const fitGraphObj = () => {
+      const graphBoundsObj = graphImgObj.getBoundingClientRect(); // Get the size of the graph content
+      const containerBoundsObj = graphDivObj.getBoundingClientRect(); // Get the size of the card container
+
+      // Calculate the scaling factor needed to fit the graph content into the container
+      const scaleWidthObj = (containerBoundsObj.width - sidebarSize) / graphBoundsObj.width * zoomLevelObj / 100;
+      const scaleHeightObj = containerBoundsObj.height / graphBoundsObj.height * zoomLevelObj / 100;
+
+      // Choose the smaller scaling factor to ensure it fits both dimensions
+      const fitScaleObj = Math.min(scaleWidthObj, scaleHeightObj);
+
+      // Convert scale to a percentage for zoom adjustment (make graph 97% smaller than max , to avoid border overlap)
+      zoomLevelObj = Math.floor(0.97 * Math.min(Math.max(Math.floor(fitScaleObj * 100), 10), 150));
+      updateZoomObj(zoomLevelObj); // Apply the calculated zoom level
+      zoomSliderObj.value = zoomLevelObj; // Sync slider value
+      resetTransformObj(); // Reset the dragging offset to 0
+    };
+
+    // Move the graph so the selected object is in the center (size of an object ~ (100, 16))
+    const centerGraphObj = () => {
+      const $centerObj = $(graphDivObj).find('.center-obj'); // Find the position of center-obj
+      const $upstreamOnlyObj = document.getElementById('show_upstream_obj').checked; // Is Upstream Only checked?
+      const $downstreamOnlyObj = document.getElementById('show_downstream_obj').checked; // Is Downstream checked?
+
+      if ($centerObj.length === 0) return;  // check center-obj exists
+
+      // X position: Depending upstream_only checkbox, True: position on the left middle, False: center graph
+      if ($upstreamOnlyObj == true && $downstreamOnlyObj == false) { fitGraphObj }
+      else if ($upstreamOnlyObj == false && $downstreamOnlyObj == true) { fitGraphObj }
+      else { currentTranslateObj.x += $('#graphdiv_obj').width() / 2 - $centerObj.position().left + $('#graphdiv_obj').offset().left - 1.5 * zoomLevelObj };
+
+      // Y position always centered
+      currentTranslateObj.y += $('#graphdiv_obj').height() / 2 - $centerObj.position().top + $('#graphdiv_obj').offset().top - 0.2 * zoomLevelObj;
+      updateTransformObj();  // Update the XY center-obj position
+    };
+
+    graphDivObj.addEventListener("mousedown", (event) => {
+      isDragging = true;
+      dragStart = { x: event.clientX, y: event.clientY }; // Store the starting mouse position
+      graphDivObj.style.cursor = "grabbing";  // Change cursor to indicate dragging (little hand)
+    });
+
+    window.addEventListener("mousemove", (event) => {
+      if (!isDragging) return; // Only operate if dragging is active
+      const deltaX = event.clientX - dragStart.x;  // Calculate how far the mouse moved on X
+      const deltaY = event.clientY - dragStart.y;  // Calculate how far the mouse moved on Y
+      dragStart = { x: event.clientX, y: event.clientY }; // Update the new starting point
+      // Update the current translation offsets
+      currentTranslateObj.x += deltaX;
+      currentTranslateObj.y += deltaY;
+      updateTransformObj(); // Apply the new translation offsets
+    });
+
+    window.addEventListener("mouseup", () => {
+      isDragging = false; // Disable dragging mode
+      graphDivObj.style.cursor = "default"; // Reset cursor style
+    });
+
+    zoomSliderObj.addEventListener("input", (e) => {
+      const newZoomLevelObj = Number(e.target.value); // Update zoom value from the slider
+      updateZoomObj(newZoomLevelObj);
+    });
+
+    graphDivObj.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const delta = Math.sign(e.deltaY);
+      const zoomStep = 4;
+      zoomLevelObj = Math.min(Math.max(zoomLevelObj - delta * zoomStep, 10), 150);
+      updateZoomObj(zoomLevelObj);
+      zoomSliderObj.value = zoomLevelObj;
+    });
+
+    fitGraphBtnObj.addEventListener("click", fitGraphObj); // Fit graph when button clicked
+    graphDivObj.addEventListener("graph_obj_loaded", centerGraphObj); // Center graph when loaded
+    graphDivObj.addEventListener("dblclick", fitGraphObj); // Double click to fit graph
+
+    updateZoomObj(zoomLevelObj);
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    let moveStart = { x: 0, y: 0 };
+    let isMoving = false;
+    let isMovingDirection = "" // movement direction, listens to "H" and "V"
+
+    let vposSettingIdObj = 0;
+    const vMover = document.querySelectorAll(".browser-vmove");
+    // use content-wrapper instead of main-window:
+    // title gets loaded later which changes the height collbrowser panels
+    mainHeight = Math.round($('.content-wrapper').height());
+    let vHeight = Math.floor(parseInt("{{ vertical_pos }}", 10) * mainHeight / 100);
+
+    let hposSettingIdObj = 0;
+    const hMover = document.querySelector(".browser-hmove");
+    mainWidth = Math.round($('#main-window').width());
+    let hWidth = Math.floor(parseInt("{{ horizontal_pos }}", 10) * mainWidth / 100);
+    const pushMenuBtn = document.querySelector('a[data-widget="pushmenu"]');
+
+    // Store zoomlevel in usersettings
+    const storeVPosLevelObj = () => {
+      mainHeight = Math.round($('.content-wrapper').height())
+      $.post('{{ url_for("userinfo.usersetting") }}', {
+        attr: 'vertical_pos',
+        value: Math.round(vHeight / mainHeight * 100)
+      });
+    };
+
+    // Store zoomlevel in usersettings
+    const storeHPosLevelObj = () => {
+      mainWidth = Math.round($('#main-window').width())
+      $.post('{{ url_for("userinfo.usersetting") }}', {
+        attr: 'horizontal_pos',
+        value: Math.round(hWidth / mainWidth * 100)
+      });
+    };
+
+
+    const updateWindows = () => {
+      mainHeight = Math.round($('.content').height())
+      maxHeight = mainHeight - 100
+      vHeight = Math.max(100, vHeight)
+      vHeight = Math.min(maxHeight, vHeight)
+      document.getElementById("main-window").style.gridTemplateRows = `${vHeight}px [v1] 4px [v2] ${mainHeight - vHeight - 5}px`;
+      if (vposSettingIdObj !== 0) clearTimeout(vposSettingIdObj);
+      vposSettingIdObj = setTimeout(storeVPosLevelObj, 1000);
+
+      mainWidth = Math.round($('#main-window').width())
+      maxWidth = mainWidth - 500
+      hWidth = Math.max(100, hWidth)
+      hWidth = Math.min(maxWidth, hWidth)
+      document.getElementById("main-window").style.gridTemplateColumns = `220px 4px [middle] ${hWidth}px [h1] 4px [right] ${mainWidth - hWidth - 236}px`;
+      if (hposSettingIdObj !== 0) clearTimeout(hposSettingIdObj);
+      hposSettingIdObj = setTimeout(storeHPosLevelObj, 1000);
+    }
+
+    updateWindows()
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    pushMenuBtn.addEventListener('click', async (event) => {
+      await sleep(10);
+      updateWindows();
+    });
+
+
+    // Dragging functionality
+    vMover.forEach(element => {
+      element.addEventListener("mousedown", (event) => {
+        isMoving = true;
+        isMovingDirection = "V"
+        moveStart = { x: event.clientX, y: event.clientY };  // Store the starting mouse position
+        element.style.cursor = "row-resize";  // Change cursor to indicate dragging (little hand)
+        document.body.style.userSelect = 'none';
+      });
+
+      element.addEventListener("mouseover", (event) => {
+        element.style.cursor = "row-resize";  // Change cursor to indicate dragging (little hand)
+      });
+    });
+
+    hMover.addEventListener("mousedown", (event) => {
+      isMoving = true;
+      isMovingDirection = "H"
+      moveStart = { x: event.clientX, y: event.clientY };  // Store the starting mouse position
+      hMover.style.cursor = "col-resize";  // Change cursor to indicate dragging (little hand)
+      document.body.style.userSelect = 'none';
+    });
+
+    hMover.addEventListener("mouseover", (event) => {
+      hMover.style.cursor = "col-resize";  // Change cursor to indicate dragging (little hand)
+    });
+
+
+    window.addEventListener("mousemove", (event) => {
+      if (!isMoving) return; // Only operate if dragging is active
+      if (isMovingDirection == "V") {
+        const deltaY = event.clientY - moveStart.y;  // Calculate how far the mouse moved on Y
+        moveStart = { x: event.clientX, y: event.clientY }; // Update the new starting point
+        // Update the current translation offsets
+        vHeight += deltaY
+      }
+      if (isMovingDirection == "H") {
+        const deltaX = event.clientX - moveStart.x;  // Calculate how far the mouse moved on Y
+        moveStart = { x: event.clientX, y: event.clientY }; // Update the new starting point
+        // Update the current translation offsets
+        hWidth += deltaX
+      }
+      updateWindows(); // Apply the new translation offsets
+    });
+
+    window.addEventListener("mouseup", () => {
+      document.body.style.userSelect = '';
+      isMoving = false; // Disable dragging modev
+      isMovingDirection = "" // unset movement direction
+      // Reset cursor style
+      vMover.forEach(element => { element.style.cursor = "default"; });
+      hMover.style.cursor = "default";
+    });
+
+
+    window.addEventListener("resize", () => {
+      updateWindows()
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      window.dispatchEvent(new Event('resize'));
+    })
+  })
+</script>
+
+
+<script>
+  /**
+  * Extracts and sorts data attributes with numeric suffixes.
+  * @param {HTMLElement} el - The DOM element.
+  * @param {string} prefix - The prefix to look for (without 'data-' or trailing dash).
+  * @returns {Array} - An array of values ordered by the numeric suffix.
+  */
+  function getOrderedData(el, prefix) {
+    const rawEl = el instanceof jQuery ? el[0] : el;
+    return Object.keys(rawEl.dataset)
+      // 1. Match the prefix followed by numbers (e.g., path1, path2)
+      .filter(key => new RegExp(`^${prefix}\\d+$`).test(key))
+      // 2. Sort based on the numeric value
+      .sort((a, b) => {
+        const numA = parseInt(a.match(/\d+/)[0], 10);
+        const numB = parseInt(b.match(/\d+/)[0], 10);
+        return numA - numB;
+      })
+      // 3. Map to the actual values
+      .map(key => rawEl.dataset[key]);
+  }
+
+  $(document).on('click', '#treeview.treeview .list-close', function () {
+    $(this).addClass('caret-down list-open');
+    $(this).removeClass('list-close');
+    myid = $(this).attr('id')
+    $.get('{{ url_for('collbrowser.colltree') }}', {
+      active: '{{ path }}',
+      root: $(this).data('path')
+    }, function (data) {
+      $('#' + $.escapeSelector(myid)).parent().after(data);
+    });
+  });
+
+  $(document).on('click', '#treeview.treeview .list-open', function () {
+    $(this).removeClass('caret-down list-open');
+    $(this).addClass('list-close');
+    $(this).parent().next('ul').empty()
+  });
+
+  $(document).on('click', '#treeview.customview .list-close', function () {
+    $(this).addClass('caret-down list-open');
+    $(this).removeClass('list-close');
+    var data = {
+      'path': getOrderedData($(this), 'path-'),
+      'active': collection,
+      'label': $('#viewselect').val()
+    }
+    myid = $(this).attr('id')
+    $.ajax({
+      url: '{{ url_for('collbrowser.customview') }}',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(data),
+      dataType: 'json',
+      success: function (data) {
+        $('#' + $.escapeSelector(myid)).parent().after(data.result);
+        // Move the active collection to the center of the view
+        centertop = $('#' + $.escapeSelector(myid)).offset().top
+        let top = centertop - $('#customdiv').height() / 2 + $('#customdiv').scrollTop()
+        $('#customdiv').animate({ scrollTop: top }, 'slow')  //;scrollTop(top)
+      }
+    })
+  });
+
+  $(document).on('click', '#treeview .list-open', function () {
+    $(this).removeClass('caret-down list-open');
+    $(this).addClass('list-close');
+    $(this).parent().next('ul').html('')
+  });
+
+</script>
+
+<div id="content">
+
+  <!-- Alert modal dialog -->
+  <div class="modal" id="modalAlert" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content ">
+        <div class="modal-header">
+          <!-- <button type="button" class="close" data-dismiss="modal">&times;</button> -->
+          <h5 class="modal-title" id="alertTitle">Alert</h5>
+          <button type="button" class="btn btn-default btn-primary btn-sm" data-dismiss="modal">Close</button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger" role="alert" id="alertBody">
+            Alert
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document viewer modal dialog -->
+  <div class="modal modal-tall" id="myOutput" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="DocTitle">Modal Header</h5>
+
+          <div class="ml-auto d-flex gap-2">
+            <!-- Browser fullscreen toggle -->
+            <button type="button" id="fullscreen-btn" title="Toggle Fullscreen in Browser Window"
+              style="background:transparent; border:none; padding:0.5rem; cursor:pointer; border-radius:6px;"
+              onmouseover="this.style.backgroundColor='rgba(0,0,0,0.1)'"
+              onmouseout="this.style.backgroundColor='transparent'">
+              <i class="fa fa-expand"></i>
+            </button>
+            <!-- Close button -->
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+              aria-hidden="true">&times</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-body p-0" id="mBody" style="height:80vh;">
+          <embed src="" width="100%" height="100%" id="DocText"></embed>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fsBtn = document.getElementById("fullscreen-btn");
+    const fsIcon = fsBtn.querySelector("i");
+    const modal = document.getElementById("myOutput");
+
+    fsBtn.addEventListener("click", () => {
+      modal.classList.toggle("browser-fullscreen");
+
+      if (modal.classList.contains("browser-fullscreen")) {
+        fsIcon.classList.remove("fa-expand");
+        fsIcon.classList.add("fa-compress");
+      } else {
+        fsIcon.classList.remove("fa-compress");
+        fsIcon.classList.add("fa-expand");
+      }
+    });
+  </script>
+
+  <!-- Upload modal modal dialog -->
+  <div class="modal" id="upload" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uDocTitle">Modal Header</h5>
+          <button type="button" class="btn btn-default btn-primary btn-sm" data-dismiss="modal">Close</button>
+        </div>
+        <div class="modal-body" id="umBody">
+          <form action="{{ url_for('collbrowser.upload_file')}}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+              <input type="hidden" id="collection" name="collection" value="{{ path }}">
+            </div>
+            <div class="form-group">
+              <input type="file" class="form-control" name="file" />
+            </div>
+            <div class="form-group">
+              <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> <!-- content -->
+
+
+<script>
+  var sidebarSize = 0
+
+  $('#viewselect').on('change', function () {
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'customview',
+      value: $(this).val()
+    })
+    load_leftpane()
+  })
+
+  $('.graphTabs').on('shown.bs.tab', function (event) {
+    activegraphtab = event.target.getAttribute('href')
+    update_item_visibility()
+  });
+
+  {% if current_user.feature('actions') %}
+  gt2 = "actions"
+  gm2 = "vmove2"
+  gb2 = "metadata"
+  {% else %}
+  gt2 = "metadata"
+  gm2 = "metadata"
+  gb2 = "metadata"
+  {% endif %}
+
+  {% if current_user.feature('provenance') %}
+  gt1 = "graph"
+  gm1 = "vmove1"
+  gb1 = "contents"
+  {% else %}
+  gt1 = "contents"
+  gm1 = "contents"
+  gb1 = "contents"
+  {% endif %}
+
+  $('#main-window').css('grid-template-areas',
+    `"sidebar hstatic ${gt1} hmove ${gt2}" "sidebar hstatic ${gm1} hmove ${gm2}"  "sidebar hstatic ${gb1} hmove ${gb2}"`)
+
+  // When graph sidebar is expanded in maximized window shift buttons left, and set potential sidebar size (250px)
+  $(document).on('expanded.lte.controlsidebar', function () {
+    if ($('#maximize-button').closest('.card').hasClass('maximized-card')) {
+      $('#btn-group-graph').addClass('shift-left');
+      sidebarSize = 250;
+    }
+  });
+
+  // When the sidebar collapses or fullscreen mode is left, remove shift-left class
+  $(document).on('collapsed.lte.controlsidebar minimized.lte.cardwidget', function () {
+    $('#btn-group-graph').removeClass('shift-left');
+    sidebarSize = 0;
+  });
+
+  $(document).on('maximized.lte.cardwidget', '#graph-card', function () {
+    if (!$('.control-sidebar').is(':hidden')) {
+      $('#btn-group-graph').addClass('shift-left');
+    }
+  })
+
+</script>
+
+{% endblock %}

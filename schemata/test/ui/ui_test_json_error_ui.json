@@ -1,0 +1,12 @@
+{
+  "ui:order": [
+    "name",
+    "non-existing"
+  ],
+  "name": {
+    "ui:placeholder": "Enter your name",
+  },
+  "age": {
+    "ui:widget": "does-not-exist"
+  }
+}

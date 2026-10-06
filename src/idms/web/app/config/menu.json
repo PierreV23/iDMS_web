@@ -1,0 +1,88 @@
+[
+  {
+    "name": "joblist",
+    "label": "Job List",
+    "icon": "fas fa-tasks",
+    "endpoint": "jobs.show_pg",
+    "feature": "jobs"
+  },
+  {
+    "name": "collectionbrowser",
+    "label": "Collection Browser",
+    "icon": "fas fa-folder-tree",
+    "endpoint": "collbrowser.collbrowser"
+  },
+  {
+    "name": "uploads",
+    "label": "Dataset Uploads",
+    "icon": "fas fa-upload",
+    "endpoint": "upload.show_uploads"
+  },
+  {
+    "name": "projects",
+    "label": "Projects",
+    "icon": "fas fa-project-diagram",
+    "endpoint": "projects.show_projects",
+    "feature": "projects"
+  },
+  {
+    "name": "processes",
+    "label": "Processes",
+    "icon": "fas fa-cogs",
+    "endpoint": "projects.show_projects",
+    "args": { "page": "processes" },
+    "feature": "jobs"
+  },
+  {
+    "name": "reference-datasets",
+    "label": "Reference Datasets",
+    "icon": "fas fa-warehouse",
+    "endpoint": "reference.show_reference_datasets",
+    "feature": "reference"
+  },
+  {
+    "name": "admin",
+    "label": "Admin",
+    "icon": "fas fa-screwdriver-wrench",
+    "require_admin": true,
+    "feature": "admin",
+    "children": [
+      { "name": "users", "label": "Users", "icon": "fas fa-user", "url": "/admin/users" },
+      { "name": "groups", "label": "Groups", "icon": "fas fa-users", "url": "/admin/groups" },
+      { "name": "resources", "label": "Resources", "icon": "fas fa-database", "endpoint": "admin.resources" },
+      { "name": "messages", "label": "Messages", "icon": "fas fa-comments", "url": "/admin/messages" },
+      { "name": "jobqueues", "label": "Job queues", "icon": "fas fa-stream", "url": "/admin/queues" },
+      { "name": "pendingtiering", "label": "Pending data migration jobs", "icon": "fas fa-stream", "url": "/admin/tiering/pending" },
+      { "name": "activetiering", "label": "Active data migration jobs", "icon": "fas fa-stream", "url": "/admin/tiering/active" },
+      { "name": "dataissues", "label": "Data issues", "icon": "fas fa-exclamation", "url": "/admin/issues" },
+      { "name": "archiveissues", "label": "Archive issues", "icon": "fas fa-archive", "endpoint": "admin.archive_issues" },
+      { "name": "accounting", "label": "Accounting dashboard", "icon": "fas fa-chart-line", "url": "/admin/accounting" }
+    ]
+  },
+  {
+    "name": "reports",
+    "label": "Reports",
+    "icon": "fas fa-chart-pie",
+    "require_admin": true,
+    "feature": "admin",
+    "children": [
+      { "name": "diskspace", "label": "Disk Space", "icon": "fas fa-hdd", "url": "/reports/space" },
+      { "name": "irodssessions", "label": "iRODS Sessions", "icon": "fas fa-link", "url": "/reports/irodssessions" },
+      { "name": "plugins", "label": "Plugins", "icon": "fas fa-puzzle-piece", "endpoint": "reports.plugin_report" },
+      { "name": "system", "label": "System config", "icon": "fas fa-gears", "endpoint": "reports.system_report" }
+    ]
+  },
+  {
+    "name": "shared",
+    "label": "Shared Collections",
+    "icon": "fas fa-share",
+    "endpoint": "collbrowser.shared_collections",
+    "feature": "sharing"
+  },
+  {
+    "name": "search",
+    "label": "Search",
+    "icon": "fas fa-microscope",
+    "endpoint": "collbrowser.search"
+  }
+]

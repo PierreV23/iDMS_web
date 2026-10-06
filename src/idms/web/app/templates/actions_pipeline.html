@@ -1,0 +1,62 @@
+{% if coll_state.processrequest != "false" %}
+{% if coll_state.processid %}
+  <h3>Starting up process:<p>{{ coll_state.processid }}</h3>
+{% elif coll_state.processgroupid %}
+  <h3>Starting up processgroup:<p>{{ coll_state.processgroupid }}</h3>
+{% endif %}
+{% else %}
+<div><span><a href="{{ coll_state.runsheetid.url }}">
+  <button class="btn btn-outline-secondary button12" {% if not coll_state.runsheetid %}disabled{% endif %}
+  >Process details</button></a>
+  <a><button class="btn btn-outline-secondary button12" {% if not coll_state.failed_pg %}disabled{% endif %} onClick="restartProcessGroup()">
+  Restart processgroup
+  </button></a></span>
+</div>
+<div><b>Start Processgroup</b></div>
+    <select class="custom-select" style="width:100%;" id="processgroupSelect" {% if not coll_state.available_processgroups or coll_state.complete != 'true' %}disabled{% endif %}>
+      {% for p in coll_state.available_processgroups | sort %}
+      <option {% if p == coll_state.processgroupid %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+
+    <div><button class="btn btn-outline-secondary button12" {% if not coll_state.available_processgroups or coll_state.complete != 'true' %}disabled{% endif %} onClick="startProcessGroup()">Start processgroup</button>
+    </div>
+
+<div class="top5"><b>Start Single process</b></div>
+    <select class="custom-select" style="width:100%;" id="processSelect" onChange="setClusterDropdown()">
+      {% for p in coll_state.available_processes | sort %}
+      <option value="{{p}}" {% if p == coll_state.processid %}selected{% endif %}>{{ p }}</option>
+      {% endfor %}
+    </select>
+    <div id="clusterSelectFormElement">
+      Run on cluster:
+      <select class="custom-select" style="width:100%;" id="clusterSelect">
+      </select>
+    </div>
+    <div><button class="btn btn-outline-secondary btn-small button12" {% if not coll_state.available_processes %}disabled{% endif %} onClick="startProcess()">Start process</button></div>
+
+{% endif %}
+
+<script>
+  function setClusterDropdown() {
+    const process_dict = JSON.parse('{{ coll_state.available_processes | tojson | safe}}');
+    const process_id = $("#processSelect").val();
+    const clusterSelect = $("#clusterSelect");
+    const compatible_clusters = process_dict[process_id]?.compatible_clusters
+    clusterSelect.empty();
+    if (compatible_clusters) {
+      compatible_clusters.forEach(function(item) {
+        clusterSelect.append($('<option>', {value: item, text: item}));
+      });
+      if (compatible_clusters.length > 1) {
+        $('#clusterSelect').attr('disabled', false)
+      } else {
+        $('#clusterSelect').attr('disabled', true)
+      }
+    }
+  }
+
+  $(document).ready(function(){
+    setClusterDropdown();
+  });
+</script>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>webSAVvy - Illumina SAV Visualizer</title>
+    <!-- Bootstrap 5 & Plotly.js -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <style>
+        body { background-color: #e9ecef; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* Top Run Info Strip */
+        .run-info-strip { background-color: #ffffff; border-bottom: 1px solid #dee2e6; padding: 8px 20px; font-size: 0.88rem; }
+        .run-info-item { display: inline-block; margin-right: 25px; }
+        .run-info-label { font-weight: 600; color: #6c757d; }
+
+        /* Navigation Tabs */
+        .nav-tabs .nav-link { color: #495057; font-weight: 600; border-radius: 0; padding: 8px 20px; }
+        .nav-tabs .nav-link.active { background-color: #ffffff; border-top: 3px solid #f37023; color: #000000; }
+
+        /* Plot Cards */
+        .sav-card { background: #ffffff; border: 1px solid #ced4da; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .sav-card-header { background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; padding: 6px 12px; font-weight: bold; font-size: 0.85rem; color: #333333; text-transform: uppercase; }
+        .plot-container { width: 100%; min-height: 280px; }
+    </style>
+</head>
+<body>
+
+    <!-- Run Summary Bar -->
+    <div class="run-info-strip d-flex align-items-center">
+        <div class="run-info-item"><span class="run-info-label">Run ID:</span> {{ context.run_info.name() or 'N/A' }}</div>
+        <div class="run-info-item"><span class="run-info-label">Run Number:</span> {{ context.run_info.run_number() or 'N/A' }}</div>
+        <div class="run-info-item"><span class="run-info-label">Flowcell:</span> {{ context.run_info.flowcell_id() or 'N/A' }}</div>
+        <div class="run-info-item"><span class="run-info-label">Cycles:</span> {{ context.run_info.total_cycles() or 'N/A' }}</div>
+        <div class="run-info-item"><span class="run-info-label">Instrument:</span> {{ context.run_info.instrument_name() }}</div>
+    </div>
+
+    <!-- SAV Tabs -->
+    <div class="container-fluid mt-2 px-3">
+        <ul class="nav nav-tabs" id="savTabs" role="tablist">
+            <li class="nav-item"><button class="nav-link active" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button">Analysis</button></li>
+            <li class="nav-item"><button class="nav-link" id="imaging-tab" data-bs-toggle="tab" data-bs-target="#imaging" type="button">Imaging / Diagnostic</button></li>
+            <li class="nav-item"><button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button">Summary</button></li>
+            <li class="nav-item"><button class="nav-link" id="indexing-tab" data-bs-toggle="tab" data-bs-target="#indexing" type="button">Indexing</button></li>
+        </ul>
+
+        <div class="tab-content bg-white p-3 border border-top-0" id="savTabsContent">
+            
+            <!-- Analysis Tab (Standard 2x2 Grid) -->
+            <div class="tab-pane fade show active" id="analysis" role="tabpanel">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="sav-card">
+                            <div class="sav-card-header">Data By Cycle - Intensity</div>
+                            <div class="plot-container">{{ context.intensity_chart | safe }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="sav-card">
+                            <div class="sav-card-header">QScore Distribution (% >= Q30)</div>
+                            <div class="plot-container">{{ context.q30_chart | safe }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="sav-card">
+                            <div class="sav-card-header">Data By Cycle - % Base</div>
+                            <div class="plot-container">{{ context.base_percent_chart | safe }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="sav-card">
+                            <div class="sav-card-header">Data By Cycle - Error Rate</div>
+                            <div class="plot-container">{{ context.error_rate_chart | safe }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="sav-card">
+                            <div class="sav-card-header">Data By Cycle - Cluster Metrics</div>
+                            <div class="plot-container">{{ context.cluster_chart | safe }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="sav-card">
+                            <div class="sav-card-header">Custom Plot - % Passing Filter vs % Occupied</div>
+                            <div class="plot-container">{{ context.pf_occupied_chart | safe }}</div>
+                        </div>
+                    </div>  
+                </div>
+            </div>
+
+            <!-- Imaging Diagnostic Tab (FWHM & SNR) -->
+            <div class="tab-pane fade" id="imaging" role="tabpanel">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="sav-card">
+                            <div class="sav-card-header">Data By Cycle - Full Width Half Max (FWHM)</div>
+                            <div class="plot-container">{{ context.fwhm_chart | safe }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="sav-card">
+                            <div class="sav-card-header">Data By Cycle - Signal to Noise Ratio (SNR)</div>
+                            <div class="plot-container">{{ context.snr_chart | safe }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Tab -->
+            <div class="tab-pane fade" id="summary" role="tabpanel">
+                <div class="row g-3">
+                    
+                    <!-- Run Metrics Table Card -->
+                    <div class="col-12">
+                        <div class="sav-card">
+                            <div class="sav-card-header">Run Overview</div>
+
+                            <div class="p-3">
+                                {{ context.overview_table | safe }}
+                            </div>
+                        </div>
+                        <div class="sav-card">
+                            <div class="sav-card-header d-flex justify-content-between align-items-center">
+                                <span>Run Summary Metrics</span>
+                                <span class="badge bg-secondary text-uppercase fs-7">InterOp Summarized</span>
+                            </div>
+                            <div class="p-3">
+                                {% if context.summary_table %}
+                                    <div class="table-responsive">
+                                        {{ context.summary_table | safe }}
+                                    </div>
+                                {% else %}
+                                    <div class="text-center py-4 text-muted">
+                                        <i class="bi bi-table display-6 d-block mb-2"></i>
+                                        <span>No Summary Statistics Found for this Run</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Indexing Tab -->
+            <div class="tab-pane fade" id="indexing" role="tabpanel">
+                <div class="row g-2">
+                    <div class="col-12">
+                        <div class="sav-card">
+                            <div class="sav-card-header">Index Representation Bar Chart</div>
+                            <div class="plot-container p-2">{{ context.index_chart | safe }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-3">
+                        <div class="sav-card">
+                            <div class="sav-card-header">Index Metrics Table</div>
+                            <div class="p-3 table-responsive">{{ context.index_table | safe }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

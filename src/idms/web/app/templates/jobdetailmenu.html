@@ -1,0 +1,24 @@
+{% extends 'base2.html' %}
+
+{% block menuitems %}
+<li class="nav-header bg-warning text-center">JOB DETAILS</li>
+<li class="nav-item">
+    <a href="{{ url_for('jobs.jobdetails', name=jobnaam) }}" class="nav-link" data-menuname='jobdetails'>
+        <i class="fas fa-sliders-h nav-icon"></i>
+        <p>Details</p>
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('jobs.job_log', name=jobnaam) }}" class="nav-link" data-menuname='joblog'>
+        <i class="fas fa-list nav-icon"></i>
+        <p>Job Log</p>
+    </a>
+</li>
+<li class="nav-item">
+    <a href="{{ url_for('jobs.all_job_logs', name=jobnaam) }}" class="nav-link" data-menuname='joblogs'>
+        <i class="fas fa-list nav-icon"></i>
+        <p>All Logs</p>
+    </a>
+</li>
+
+{% endblock %}

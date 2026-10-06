@@ -1,0 +1,16 @@
+<div>
+    <table>
+        {% for result in results %}
+        <tr>
+            {% if result[2] %}
+                {# This is reference data #}
+                <td><b>REFDATA</b></td>
+                <td>{{ result[2] }}: {{ result[1].collentry | safe }}</td>
+            {% else %}
+                <td>{{ result[0] }}</td>
+                <td>{{ result[1].collentry | safe }}</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+</div>

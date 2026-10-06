@@ -1,0 +1,45 @@
+<script>
+$(".action-button").on('click', function(clk) {
+    $.post(
+        "{{ url_for('admin.collection_actions') }}", {
+          collection: collection,
+          action: $(clk.target).data('action')
+        }
+    ).done(function(){
+        load_meta();
+    })
+})
+</script>
+
+
+<div class="container">
+
+    {% if coll_state.is_dataset %}
+    <div class="row">
+        <div class="col-sm-3"><button id="clear-lock-button" class="btn btn-outline-secondary btn-block action-button"
+                data-action="remove-locks">Remove locks</button></div>
+        <div class="col-sm">Remove all <b>sys::lock%</b> metadata</div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3"><button id="tiering-button" class="btn btn-outline-secondary btn-block action-button"
+                data-action="rerun-tiering">Tiering</button></div>
+        <div class="col-sm">Reapply <b>sys::archive::desired_state</b></div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3"><button id="state-button" class="btn btn-outline-secondary btn-block action-button"
+                data-action="remove-state">Remove State Metadata</button></div>
+        <div class="col-sm">Remove state metadata, related to consistency or collection size (safe)</b></div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3"><button id="archive-button" class="btn btn-outline-secondary btn-block action-button"
+                data-action="reset-archive">Reset archive time</button></div>
+        <div class="col-sm">Reset archive timestamps, so archive state will be re-evaluated</b></div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-sm-3"><button id="dataset-button" class="btn btn-outline-secondary btn-block action-button"
+                data-action="make-dataset">Dataset</button></div>
+        <div class="col-sm">Add a dataset_id</div>
+    </div>
+    {% endif %}
+</div>

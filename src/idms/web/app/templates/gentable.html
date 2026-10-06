@@ -1,0 +1,20 @@
+<table class="table table-sm table-striped table-hover">
+    <thead>
+  <tr>
+      {% for field in header %}
+      <td>{{ field }}</td>
+      {% endfor %}
+  </tr>
+  
+    </thead>
+    <tbody<>
+  {% for row in data %}
+  <tr>
+  {% for cell in row %}
+  <td>{{ cell.htmlstring | safe }}</td>
+  {% endfor %}
+  </tr>
+  {% endfor %}
+    </tbody>
+</table>
+  

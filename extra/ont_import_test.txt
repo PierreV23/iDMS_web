@@ -1,0 +1,9 @@
+D98722500092-01	RSVB	rsv_wgs		tabs_in_row	adhoc
+D98722500093-01,RSVA	rsv_wgs		comma_and_tabs_in_row	adhoc
+D98722500104-01,RSVA,rsv_wgs,,commas_in_row,adhoc
+NC-2026-RSVA,RSVA;rsv_wgs,,comma_and_semicolon_in_row,adhoc
+D98722500128-01;RSVB;rsv_wgs;kit_1;;adhoc
+D98722500129-01;RSVB;rsv_wgs;;description_2;adhoc
+D98722500130-01;RSVB;rsv_wgs;;;adhoc					
+
+D62472500294-35,Measles	Measles		skip_one_row	adhoc

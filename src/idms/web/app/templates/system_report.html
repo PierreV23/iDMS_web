@@ -1,0 +1,46 @@
+{% extends 'base2.html' %} 
+{% block heading %}
+<h3>System Report</h3>
+{% endblock %}
+{% block menuname %} 
+menuname="system_report"
+{% endblock %}
+{% block content %}
+
+<div id="system-report-card" class="card h-100">
+  <div class="card-header">
+    <ul class="nav nav-tabs" id="system-report-tabs">
+      <li class="nav-item mx-2">
+        <a class="nav-link" id="attributes-tab"
+        data-toggle="tab" href="#attributes" role="tab"
+        aria-controls="attributes" aria-selected="false">Known Attributes</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link" id="viewers-tab"
+        data-toggle="tab" href="#viewers" role="tab"
+        aria-controls="viewers" aria-selected="false">Document Viewers</a>
+      </li>      
+    </ul>
+  </div>
+<div class="card-body tab-content h-100" id="report-content">
+<div class="tab-pane" id="attributes-tab-content" role="tabpanel" aria-labelledby="attributes-tab"></div>
+</div>
+</div>
+
+<script>
+    $('#system-report-tabs').on('shown.bs.tab', function(event){
+        target = event.target.getAttribute('href')
+        $.get('{{ url_for("reports.system_report_data") }}', {
+            category: target
+            }, function (data) {
+                $('#report-content').html(data);
+            }
+        );
+    })
+
+    $(document).ready(function () {
+        $('#attributes-tab').tab('show')
+    })
+</script>
+
+{% endblock %}

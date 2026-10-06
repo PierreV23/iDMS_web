@@ -1,0 +1,89 @@
+{% extends 'jobdetailmenu.html' %} {% block heading %}
+<h3>Job logs for {{ jobnaam.htmlstring | safe }}</h3>
+{% endblock %} {%block menuname %} menuname='joblogs' {% endblock %} {% block
+content %}
+
+<script>
+
+    $SCRIPT_ROOT = {{ request.script_root | tojson | safe }};
+
+    $(function () {
+        $('li.logcard').bind('click', function (e) {
+            $('li.logcard').removeClass('active')
+            $(this).addClass('active')
+            // add loading icon 
+            $('pre#logcontainer').html('<div class="overlay"><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>')
+            console.log($('pre#logcontainer'))
+            $('div#logname').html($(this).html())
+            $.get(
+                // URL, data, function(), datatype = optional
+                $SCRIPT_ROOT + '/jobs/_joblog', {path: $(this).data('logpath')},
+                function (data) {
+                    if (data.error) {
+                        // set up the title and body
+                        $('#alertTitle').html('Access Denied')
+                        $('#alertBody').html("<center>"+decodeURIComponent(data.msg)+"<center>")
+                        // raise alert model
+                        $('#modalAlert').modal()
+                        // remove selector and show select file again                  
+                        $('li.logcard').removeClass('active')
+                        $('pre#logcontainer').html('<center>.. select a log file ..</center>')
+                    }
+                    else {
+                        $('pre#logcontainer').text(data.data);
+                    }
+                }
+            )
+        })
+    })
+</script>
+
+<!-- Alert modal dialog -->
+<div class="modal" id="modalAlert" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <!--            <button type="button" class="close" data-dismiss="modal">&times;</button> -->
+                <h5 class="modal-title" id="alertTitle">Alert</h5>
+                <button
+                    type="button"
+                    class="btn btn-default btn-primary btn-sm"
+                    data-dismiss="modal"
+                >
+                    Close
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert" id="alertBody">
+                    Alert
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="selectgrid h100">
+    <div class="card h100">
+        <div class="card-body h100 autoscroll nopadding">
+            <ul class="list-group">
+                {% for logfile in logs %} {% set label = logfile |
+                replace('.','_') | replace('/', '_') %}
+                <li
+                    class="logcard file-link list-group-item"
+                    data-logpath="{{ logs[logfile] }}"
+                    data-loglabel="{{ label }}"
+                >
+                    {{ logfile }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="card h100">
+        <pre class="card-body h100 autoscroll" id="logcontainer">
+        <center>.. select a log file ..</center></pre>
+    </div>
+</div>
+
+{% endblock %}

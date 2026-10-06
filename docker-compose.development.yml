@@ -1,0 +1,14 @@
+version: '3'
+services:
+
+  # note; symlink docker-compose.development.yml to
+  # docker-compose.override.yml when developing.
+
+  idms_web:
+    entrypoint: /bin/bash -c ". /venv/bin/activate && flask --debug run --host=0.0.0.0 --port=$${PORT} --with-threads"
+    ports:
+      - 2048:8080
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"

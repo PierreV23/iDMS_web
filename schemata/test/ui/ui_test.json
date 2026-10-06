@@ -1,0 +1,12 @@
+{
+  "ui:order": [
+    "name",
+    "age"
+  ],
+  "name": {
+    "ui:placeholder": "Enter your name"
+  },
+  "age": {
+    "ui:widget": "updown"
+  }
+}

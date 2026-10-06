@@ -1,0 +1,24 @@
+{% extends 'jobdetailmenu.html' %} {% block heading %}
+<h3>Job log for {{ jobnaam.htmlstring | safe }}</h3>
+{% endblock %} {%block menuname %} menuname='joblog' {% endblock %} {% block
+content %}
+
+<div class="card h100">
+        <pre class="card-body h100 autoscroll" id="logcontainer">
+        <center>.. Loading .. {{ jobnaam.value }}</center></pre>
+</div>
+
+<script>
+
+$(document).ready(function(){
+    $.get('{{ url_for("jobs.show_logfile") }}', {
+        path: '{{ collection }}/{{ jobnaam.value }}.log'
+    }, function (data) {
+            $('#logcontainer').html(data.data);
+          }
+    )
+})
+
+</script>
+
+{% endblock %}

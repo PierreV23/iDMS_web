@@ -1,0 +1,12 @@
+name: idms_web
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python<3.13
+  - pip 
+  - git 
+  - graphviz
+  - openssl
+  - sqlite 
+  - uwsgi>2.0.20

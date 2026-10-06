@@ -1,0 +1,27 @@
+{% extends 'base2.html' %}
+  
+{% block heading %}
+Cluster information items = {{ items }}
+{% endblock %}
+
+{% block content %}
+
+<div class="dropdown">
+<button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+{{ request.args.get('items') }}
+  </button>
+ <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+ <a class="dropdown-item" href="/hpcinfo?items=twohago">2 hours ago</a>
+ <a class="dropdown-item" href="/hpcinfo?items=wkago">week ago</a>
+ <a class="dropdown-item" href="/hpcinfo?items=mdago">month ago</a>
+ <a class="dropdown-item" href="/hpcinfo?items=yrago">year ago</a>
+ </div>
+</div>
+
+
+{{ text| safe }}
+
+
+
+{% endblock %}
+

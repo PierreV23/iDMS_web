@@ -1,0 +1,111 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h2>Resource settings</h2>
+{% endblock %}
+
+{%block menuname %}
+menuname='resources'
+{% endblock %}
+
+{% block content %}
+<div class="card card-body">
+<form action="{{ url_for('admin.update_resources') }}" method = "POST" enctype = "multipart/form-data">
+<table class="table">
+    <thead class="thead-dark">
+        <tr>
+            <th><div><span>
+                Name
+            </span></div></th>
+            {% for column in columns %}
+                <th 
+                    {% if columns[column].type == 'bool' or columns[column].type == 'status' %}
+                        class="rotated-text" scope="col"
+                    {% endif %}
+                ><div><span>
+                    {{ columns[column].label }}
+                </span></div></th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for resource in resources | sort %}
+        <tr>
+            <td id="{{resource}}">{{ resource }}</td>
+            {% for property in columns %}
+                {% if columns[property].type == 'text' %}
+                    <td>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            name="{{ resource }}__{{ property }}"
+                            value="{{ resources[resource].get(property, '') }}"
+                        >
+                    </td>
+                {% elif columns[property].type == 'number' %}
+                    <td>
+                        <input 
+                            type="number" 
+                            class="form-control" 
+                            name="{{ resource }}__{{ property }}"
+                            value="{{ resources[resource].get(property, '') }}"
+                        >
+                    </td>
+                {% elif columns[property].type == 'bool' %}
+                    <td>
+                        <input class="checkbx" type="checkbox"
+                            name="{{ resource }}__{{ property }}"
+                            value="true"
+                            {% if resources[resource].get(property) == "true" %} checked {% endif %}
+                            {% if columns[property].get('help') %}
+                            title="{{ columns[property].get('help') }}"
+                            {% endif %} 
+                        >
+                    </td>
+                {% elif columns[property].type == 'select' %}
+                    <td>
+                        <select class="form-control" name="{{ resource }}__{{ property }}" style="width:auto">
+                            {% for value in columns[property].options %}
+                                <option value="{{ value }}" {% if value == resources[resource].get(property, '') %}selected{% endif %}>
+                                    {{ value }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                {% elif columns[property].type == 'status' %}
+                    <td>
+                        <center>
+                            {% if resources[resource].get(property) == 'true' %}
+                            <i class="fa-solid fa-square-check fa-lg" style="color:green"></i>
+                            <input type="hidden" name="{{ resource }}__{{ property }}" value="true">
+                            {% else %}
+                            <i class="fa-solid fa-square-xmark fa-lg" style="color:red"></i>
+                            <input type="hidden" name="{{ resource }}__{{ property }}" value="false">
+                            {% endif %}
+                        </center>
+                    </td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<button type=submit class="btn btn-primary">Submit</button>
+</form>
+</div>
+
+<script>
+$('.checkbx').on('click', function(event){
+        var name = $(this).attr('name').split('__')
+        $('#' + name).css('color', 'red')
+    }
+)
+
+$('.form-control').on('change', function(event){
+        var name = $(this).attr('name').split('__')
+        $('#' + name).css('color', 'red')
+    }
+)
+</script>
+
+{% endblock %}

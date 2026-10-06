@@ -1,0 +1,199 @@
+<script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
+{% if external_groups %}
+<div class="bg-info text-white text-center py-2 px-3 fw-semibold fs-6">
+    <strong>This group is linked to external groups: {{ ','.join(external_groups) }}. Members cannot be managed
+        here.</strong>
+</div>
+{% endif %}
+<div class="usermanager">
+    <div class="buttons-toolbar"></div>
+
+    <table class="userTable" id="{{ usertype }}-userTable" data-click-to-select="true" data-toggle='table'
+        data-striped="true" data-height="450" data-show-columns-toggle-all="false" data-show-pagination-switch="true"
+        data-show-toggle="false" data-show-columns="true" data-buttons-toolbar=".buttons-toolbar"
+        data-sort-name="username"
+        data-url="{{ url_for('main.restcall', rest_endpoint=objecttype + '/' + object + '/' + usertype ) }}">
+        <thead>
+            <tr>
+                <th data-checkbox="true"></th>
+                <th data-sortable="true" data-field="username">Username</th>
+                <th data-sortable="true" data-field="displayName">Full Name</th>
+            </tr>
+        </thead>
+
+    </table>
+    <hr>
+    {% if can_modify | default(true) %}
+    <input class="form-control userSelect" id="{{ usertype }}-username-input" type="text" autocomplete="off" placeholder="Enter Username">
+    <button class="user-add btn-primary" disabled>Add User</button>
+    <hr>
+    <button class="user-delete btn-danger" disabled>Delete Selected Users</button>
+    {% endif %}
+    
+    <script>      
+        $('.userSelect').autoComplete({
+            resolver: 'custom',
+            formatResult: function (item) {
+                return {
+                    value: item.account,
+                    text: item.account,
+                    html: item.label
+                };
+            },
+            events: {
+                search: function (qry, callback) {
+                    selectedAccount = null;
+                    foundUsers = [];
+                    $('.user-add').prop('disabled', true);
+
+                    if (!qry || !qry.trim()) {
+                        callback([]);
+                        return;
+                    }
+
+                    $.ajax({
+                        url: '{{ url_for("irods_api.usersearch") }}',
+                        type: 'GET',
+                        data: { q: qry.trim() },
+                        dataType: 'json',
+                        success: function (res) {
+                            if (res == null || !Array.isArray(res)) {
+                                callback([]);
+                                return;
+                            }
+                            // exclude already existing users from list
+                            res = res.filter(function (user) {
+                                return !existingUsers.includes(user.account);
+                            });
+
+                            foundUsers = res;
+
+                            // Enable if exactly one user was found
+                             if (res.length === 1 & $('.userSelect').val() == res[0].account) {
+                                selectedAccount = res[0].account;
+                                $('.user-add').prop('disabled', false);
+                            }
+                            callback(res);
+                        },
+
+                        error: function (xhr, status, error) {
+                            console.error('User search failed:', error);
+                            callback([]);
+                        }
+                    });
+                }
+            }
+        });
+        
+        $('.userSelect').on('input', function () {
+            selectedAccount = null;
+            $('.user-add').prop('disabled', true);
+        });
+
+        // User explicitly selects an autocomplete result
+        $('.userSelect').on('autocomplete.select', function (evt, item) {
+            if (item && item.account) {
+                selectedAccount = item.account;
+                $('.user-add').prop('disabled', false);
+            } else {
+                selectedAccount = null;
+                $('.user-add').prop('disabled', true);
+            }
+        });
+
+        // Enable 'Delete Selected' button if users are selected or a row is clicked
+        $('.userTable').bootstrapTable({
+            // Declare existingUsers to exclude from dropdown
+            onLoadSuccess: function (data) {
+                existingUsers = data.map(function (user) {
+                    return user.username;
+                });
+            },
+            onClickRow: function (row, $element, field) {
+                $('.user-delete').prop("disabled", false)
+            },
+            onCheck: function (row, $element) {
+                $('.user-delete').prop("disabled", false);
+            },
+            onCheckAll: function (row, $element) {
+                $('.user-delete').prop("disabled", false);
+            },
+            onUncheck: function () {
+                const selected = $('.userTable').bootstrapTable('getSelections');
+                $('.user-delete').prop('disabled', selected.length == 0);
+            },
+            onUncheckAll: function () {
+                $('.user-delete').prop('disabled', true);
+            }
+        })
+
+        $('.user-add').on('click', function (obj) {
+            $('.usermanager').addClass('pending')
+            
+            $.ajax({
+                url: "{{ url_for('main.restcall', rest_endpoint=objecttype + '/' + object + '/' + usertype) }}",
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    username: selectedAccount
+                }),
+                dataType: 'json',
+
+                success: function () {
+                    selectedAccount = null;
+                    foundUsers = [];
+
+                    $('.userSelect').val('');
+                    $('.user-add').prop('disabled', true);
+                },
+
+
+                error: function (data) {
+                    alert(data["responseJSON"]["message"])
+                },
+                complete: load_users
+            })
+        })
+
+        $('.user-delete').on('click', function () {
+            const table = $('#{{ usertype }}-userTable');
+            const selected = table.bootstrapTable('getSelections');
+
+            if (selected.length === 0) {
+                return;
+            }
+
+            if (selected.length === existingUsers.length && selected.length > 1) {
+                const confirmed = confirm(
+                    `WARNING: You are about to delete all ${existingUsers.length} users.\n\n` +
+                    'This action cannot be undone. Continue?'
+                );
+
+                if (!confirmed) {
+                    return;
+                }
+            }
+
+            $('.usermanager').addClass('pending');
+
+            let completed = 0;
+            selected.forEach(function (element) {
+                $.ajax({
+                    url: "{{ url_for('main.restcall', rest_endpoint=objecttype + '/' + object + '/' + usertype) }}" + '/' + element.username,
+                    type: 'DELETE',
+
+                    error: function (data) {
+                        alert(data["responseJSON"]["message"]);
+                    },
+
+                    complete: function () {
+                        completed += 1;
+
+                        if (completed === selected.length) {
+                            load_users();
+                        }
+                    }
+                });
+            });
+        });
+    </script>

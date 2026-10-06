@@ -1,0 +1,354 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap4.min.css') }}">
+<script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+
+<div class="container-wide">
+    {% if message %}
+    <div class="row card bg-warning "><h3><center>{{ message }}</center></h3></div>
+    {% endif %}
+    {% if selected_details %}
+    <div class="row card"><h5>Selected process: <em>{{ selected_details.name }}</em> ({{ selected_process.htmlshort | safe }})</h5> </div>
+    {% else %}
+    <hr>
+    {% endif %}
+    <div class="row">
+        {% if project_permissions.users %}
+        <div class="col col-mb-3">
+            <h5>Add Process</h5>
+            <form>
+                <div class="form-group">
+                    <select class="form-control" style="width: '100px'" id="process_select">
+                        <option disabled selected value> -- select a process -- </option>
+                        {% for proc in all_processes %}
+                        <option>{{ proc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="process_name">Process name (optional)</label>
+                    <input type="text" class="form-control form-control-sm" id="process_name" placeholder="Optional name for the process"></input>
+                </div>
+                <button type="button" class="btn btn-sm btn-primary" onClick='pgadd_process()''>Add Process</button>
+            </form>
+        </div>
+        {% endif %}
+        <div class="col col-mb-3">
+            {% if selected_details %}
+            <form action="{{ url_for('projects.pgaction') }}">
+                <div class="form-group">
+                    <label for="process_name">GIT Tag</label>
+                    <select class="form-control form-control-sm" id="git_tag" {% if project_permissions.users is sameas false %}disabled{% endif %}>
+                        <option disabled selected value> -- select a tag -- </option>
+                        {% for tag in selected_tags %}
+                        <option {% if tag == selected_details.tag %}selected{% endif %}>{{ tag }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+            <form action="{{ url_for('projects.pgaction') }}">
+                <div class="form-group">
+                    <label for="process_name">LSF queue</label>
+                    <select class="form-control form-control-sm" id="lsf_queue" {% if project_permissions.users is sameas false %}disabled{% endif %}>
+                        <option disabled selected value> -- select a queue -- </option>
+                        {% for lsf_queue in list_of_lsf_queue_options %}
+                        <option {% if lsf_queue == selected_details.lsf_queue %}selected{% endif %}>{{ lsf_queue }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if project_permissions.users %}
+                <button type="button" class="btn btn-sm btn-primary disabled" id="update_process_button">Submit</button>
+                {# No one is currently using the button, we can add this back when someone is really using this #}
+                {# <button type="button" class="btn btn-sm btn-primary" id="update_allprocs_button">Set for all processes</button> #}
+                {% endif %}
+            </form>
+            {% endif %}
+        </div>
+        <div class="col col-mb-3">
+            {% if selected_details %}
+            {% if project_permissions.users %}
+            <h5>Actions</h5>
+            <button type="button" class="btn btn-sm btn-primary" id="select_input_button">Select input</button>
+            <button type="button" class="btn btn-sm btn-danger  "id="delete_process_button">Delete selected</button>
+            <hr>
+            {% endif %}
+            <h5>Process-Dependencies</h5>
+            {% if project_permissions.users %}
+            <div>
+            <button type="button" class="btn btn-sm btn-primary" id="add_dep">Add dependency</button>
+            <button type="button" class="btn btn-sm btn-danger disabled" id="del_dep">Delete dependency</button>
+            </div>
+            <hr>
+            {% endif %}
+            <ul class="list-group">
+            {% for dep in dependencies %}
+            <li class="list-group-item {% if dep == selected_dependency %} active {% endif %} select-dep">{{ dep }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% if current_user.feature('reference') %}
+        <div class="col col-mb-3">
+            {% if selected_details %}
+            <h5>Reference-Data</h5>
+            <hr>
+            <div>
+                <table id="tableReferenceDataVersions">
+                    <tr>
+                        <th>ReferenceDataSet</th>
+                        <th>Version</th>
+                    </tr>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+
+function pgadd_process() {
+    $.get('{{ url_for("projects.pgaction") }}', {
+        project: "{{ project }}",
+        group: "{{ group }}",
+        action: 'add_process',
+        process: $("#process_select").val(),
+        name: $('#process_name').val()
+    }, function(data) {
+        selected_processref = data.selected_processref;
+        load_pgpage( data );
+    });
+}
+
+function enableButton(buttonID) {
+    $('#update_process_button').removeClass('disabled');
+}
+
+$('#lsf_queue, #git_tag').on('change', function(){
+    enableButton('#update_process_button');
+})
+
+$('#update_allprocs_button').on('click', function(){
+    waiting()
+    $.get('{{ url_for("projects.pgaction") }}', {
+        project: "{{ project }}",
+        group: "{{ group }}",
+        action: 'update_processes',
+        lsf_queue: $('#lsf_queue').val()
+    }, function(data) {
+        load_pgpage( data );
+    });
+})
+
+$('#update_process_button').on('click', function(){
+    $.get('{{ url_for("projects.pgaction") }}', {
+        project: "{{ project }}",
+        group: "{{ group }}",
+        action: 'update_process',
+        process: selected_processref,
+        lsf_queue: $('#lsf_queue').val(),
+        tag: $('#git_tag option:selected').text()
+    }, function(data) {
+        load_pgpage( data );
+    });
+})
+
+$('#delete_process_button').on('click', function(){
+    $.get('{{ url_for("projects.pgaction") }}', {
+        project: "{{ project }}",
+        group: "{{ group }}",
+        action: 'delete_process',
+        process: selected_processref
+    }, function(data) {
+        selected_processref = null
+        load_pgpage( data );
+    });
+})
+
+$('#add_dep').on('click', function() {
+    if (mode != 'add_dependency') {
+        mode = 'add_dependency';
+    } else {
+        mode = 'display';
+    }
+    load_pgpage()
+})
+
+$('.select-dep').on('click', function() {
+    $('.select-dep').removeClass('active')
+    $(this).addClass('active')
+    $('#del_dep').removeClass('disabled')
+})
+
+$('#del_dep').on('click', function() {
+    $.get('{{ url_for("projects.pgaction") }}', {
+        project: "{{ project }}",
+        group: "{{ group }}",
+        process: selected_processref,
+        action: 'delete_dependency',
+        depend: $('.select-dep.active').text()
+    }, function(data) {
+        load_pgpage( data );
+    });
+})
+
+
+
+$('#add_ref').on('click', function() {
+    if (mode != 'add_refData') {
+        mode = 'add_refData';
+    } else {
+        mode = 'display';
+    }
+    load_pgpage()
+})
+
+
+$('#refDataSetSelect').on('change', function() {
+    $('#refDataVersionSelectArea').removeClass('invisible')
+    $.get('{{ url_for("projects.pg_list_referencedataversions") }}', {
+        referencedataid: this.value
+    }, function(data) {
+        for( version of data ) {
+            $('#refDataSetVersionSelect').append( new Option(version.name + '('+version.id+')', version.id ) )
+        };
+    } )
+})
+
+
+$('#refDataSetVersionSelect').on('change', function() {
+    $('#btn_add_referencedata_version').removeClass('invisible disabled')
+})
+
+
+function build_connected_reference_data_version_list( data ) {
+    $( '#listOfConnectedRefDataVersions').empty()
+    for( version of data ) {
+        $( '#listOfConnectedRefDataVersions').append( '<li class="list-group-item">'+version.id+'</li>')
+    }
+}
+
+$('#btn_add_referencedata_version').on('click', function() {
+    //get value of both select boxes
+    var referencedataSetId = $('#refDataSetSelect').find(":selected").val();
+    var referenceDataVersionId = $('#refDataSetVersionSelect').find(":selected").val();
+
+    $.get('{{ url_for("projects.pg_add_referencedataversions") }}', {
+        processref: selected_processref,
+        referencedataSetId: referencedataSetId,
+        referenceDataVersionId: referenceDataVersionId
+    }, function(data) {
+       //rebuild list of connected referencedataversions
+        $.get('{{ url_for("projects.pg_list_referencedataversions") }}', {
+            processref: selected_processref
+        }), function( data ) {
+            build_connected_reference_data_version_list( data )
+        }
+    })
+})
+
+function build_line( p_ref_data, default_version, versions, selected_version ) {
+    //alert(JSON.stringify(selected_version))
+    id = p_ref_data.id //of the process specific default that we might want to overrride
+    versionidstr = "Default of process"
+    versionid = -2
+    selOption1 = "selected"
+    selOption2 = ""
+    if( selected_version != null ){
+        versionidstr = "Latest (dynamic)"
+        versionid = -1
+        selOption1 = ""
+        selOption2 = "selected"
+        if( selected_version["supersedingversion"] ) {
+            versionidstr = selected_version["supersedingversion"]["version"]
+            versionid = selected_version["supersedingversion"]["id"]
+            selOption1 = ""
+            selOption2 = ""
+        }
+    }
+    defaultversionstr = "Latest (dynamic)"
+    if( default_version ) {
+        defaultversionstr = default_version.version
+    }
+
+    html = '<tr id="refdata-row-'+id +'"><th colspan=2>' + p_ref_data.label + '</th></tr>'
+    html += '<tr><td colspan=2>' + p_ref_data.referencedata.name + '</td></tr>'
+
+    html += '<tr><td>'
+    html += 'default:&nbsp;' + defaultversionstr
+    html += '</td>'
+    html += '<td><select class="form-control form-control-sm" id="refDataSetVersion-' + id + '">'
+    html += '    <option value="-2" '+ selOption1 +'>Default of process</option>'
+    html += '    <option value="-1" '+ selOption2 +'>Latest (dynamic)</option>'
+    for ( const v of versions ) {
+        selected=""
+        if (v.id == versionid ) {
+            selected="selected"
+        }
+        display_version = v.version + ': ' + v.version_name + ' (' + v.creation_date.substring(0,10) + ')'
+        if( v.version_name == '' )
+            display_version = v.version + ' (' + v.creation_date.substring(0,10) + ')'
+        html += '<option value="'+ v.id +'"' + selected + '>'+ display_version +'</option>'
+    }
+    html += '</select></td>'
+    html += '</tr>'
+    return html
+}
+
+
+
+function addEventChangeVersion( id, /* of the process specific default*/
+                                overwriting, /* the entry of refData2processRef*/
+                                data /* the specified default in refData2process */ ) {
+    document.getElementById('refDataSetVersion-'+id).addEventListener('change', function() {
+        //alert($( '#refDataSetVersion-'+id).val())
+        existing_entry_id = null
+        if( overwriting ){
+            existing_entry_id = overwriting["id"]
+        }
+        $.get('{{ url_for("projects.pg_set_referencedataversion") }}', {
+            refdataversion2processrefid: existing_entry_id,
+            processdefaultid: data["id"], //the refdataversion2process thats beeing overwritten
+            //referencedataid: id,
+            supersedingversionid:  $( '#refDataSetVersion-'+id).val(), //concrete value of a version that should overwrite the process default!
+            process_ref_id: '{{selected_details.id}}',
+            project: "{{ project }}",
+            group: "{{ group }}"
+        }, function(data) {
+            build_reference_data_table()
+        })
+    });
+}
+
+function build_reference_data_table() {
+    $.get('{{ url_for("projects.pg_list_processref_refdata") }}', {
+        project: "{{ project }}",
+        group: "{{ group }}",
+        process: "{{selected_details.processid}}",
+        process_ref: "{{selected_details.id}}"
+    }, function( data ) {
+        $('#tableReferenceDataVersions > tbody').empty()
+        p_rds = data["refdatasForProcess"]
+        pr_rds = data["refdatasForProcessRef"]
+        for ( p_ref_data of p_rds ) {
+            let all_versions  = p_ref_data["versions"]
+            let default_version = p_ref_data["referencedataversion"]
+            let overwriting_version = null;
+            if (p_ref_data["id"] in pr_rds ) {
+                overwriting_version = pr_rds[p_ref_data["id"]]
+            }
+            $('#tableReferenceDataVersions > tbody:last-child').append( build_line( p_ref_data, default_version, all_versions, overwriting_version ) )
+            addEventChangeVersion(p_ref_data["id"], overwriting_version ,p_ref_data)
+        }
+    })
+}
+
+$( document ).ready(function() {
+    if( selected_processref ) { build_reference_data_table() };
+    $('#process_select').select2({
+        theme: 'bootstrap4',
+        allowClear: true,
+        width: 'style'
+    });
+})
+</script>

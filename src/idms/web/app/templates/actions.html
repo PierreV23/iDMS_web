@@ -1,0 +1,219 @@
+<script>
+
+    var waiting = '<div class="overlay"><i class="fas fa-2x fa-sync-alt fa-spin"></i></div>'
+
+    function updateUntilDate() {
+        var selected = $( "#inputSelectDate" ).val()
+        var now = moment()
+        var until = moment()
+        until.add(selected, 'days')
+        $( "#untilDate" ).html( "until:" + until.format( "YYYY-MM-DD" ))
+    }
+
+    function bringDatasetOnline() {
+        var selected = $( "#inputSelectDate" ).val()
+        $.get('{{ url_for('collbrowser.setKeepOnlineUntil') }}', {
+          collection: '{{ collection }}',
+          selection: selected
+        }, function(data) {
+           load_meta();
+           load_actions();
+        });
+    }
+
+    function startProcess() {
+      var processid = $("#processSelect").val()
+      var cluster = $("#clusterSelect").val()
+      $.get('{{ url_for('collbrowser.startprocess') }}', {
+        collection: '{{ collection }}',
+        processid: processid,
+        cluster: cluster
+      }, function(data) {
+        load_meta();
+        load_actions();
+      });
+    }
+
+    function startProcessGroup() {
+      var processgroupid = $("#processgroupSelect").val()
+      $.get('{{ url_for('collbrowser.startprocess') }}', {
+        collection: '{{ collection }}',
+        processgroupid: processgroupid
+      }, function(data) {
+        load_meta();
+        load_actions();
+      });
+    }
+
+    function restartProcessGroup() {
+      $.get('{{ url_for('collbrowser.startprocess') }}', {
+        collection: '{{ collection }}',
+        processgroupguid: '{{ coll_state.processgroupguid }}'
+      }, function(data) {
+        load_actions();
+        load_graph();
+      });
+    }
+
+    function setCollectionValidity() {
+      var selected = $( "#overrideValidity" ).is(':checked')
+      $.get('{{ url_for('collbrowser.setoverride') }}', {
+          collection: '{{ collection }}',
+          attr: "user::data::state",
+          value: "{{ 'invalid' if coll_state.sys_coll_state != 'invalid' else 'valid' }}",
+          override: selected
+        }
+      )
+      .done(function() {
+        load_meta();
+        load_actions();
+        load_graph();
+      })
+      .fail(function(data, status) {
+          alert("Set override failed");
+          load_actions(); // load actions again to show flash message)
+      })
+    }
+
+    function propagateUserState() {
+      if (confirm("Warning: This can only be reverted by manually disabling the override for each downstream collection. \n\nAre you sure you want to propagate the state to all downstream collections?")) {
+        $.post('{{ url_for('collbrowser.propagateDownstreamInvalid') }}', {
+            collection: '{{ collection }}',
+          }
+        )
+        .done(function() {
+          load_graph()
+        })
+        .fail(function(data, status) {
+          alert("Propagation failed");
+          load_actions(); // load actions again to show flash message
+        })
+      }
+    }
+
+
+$('.action-tabs').on('shown.bs.tab', function(event){
+  activetab = event.target.getAttribute('href')
+  localStorage.setItem('activetab', activetab)
+  $.get('{{ url_for("collbrowser.actions_tabs") }}', {
+    collection: '{{ collection }}',
+    tabname: activetab.substring(1)
+  })
+  .done(function(data) {
+    $(activetab).html(data)
+  })
+  .fail(function(){
+    $(activetab).html('<center>Error retrieving content</center>')
+  })
+})
+
+
+$( function() {
+    $( ".datepicker" ).datepicker({
+      weekStart: 1,
+      daysOfWeekHighlighted: "6,0",
+      format: "dd/mm/yyyy",
+      autoclose: true
+    })
+} );
+
+$('#shareButton').on('click', function(){
+  $('#shareGroup').addClass('hidden')
+  $('#newshare input').attr('readonly', true)
+  $('.results').removeClass('hidden')
+  $('#newshare').addClass('pending')
+  $.post("{{ url_for('collbrowser.actions_newshare')}}", $('#newshareform').serialize(), function(data) {
+    console.log(data);
+    if (data.result != 200 ) {
+      console.log('FAILED')
+      $('#idResult').val('FAILED')
+    } else {
+      console.log('SUCCES')
+      $('#idResult').val('The collection share was created')
+      $('#newshare').removeClass('pending')
+      $('#idURL').val(data.url)
+    }
+  })
+})
+
+</script>
+
+<div class="card-header card-header-tabs">
+  <ul class="nav nav-tabs action-tabs">
+{% for tabname, tabdata in actions.items() %}
+    <li class="nav-item mx-2">
+      <a class="nav-link" 
+        id="{{ tabname }}-tab" data-toggle="tab" href="#{{ tabname }}" role="tab" aria-controls="{{ tabname }}"
+          aria-selected="false">
+          {{ tabdata.title }}
+      </a>
+    </li>
+{% endfor %}
+</div>
+
+<div class="card-body tab-content h-100">
+  {% with messages = get_flashed_messages(category_filter=["actions_panel"]) %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="error"><b>{{ message }}</b></div>
+    {% endfor %}
+  {% endif %}
+  {% endwith %}
+  {% for tabname, tabdata in actions.items() %}
+    <div class="tab-pane autoscroll-y h-100" id="{{ tabname }}" role="tabpanel" aria-labelledby="{{ tabname }}-tab"></div>
+  {% endfor %}
+{% if coll_state.is_dataset is sameas True %}
+  <div class="tab-pane autoscroll-y h-100" id="archive" role="tabpanel" aria-labelledby="archive-tab"></div>
+  <div class="tab-pane autoscroll-y h-100" id="pipeline" role="tabpanel" aria-labelledby="pipeline-tab"></div>
+  <div class="tab-pane" id="validity" role="tabpanel" aria-labelledby="validity-tab"></div>
+  <div class="tab-pane autoscroll-y h-100" id="provenance" role="tabpanel" aria-labelledby="provenance-tab"></div>
+  <div class="tab-pane autoscroll-y h-100" id="sharing" role="tabpanel" aria-labelledby="sharing-tab"></div>
+{% else %}
+  <div class="tab-pane h-100" id="noactions" role="tabpanel" aria-labelledby="noactions-tab"></div>
+{% endif %}
+<!--  <div class="tab-pane h-100" id="settings" role="tabpanel" aria-labelledby="settings-tab"></div>
+  <div class="tab-pane h-100" id="admin" role="tabpanel" aria-labelledby="admin-tab"></div> --!>
+</div>
+
+  <!-- New share form -->
+  <div class="modal" id="newshare" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="nsTitle">Share collection</h5>
+        </div>
+        <div class="modal-body" id="nsBody">
+          <form action="{{ url_for('collbrowser.actions_newshare')}}" id="newshareform" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+              <input type="hidden" id="collection" name="collection" value="{{ collection }}">
+            </div>
+            <div class="form-group">
+              <label for="iddescription">Description</label>
+              <input type="text" class="form-control shareinput" name="description" id="iddescription"/>
+              <small id="descHelp" class="form-text text-muted">Describe the purpose of this share</small>
+            </div>
+            <div class="form-group">
+              <label for="idenddate">End Date</label>
+              <input type="text" class="form-control datepicker shareinput" name="enddate" id="idenddate"/>
+              <small id="descEnddate" class="form-text text-muted">Share will only be valid up till this date</small>
+            </div>
+            <div class="form-group hidden results" id="shareresult">
+              <label for="idResult">Result</label>
+              <input type="text" class="form-control" name="result" id="idResult" readonly></textarea>
+              <label for="idURL">URL</label>
+              <input type="text" class="form-control" name="url" id="idURL" readonly></textarea>
+            </div>
+            <div class="form-group hidden results">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+            </div>
+            <div class="form-group" id="shareGroup">
+              <button type="button" id="shareButton" class="btn btn-primary">Share</button>
+              <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> <!-- content -->
+

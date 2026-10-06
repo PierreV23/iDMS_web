@@ -1,0 +1,50 @@
+<div class="xcard h-100">
+  <div class="xcard-header">
+    <ul class="nav nav-tabs nav2">
+      <li class="nav-item mx-2">
+        <a class="nav-link stats-tab" id="proc-stats-history" data-toggle="tab" href="#proc-stats-history-content"
+          role="tab" aria-controls="proc-stats-history" aria-selected="false">History</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link stats-tab" id="proc-stats-projects" data-toggle="tab" href="#proc-stats-projects-content"
+          role="tab" aria-controls="proc-stats-projects" aria-selected="false">Projects</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link stats-tab" id="proc-stats-runtime-dist" data-toggle="tab" href="#proc-stats-runtime-dist-content"
+          role="tab" aria-controls="proc-stats-runtime-dist" aria-selected="false">Runtime distribution</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link stats-tab" id="proc-stats-runtime-hist" data-toggle="tab" href="#proc-stats-runtime-hist-content"
+          role="tab" aria-controls="proc-stats-runtime-hist" aria-selected="false">Runtime history</a>
+      </li>           
+      <li class="nav-item mx-2">
+        <a class="nav-link stats-tab" id="proc-stats-versions" data-toggle="tab" href="#proc-stats-versions-content"
+          role="tab" aria-controls="proc-stats-versions" aria-selected="false">Versions</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link stats-tab" id="proc-stats-users" data-toggle="tab" href="#proc-stats-users-content"
+          role="tab" aria-controls="proc-stats-users" aria-selected="false">Users</a>
+      </li>      
+    </ul>
+  </div>
+  <div id="stats-content">
+  </div>  
+</div>
+
+<script>
+
+$('.stats-tab').on('shown.bs.tab', function (e) {
+    const tabid = this.id
+    const content_id = '#' + tabid + '-content'
+    $(content_id).html('I am loading ...').addClass('pending')
+    console.log(content_id)
+    $.get("{{ url_for('projects.process_stats_page') }}", {
+      process: {{ process_id }},
+      statname: tabid
+    }, function(data) {
+      $('#stats-content').html(data).removeClass('pending')
+    });    
+});
+
+</script>
+

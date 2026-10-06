@@ -1,0 +1,231 @@
+{% extends 'base2.html' %}
+
+{% block meta %}
+{% endblock %}
+
+{% block heading %}
+<h3>
+    <div class="inline">Processgroup overview</div>
+    <div class="float-right header-right">
+        Last refresh: <div class="refresh-time">... loading ...</div>
+    </div>
+</h3>
+{% endblock %}
+
+{%block menuname %}
+menuname='joblist'
+{% endblock %}
+
+{% block helptitle %}
+processgroups
+{% endblock %}
+
+{% block helptext %}
+This page shows an overview of <emp>processgroups</emp>. Processgroups are groups of pipelines that act on a specific collection
+or the output of a previous pipeline. For each project, one ore more processgroups can be configured using the processgroup tab in the
+<a href="/projects">project configuration</a>
+{% endblock %}
+
+{% block content %}
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+
+    </script>
+
+<div class="h-100 d-flex flex-column">
+
+    {% if disabled_queues %}
+    <div class="p-3 alert bg-warning">
+        <div class="mb-1"><strong>The following job processing state{{ 's are' if disabled_queues|length > 1 else ' is' }}
+                currently disabled:</strong>
+        </div>
+        <div>
+            {{ ', '.join(disabled_queues) }}
+        </div>
+    </div>
+    {% endif %}
+    <div class="flex-grow-1 p-3 overflow-hidden" id="table-container">
+        <table id="pgtable"
+        data-buttons-prefix="btn"
+        data-classes='table table-bordered table-hover table-striped'
+        data-filter-control="true"
+        data-detail-view='true'
+        data-detail-view-by-click='true'
+        data-id-field='processgroupid'
+        data-page-list=[15,25,50,100]
+        data-page-size=15 data-pagination='true'
+        data-pagination-use-intermediate='true'
+        data-row-style="groupStyle"
+        data-search="true"
+        data-search-on-enter-key="false"
+        data-searchable="true"
+        data-search-time-out="600"
+        data-show-search-button="false"
+        data-url='{{ url_for("jobs.pglist", processgroupid=processgroupid) }}'
+        data-side-pagination='server'
+        data-show-columns="true"
+        data-show-filter-control-switch="true"
+        data-show-search-clear-button="true"
+        data-custom-sort="sorter"
+        data-sort-name="create_time"
+        data-sort-order="desc"
+        data-toggle="table"
+        data-auto-refresh="true"
+        data-auto-refresh-interval='30'
+        data-show-auto-refresh="false">
+            <thead>
+                <tr>
+                    {% for c in columns %}
+                    <th class="pgcolumn"
+                        data-field="{{columns[c]['field']}}"
+                        data-align="left"
+                        data-sortable="{{columns[c]['sortable']}}"
+                        data-visible="{{columns[c]['visible']}}"
+                        data-filter-control="{{columns[c]['filtercontrol']}}"
+                        {% if columns[c]['filtercontrol']=="select" %}
+                        data-filter-data='url:{{ url_for("jobs.filterdata", field=columns[c]["field"], table="rivm_v_processgroups") }}'
+                        {% endif %}
+
+                        {% if columns[c]['field']=="projectid" %}
+                            data-filter-default="{{default_project}}"
+                        {% endif %}>
+                        {{columns[c]['title']}}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+    <script>
+
+        openDetails = new Set();
+
+        $(function(){
+
+            //at initial load the default-filter is set by the data-filter-default attribute
+            //at each reload this filter MUST NOT be there anymore, otherwise the table will revert to an old state
+            $('table#jobtable').on('post-header.bs.table', function ($data) {
+                $( ".jobcolumn[data-field=projectid" ).removeAttr( 'data-filter-default' )
+            })
+
+
+            $table=$('#pgtable')
+            $table.bootstrapTable('showAllColumns');
+            all_columns = {{ columns.values()  | map(attribute='field') | list | safe }}
+            visible_columns = {{ visible_columns | safe }};
+            all_columns.forEach(element => {
+                if (!visible_columns.includes(element)) {
+                    $table.bootstrapTable('hideColumn', element)
+                }
+            })
+
+
+            $('table#pgtable').on('column-switch.bs.table', function (e, field, checked) {
+                visible_fields = $("th.pgcolumn").map(function(){return $(this).data('field') ;}).get();
+                $.post('{{ url_for("userinfo.usersetting") }}', {
+                    attr: 'processgroups::columns',
+                    value: JSON.stringify(visible_fields)
+                })
+            })
+
+
+            $('table#pgtable').on('expand-row.bs.table', function (e, index, row, $detail) {
+                openDetails.add(index)
+                $.get('{{ url_for("jobs.pgjobs") }}?processgroupid=' + row['_processgroupid'], function (data) {
+                    $detail.html('<table></table>').find('table').bootstrapTable({
+                        autoRefresh: true,
+                        showAutoRefresh: false,
+                        autoRefreshInterval: 30,
+                        columns: data['columns'],
+                        data: data['rows'],
+                        rowStyle: 'rowStyle',
+                        sortName: 'start_time',
+                        customSort: 'sorter'
+                    });
+                    data['columns'].forEach(function (x, i) {
+                        if (x['visible'] == 'false') {
+                            $detail.find('table').bootstrapTable('hideColumn', x['field'])
+                        }
+                    })
+                })
+            })
+
+
+            $('table#pgtable').on('page-change.bs.table', function () {
+                openDetails = new Set();
+            })
+
+            $('table#pgtable').on('collapse-row.bs.table', function (e, index, row, $detail) {
+                openDetails.delete(index)
+            })
+
+            $('table#pgtable').on('load-success.bs.table', function (e, index, row, $data) {
+                openDetails.forEach(function (value) {
+                    $('table#pgtable').bootstrapTable('expandRow', value)
+                })
+                $.get('{{ url_for("jobs.jobs_refresh") }}', function(data) {
+                    $('.refresh-time').html(data);
+                });
+            })
+
+            $('table#pgtable').on('load-error.bs.table', function (e, index, row, $data) {
+                window.location.replace('/')
+            })
+
+
+        })
+
+        function sorter(field, sortOrder, data) {
+            var order = sortOrder === 'desc' ? -1 : 1
+            data.sort(function (a, b) {
+                var aa = a['_' + field]
+                var bb = b['_' + field]
+                if (aa < bb) {
+                    return order * -1
+                }
+                if (aa > bb) {
+                    return order
+                }
+                return 0
+            })
+        }
+
+        function groupStyle(row, index) {
+            var styles = {
+                'done': 'table-success',
+                'error': 'table-danger',
+                'active': 'table-info'
+            };
+            if (row['exit_code'] > 0) {
+                return {
+                    classes: 'table-danger'
+                }
+            }
+            return {
+                classes: styles[row['state']]
+            }
+        }
+
+        function rowStyle(row, index) {
+            var styles = {
+                'OK': 'table-success',
+                'ERROR': 'table-danger',
+                'FAILED': 'table-danger',
+                'NOTRUN': 'table-secondary'
+            };
+            if (row['state'] == 'done') {
+                return {
+                    classes: styles[row['result']]
+                }
+            }
+            return {
+                classes: 'table-info'
+            }
+        }
+
+    </script>
+    {% endblock %}

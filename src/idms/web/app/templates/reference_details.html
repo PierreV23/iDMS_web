@@ -1,0 +1,367 @@
+
+{% import 'components/metadata_editor.html' as metadata_widget %}
+
+<script src="{{ url_for('static', filename='js/markdown-it.min.js') }}"></script>
+
+<!-- TABS -->
+<div class="card h-100">
+  <div class="card-header">
+    <ul class="nav nav-pills nav2" id="referencetabs">
+      <li class="nav-item mx-2">
+        <button class="btn btn-outline-primary active" id="settings-tab" 
+        data-toggle="tab" href="#settings" role="tab" 
+        aria-controls="settings" aria-selected="false">Settings</button>
+      </li>
+      <li class="nav-item mx-2">
+        <button class="btn btn-outline-primary contactmanager" id="contacts-tab" 
+        data-toggle="tab" href="#contacts" role="tab" 
+        aria-controls="contacts" aria-selected="false">Contacts</button>
+      </li>
+      <li class="nav-item mx-2">
+        <button class="btn btn-outline-primary" id="refdatameta-tab" 
+        data-toggle="tab" href="#refdatameta" role="tab" 
+        aria-controls="refdatameta" aria-selected="false">Metadata</button>
+      </li>
+      <li class="nav-item mx-2">
+        <button class="btn btn-outline-primary" id="versions-tab" 
+        data-toggle="tab" href="#versions" role="tab" 
+        aria-controls="versions" aria-selected="false">Versions</button>
+      </li>
+      <li class="nav-item mx-2">
+        <button class="btn btn-outline-primary" id="usage-tab" 
+        data-toggle="tab" href="#usage" role="tab" 
+        aria-controls="usage" aria-selected="false">Usage</button>
+      </li>
+      <li class="nav-item mx-2">
+        <button class="btn btn-outline-primary" id="importstate-tab" 
+        data-toggle="tab" href="#importstate" role="tab" 
+        aria-controls="importstate" aria-selected="false">importing status</button>
+      </li>
+    </ul>
+  </div>
+<div class="card-body tab-content h-100">
+
+
+<!-- Settings -->
+<div class="tab-pane active" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+  <form action="update_reference" method="post">
+    <input type="hidden" id="action" name="action" value="update_reference">
+    <input type="hidden" id="reference" name="reference" value="{{RD.name}}">
+
+    <div class="form-group">
+      <label for="reference_activate_{{RD.name}}">Activate/Deactivate</label>
+      <div>
+        {% if RD.is_active %}
+        <div class="btn-group">
+            <label class="btn btn-success">Enabled</label>
+            <label class="btn btn-secondary">
+                <a href="{{url_for('reference.deactivate_reference')}}?reference={{RD.name}}">Disable</a>
+            </label>
+        </div>
+        {% else %}
+        <div class="btn-group">
+            <label class="btn btn-secondary">
+                <a href="{{url_for('reference.activate_reference')}}?reference={{RD.name}}">Enable</a>
+            </label>
+            <label class="btn btn-danger">Disabled</label>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="form-group">
+        <label for="reference_description_{{RD.name}}">Description</label>
+        <ul class="nav nav-tabs nav2" role="tablist">
+            <li class="nav-item" role="presentation">
+              <a class="nav-link active" id="show_desc_tab" data-toggle="tab" data-target="#show_desc" role="tab" aria-controls="show_desc" aria-selected="true" href="#">Show</a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="edit_desc_tab" data-toggle="tab" data-target="#edit_desc" role="tab" aria-controls="edit_desc" aria-selected="false" href="#">Edit</a>
+            </li>
+        </ul>
+        <div class="tab-content" id="DescriptionTabContent">
+            <div class="tab-pane show active" id="show_desc" role="tabpanel" aria-labelledby="show_desc_tab">
+                <div class="card bg-light">
+                  <div class="card-body" id="markdown"></div>
+                </div>
+            </div>
+            <div class="tab-pane" id="edit_desc" role="tabpanel" aria-labelledby="edit_desc_tab">
+                <textarea rows="5" class="form-control" name="description" id="reference_description_{{RD.name}}">{{ RD.description }}</textarea>
+            </div>
+         </div>
+    </div>
+
+    <div class="form-group">
+      <label for="reference_synchronize_repository_{{RD.name}}">Repository</label>
+      <input type="text" class="form-control" name="repository" id="reference_synchronize_repository_{{RD.name}}" 
+             placeholder="https://gitlab.rivm.nl/bioinformatics/refdata_version_check.git" value="{{ RD.repository }}">
+    </div>
+
+    <div class="form-group">
+      <label for="reference_synchronize_repository_tag_{{RD.name}}">Tag</label>
+      <!--input type="text" class="form-control" name="tag" id="reference_synchronize_repository_tag_{{RD.name}}" 
+             placeholder="v1.1" value="{{ RD.tag }}"--> 
+      <select class="form-control form-control-sm" id="reference_synchronize_repository_tag_{{RD.name}}" name="tag">
+          <option disabled selected value> -- select a tag/branch -- </option>
+          {% for tag in available_tags %}
+          <option value="{{tag}}" {% if tag == RD.tag %}selected{% endif %}>{{ tag }}</option>
+          {% endfor %}
+        </select>
+    </div>
+   
+
+    <div class="form-group">
+      <label for="reference_synchronization_frequency_{{RD.name}}">Synchronization frequency (seconds)</label>
+      <input type="number" min="0" class="form-control" name="synchronization_frequency" id="reference_synchronization_frequency_{{RD.name}}" 
+             placeholder="86400" value="{{ RD.synchronization_frequency }}">
+      <small id="frequencyHelp" class="form-text text-muted">
+          Current Value: <span id="frequencyDays_{{RD.name}}">-</span> days, 
+                         <span id="frequencyHours_{{RD.name}}">-</span> hours, 
+                         <span id="frequencyMins_{{RD.name}}">-</span> min, 
+                         <span id="frequencySecs_{{RD.name}}">-</span> sec <br>
+      
+      </small>  
+    </div>
+
+    <div class="alert alert-light" role="alert"">
+        <small> 
+          Examples:<br>
+          &emsp;&emsp;daily: 86400 <br>
+          &emsp;&emsp;weekly: 604800 <br>
+          &emsp;&emsp;monthly: 2592000 <br>
+      </small>
+    </div>
+  
+    <!-- update frequency is actually not used anymore-->
+    <!--div class="form-group">
+      <label for="reference_update_frequency_{{RD.name}}">Update frequency (seconds)</label>
+      <input type="number" min="0" class="form-control" name="update_frequency" id="reference_update_frequency_{RD.name}}" placeholder="86400" value="{{ RD.update_frequency }}">
+    </div-->
+    <div class="form-group">
+      <label for="reference_precheck_command_{{RD.name}}">Precheck command (bash command)</label>
+      <input type="text" class="form-control" name="precheck_command" id="precheck_command_{{RD.name}}" 
+             placeholder="precheck_changes.sh" value="{{ RD.precheck_command }}">
+              <small class="form-text text-muted">
+                command  &lt;FLAGDIR&gt; &lt;WORKDIR&gt; &lt;LATESTVERSIONDIR&gt;<br>
+              </small>
+    </div>
+    <div class="form-group">
+      <label for="reference_synchronize_command_{{RD.name}}">Synchronize command (bash command)</label>
+      <input type="text" class="form-control" name="synchronize_command" id="synchronize_command_{{RD.name}}" 
+             placeholder="download_dataset.sh" value="{{ RD.synchronize_command }}">
+             <small class="form-text text-muted">
+                command  &lt;WORKDIR&gt; <br>
+              </small>
+    </div>
+
+    <div class="alert alert-light" role="alert"">
+        <small> 
+            <dl>  
+                <dt>FLAGDIR</dt><dd>base directory, where the flag files precheck_finished__no_changes.txt / precheck_finished__found_changes.txt need to be stored.</dd>
+                <dt>WORKDIR</dt><dd>working directory (usually "new"), place logfiles here, create a DATASET directory here.</dd>
+                <dt>LATESTVERSIONDIR</dt><dd>directory containing the current version, check for changes against this content</dd>
+             </dl>
+         </small>
+    </div>
+
+    <!-- for now the possible values are hardcoded. Later those values should be read from the API or the refdata_updater configuration.
+         The execution environment selected here will contain additional information (e.g. queue to use, walltime, number of cores, etc.) 
+         THE SELECTED VALUE HAS TO CORRESPOND TO THE STRING IN THE CONFIG.YAML OF REFERENCE_UPDATER!
+    -->
+    <div class="form-group">
+      <label for="execution_environment_{{RD.name}}">Execution environment</label>
+      <select class="form-control" name="execution_environment" id="execution_environment_{{RD.name}}" >
+             <option value="local" {% if RD.execution_environment == "local" %}selected{% endif %}>local</option>
+             <option value="standard"   {% if RD.execution_environment == "standard" %}selected{% endif %}>standard</option>
+             <option value="long_running"   {% if RD.execution_environment == "long_running" %}selected{% endif %}>long_running</option>
+        </select>
+    </div>
+
+
+    <hr>
+  
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="button" class="btn btn-danger" data-href="/remove_reference?name={{RD.name}}" data-toggle="modal" data-target="#confirm-delete">
+      Remove reference dataset
+    </button>
+  </form>
+</div>
+
+<!-- Contacts -->
+<div class="tab-pane" id="contacts" role="tabpanel" aria-labelledby="contacts-tab">
+</div>
+
+<!-- Metadata -->
+<div class="tab-pane h-100" id="refdatameta" role="tabpanel" aria-labelledby="refdatameta-tab">
+      {{ metadata_widget.render_metadata_editor(
+          id="comp_refdata_metadata_"+RD.name,
+          prefix=metadata_prefix,
+          project_name=RD.name, 
+          collection=collection, 
+          meta_default_values_collection='',
+          edit_allowed='true',
+          schemata_data_url=url_for('metaedit.schemata_for_reference_dataset', collection=collection, refdata_name=RD.name),
+          attribute_type=attribute_type
+      ) }}
+</div>
+
+<!-- Versions -->
+<div class="tab-pane fullheight" id="versions" role="tabpanel" aria-labelledby="versions-tab">
+  <div class="h100" id="versions-table"></div>
+</div>
+
+<!-- ImportState -->
+<div class="tab-pane" id="importstate" role="tabpanel" aria-labelledby="importstate-tab">
+  <div class="form-group">
+    <label for="import_state_{{import_state.id}}_current_version">current version</label>
+    <input type="number" class="form-control" name="import_state_current_version" id="import_state_{{import_state.id}}_current_version" value="{{import_state.current_version}}" readonly>
+
+    <label for="import_state_{{import_state.id}}_last_prechecked">last prechecked</label>
+    <input type="text" class="form-control" name="import_state_last_prechecked" id="import_state_{{import_state.id}}_last_prechecked" value="{{import_state.last_prechecked_iso}}" readonly>
+    
+    <label for="import_state_{{import_state.id}}_last_synchronized">last synchronized</label>
+    <input type="text" class="form-control" name="import_state_last_synchronized" id="import_state_{{import_state.id}}_last_synchronized" value="{{import_state.last_synchronized_iso}}" readonly>
+    
+    <label for="import_state_{{import_state.id}}_last_updated">last updated</label>
+    <input type="text" class="form-control" name="import_state_last_updated" id="import_state_{{import_state.id}}_last_updated" value="{{import_state.last_updated_iso}}" readonly>
+    
+    <hr>
+    <h3>Last processing task</h3>
+
+    <label for="import_state_{{import_state.id}}_last_task_changed">last task change</label>
+    <input type="text" class="form-control" name="import_state_last_task_changed" id="import_state_{{import_state.id}}_last_task_changed" value="{{import_state.last_task_changed_iso}}" readonly>
+  
+    
+    <label for="import_state_{{import_state.id}}_last_task_pid">last task PID/JOBID</label>
+    <input type="text" class="form-control" name="import_state_last_task_pid" id="import_state_{{import_state.id}}_last_task_pid" value="{{import_state.last_task_pid}}" readonly>
+  
+     
+      <label for="import_state_{{import_state.id}}_last_task_message">last task message</label>
+      <textarea rows="5" class="form-control" name="last_task-message" id="import_state_{{import_state.id}}_last_task_message" readonly>{{import_state.last_task_message }}</textarea>
+       
+     <label for="import_state_{{import_state.id}}_error_count">error count</label>
+    
+     <div class="input-group">
+     <input type="text" class="form-control" name="import_state_error_count" id="import_state_{{import_state.id}}_error_count" value="{{import_state.error_count}}"
+      aria-describedby="import_state_{{import_state.id}}_error_count_reset" readonly>
+       <span class="input-group-btn">
+          <button type="button" class="btn btn-danger" id="import_state_{{import_state.id}}_error_count_reset" 
+                  {% if import_state.error_count == 0 %} disabled {% endif %}>reset</button>
+       </span>
+    </div>
+
+      <hr>
+
+    <label for="import_state_{{import_state.id}}_dataset_id">dataset id</label>
+    <input type="text" class="form-control" name="import_state_dataset_id" id="import_state_{{import_state.id}}_dataset_id" value="{{import_state.dataset_id}}" readonly>
+    
+
+    </div>
+</div>
+
+<!-- REFERENCE DELETE CONFIMATION DIALOG -->
+
+<div class="modal" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                Remove reference
+            </div>
+            <div class="modal-body">
+                Are you sure you want to remove reference {{RD.name}}
+            </div>
+            <div class="modal-footer">
+                <form method="post" action="update_reference">
+                <input type="hidden" id="action_remove_reference" name="action" value="remove_reference">
+                <input type="hidden" id="reference" name="reference" value="{{RD.name}}">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger btn-ok">Delete</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+function displayFrequencyForHumans( seconds ) {
+  if( !isNaN(seconds) ) {
+      days  = Math.floor(seconds / 86400)
+      seconds = seconds - (days * 86400)
+      hours = Math.floor(seconds / 3600)
+      seconds = seconds - (hours * 3600)
+      mins  = Math.floor(seconds / 60)
+      seconds = seconds - (mins * 60)
+      secs  = seconds
+      $('#frequencyDays_{{RD.name}}').text(days)
+      $('#frequencyHours_{{RD.name}}').text(hours)
+      $('#frequencyMins_{{RD.name}}').text(mins)
+      $('#frequencySecs_{{RD.name}}').text(secs)
+  }
+  else {
+      $('#frequencyDays_{{RD.name}}').text("-")
+      $('#frequencyHours_{{RD.name}}').text("-")
+      $('#frequencyMins_{{RD.name}}').text("-")
+      $('#frequencySecs_{{RD.name}}').text("-")
+  }
+}
+
+
+$('#reference_synchronization_frequency_{{RD.name}}').on('input', function(){
+    seconds = +$('#reference_synchronization_frequency_{{RD.name}}').val()
+    displayFrequencyForHumans( seconds )
+});
+
+
+$('.nav2').on('shown.bs.tab', function(event){
+  target = event.target.getAttribute('href')
+  activetab = target
+  if (target == "#versions") {
+    load_versions();
+  }
+})
+
+
+function load_versions() {
+  $.get('{{ url_for("reference.versions_table") }}?name={{ RD.name }}&id={{ RD.id }}', {
+    project: "{{ RD.name }}"
+  }, function(data) {
+     $('#versions-table').html(data);
+  });
+}
+
+
+function load_contacts() {
+    $.get("{{ url_for('contacts.contactmanager') }}", {
+      object: '{{ RD.name }}',
+      objecttype: 'reference_data'
+    }, function(data) {
+
+      $('#contacts').removeClass('pending')
+      $('#contacts').html(data);
+    });
+}
+
+$('.contactmanager').on('shown.bs.tab', function (event) {
+    $('#contacts').addClass('pending')
+    load_contacts();
+});
+
+$( '#import_state_{{import_state.id}}_error_count_reset').on( "click", function(event){
+  $.get('{{ url_for("reference.reset_error_counter")}}', { reference_id: '{{ RD.id }}'} )
+      .done(function(data) {
+              $('#import_state_{{import_state.id}}_error_count').val('0');
+      })
+})
+
+
+seconds = +"{{ RD.synchronization_frequency }}"
+displayFrequencyForHumans( seconds )
+
+$(function(){
+  const md = window.markdownit();
+  const result = md.render( `{{ RD.description }}` );
+  $("#markdown").append(result)
+})
+
+</script>

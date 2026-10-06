@@ -1,0 +1,13 @@
+/* Reset fieldset/legend to look like normal labels */
+fieldset.alt-date-field {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+fieldset.alt-date-field > legend.form-label {
+  font-size: inherit;
+  font-weight: bold;
+  padding: 0;
+  margin-bottom: 0.5rem !important;
+}

@@ -1,0 +1,10 @@
+{% extends 'base2.html' %}
+  
+{% block content %}
+
+<div class="card card-body">
+<h1>You are not authorized to use this page</h1>
+<a href="{{ url_for('main.home') }}">Home</a>
+</div>
+
+{% endblock %}

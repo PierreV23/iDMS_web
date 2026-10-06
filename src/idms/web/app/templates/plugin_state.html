@@ -1,0 +1,349 @@
+{% extends 'base2.html' %} 
+{% block heading %}
+<h3>Plugin Architecture Overview</h3>
+{% endblock %}
+{% block menuname %} 
+menuname="plugins"
+{% endblock %}
+{% block content %} 
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --border-color: #e9ecef;
+            --primary: #0d6efd;
+            --success: #198754;
+            --badge-bg: #e7f1ff;
+            --badge-text: #0a58ca;
+            --code-bg: #f1f3f5;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            margin: 0 0 6px 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Summary Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card .label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 6px;
+            color: var(--primary);
+        }
+
+        /* Plugin Cards */
+        .plugin-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .plugin-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: #fafbfc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .plugin-title-group h2 {
+            margin: 0 0 4px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .plugin-title-group .description {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .badges {
+            display: flex;
+            gap: 8px;
+        }
+
+        .badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .badge-enabled { background: #d1e7dd; color: #0f5132; }
+        .badge-disabled { background: #f8d7da; color: #842029; }
+        .badge-optional { background: #e2e3e5; color: #41464b; }
+        .badge-required { background: #cff4fc; color: #055160; }
+
+        .plugin-body {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-section {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 14px;
+        }
+
+        .feature-section h3 {
+            margin: 0 0 12px 0;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .count-tag {
+            background: #e9ecef;
+            color: var(--text-main);
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .feature-item {
+            font-size: 13px;
+            padding: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 6px;
+        }
+
+        .feature-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .feature-item code {
+            font-family: SFMono-Regular, Consolas, Monaco, monospace;
+            background: var(--code-bg);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #d63384;
+        }
+
+        .ext-tag {
+            display: inline-block;
+            background: var(--badge-bg);
+            color: var(--badge-text);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            margin-right: 4px;
+        }
+
+        .empty-state {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-style: italic;
+            margin: 0;
+        }
+    </style>
+    <div class="container h-100 autoscroll">
+        <div class="header">
+            <p>Active registry of loaded plugins, navigation menus, extension mappings, and viewer handlers.</p>
+        </div>
+        <!-- Aggregate Summary Metrics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Total Plugins</div>
+                <div class="value">{{ plugins|length }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Registered Menu Entries</div>
+                <div class="value">{{ plugins|map(attribute='menus')|map('length')|sum }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">File Mappings</div>
+                <div class="value">{{ plugins|map(attribute='mappings')|map('length')|sum }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Viewer Handlers</div>
+                <div class="value">{{ plugins|map(attribute='handlers')|map('length')|sum }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Action Pages</div>
+                <div class="value">{{ plugins|map(attribute='actionpages')|map('length')|sum }}</div>
+            </div>            
+        </div>
+
+        <!-- Plugins Detail View -->
+        {% if plugins %}
+            {% for plugin in plugins %}
+            <div class="plugin-card">
+                <div class="plugin-header">
+                    <div class="plugin-title-group">
+                        <h2>{{ plugin.name }}</h2>
+                        <p class="description">{{ plugin.description }}</p>
+                    </div>
+                    <div class="badges">
+                        {% if plugin.enabled %}
+                            <span class="badge badge-enabled">Active</span>
+                        {% else %}
+                            <span class="badge badge-disabled">Disabled</span>
+                        {% endif %}
+
+                        {% if plugin.optional %}
+                            <span class="badge badge-optional">Optional</span>
+                        {% else %}
+                            <span class="badge badge-required">Core</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="plugin-body">
+                    <!-- Menus Section -->
+                    <div class="feature-section">
+                        <h3>Registered Menus <span class="count-tag">{{ plugin.menus|length }}</span></h3>
+                        {% if plugin.menus %}
+                            <ul class="feature-list">
+                                {% for menu in plugin.menus %}
+                                <li class="feature-item">
+                                    <strong>{{ menu.label }}</strong><br>
+                                    <small>Endpoint: <code>{{ menu.endpoint }}</code></small>
+                                    <br><small>Url: <a href="{{ menu.url }}">{{ menu.url }}</a></small>
+                                    {% if menu.icon %}
+                                        <br><small>Icon: <code>{{ menu.icon }}</code></small><i class="{{ menu.icon }}"></i>
+                                    {% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="empty-state">No menu items registered</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Mappings Section -->
+                    <div class="feature-section">
+                        <h3>Extension Mappings <span class="count-tag">{{ plugin.mappings|length }}</span></h3>
+                        {% if plugin.mappings %}
+                            <ul class="feature-list">
+                                {% for mapping in plugin.mappings %}
+                                <li class="feature-item">
+                                    <strong>Type:</strong> <code>{{ mapping.name }}</code><br>
+                                    <div style="margin-top: 4px;">
+                                        {% for ext in mapping.extensions %}
+                                            <span class="ext-tag">{{ ext }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="empty-state">No extension mappings registered</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Viewer Handlers Section -->
+                    <div class="feature-section">
+                        <h3>Document Handlers <span class="count-tag">{{ plugin.handlers|length }}</span></h3>
+                        {% if plugin.handlers %}
+                            <ul class="feature-list">
+                                {% for handler in plugin.handlers %}
+                                <li class="feature-item">
+                                    <strong>Format:</strong> <code>{{ handler.name }}</code><br>
+                                    <small>Callable: <code>{{ handler.handler.__name__ if handler.handler.__name__ else 'function' }}</code></small>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="empty-state">No viewer handlers registered</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Pages Section -->
+                    <div class="feature-section">
+                        <h3>Action Pages <span class="count-tag">{{ plugin.actionpages|length }}</span></h3>
+                        {% if plugin.actionpages %}
+                            <ul class="feature-list">
+                                {% for actionpage in plugin.actionpages %}
+                                <li class="feature-item">
+                                    <strong>Name:</strong> <code>{{ actionpage.name }}</code><br>
+                                    <small>Title: <code>{{ actionpage.title }}</code></small>
+                                    <br><small>Template: <code>{{ actionpage.template }}</code></small>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="empty-state">No action pages registered</p>
+                        {% endif %}
+                    </div>                
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="plugin-card" style="padding: 30px; text-align: center;">
+                <p class="empty-state">No plugins currently registered or loaded.</p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

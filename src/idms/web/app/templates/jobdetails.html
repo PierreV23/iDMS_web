@@ -1,0 +1,123 @@
+{% extends 'jobdetailmenu.html' %}
+
+{% block heading %}
+<h3>Job details for {{ jobnaam.htmlstring | safe }}</h3>
+{% endblock %}
+
+{% block menuname %}
+menuname='jobdetails'
+{% endblock %}
+
+{% block meta %}
+<meta http-equiv="refresh" content="30">
+{% endblock %}
+
+{% block content %}
+
+<script>
+
+  $(window).on('load', function () {
+    $.get('{{ url_for("jobs.processgraph") }}', {
+      runsheet: '{{ runsheet }}'
+    }, function (data) {
+      $('#processgraph').html(data)
+      let w = $("#processgraph").width().toString() + 'px';
+      $('svg').width(w);
+    })
+  });
+
+  function detailFilter(index, row) {
+    return row._data.multi > 1
+  }
+
+
+</script>
+
+
+{% if processgroupid != '' %}
+<div class="jobdetail-grid h-100">
+  {% endif %}
+  <div class="card h100 grid-jobmeta h-100">
+    <div class="card-header">
+      <div class="card-title">Job Parameters</div>
+    </div>
+    <div class="card-body h100 autoscroll">
+      <table id="jobdetails" 
+        data-toggle="table" 
+        data-striped="true"
+        data-detail-view="true"
+        data-detail-filter="detailFilter">
+        <thead>
+          <tr>
+            <th scope="col">Attribute</th>
+            <th scope="col">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in details %}
+          <tr>
+            <td>{{ entry }}</td>
+            <td>{{ details[entry].htmlstring | safe }}</td>
+          </tr>
+          {% endfor %}
+          {% for entry in multi %}
+          <tr DATA-MULTI={{ multi[entry] | length }}>
+            <td>{{ entry }}</td>
+            <td>{% if multi[entry] | length == 1 %}{{ multi[entry][0] | safe }}{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% if processgroupid != '' %}
+  <div class="card grid-pggraph h-100">
+    <div class="card-header">
+      <div class="card-title">Processgroup execution plan</div>
+    </div>
+    <div class="card-body h-100 nopadding" id="processgraph">
+    </div>
+  </div>
+  <div class="card grid-pgjobs h-100">
+    <div class="card-header">
+      <div class="card-title">Processgroup jobs</div>
+    </div>
+  <table id='pgprocessTable' data-classes='table table-bordered table-hover table-striped' data-toggle='table'
+    data-url='{{ url_for("jobs.processgroupprocs", processgroupguid=processgroupid) }}' data-striped="true" data-pagination="false"
+    data-show-columns-toggle-all="false" data-show-pagination-switch="false" data-show-toggle="false"
+    data-show-columns="false" data-search="false" data-sort-name="start">
+    <thead>
+      <tr>
+        <th data-sortable="true" data-field="runsheet">Runsheet</th>
+        <th data-field="description">Description</th>
+        <th data-field="state">State</th>
+        <th data-field="result">Result</th>
+        <th data-field="start">Start Time</th>
+        <th data-field="end">End Time</th>
+      </tr>
+    </thead>
+  </table>
+</div>
+</div>
+</div>
+{% endif %}
+
+<script>
+  multi = {{ multi | safe }}
+
+  function subTable($table, name) {
+    data = []
+    multi[name].forEach((x,i) => data.push({'field': x}))
+    $table.bootstrapTable({
+      columns: [{ field: 'field', title: name }],
+      data: data,
+      showHeader: false
+    })
+  }
+
+  $('table#jobdetails').on('expand-row.bs.table', function (e, index, row, $detail){
+    subTable($detail.html('<table></table>').find('table'), row[0])
+  });
+</script>
+
+{% endblock %}

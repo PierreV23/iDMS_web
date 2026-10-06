@@ -1,0 +1,266 @@
+{% import 'components/metadata_editor.html' as metadata_widget %}
+
+<script>
+var activemetatab = '{{ tabname }}';
+var objectmeta = {% if (object_avu | length > 0) %} true {% else %} false {% endif %}
+var currentJsonData = {{ json_data | tojson | safe }};
+var jsontree_loaded = false;
+
+</script>
+
+<div class="card-header d-flex align-items-center justify-content-between">
+    <div>
+        <ul class="nav nav-tabs meta-tabs">
+            <li class="nav-item mx-2">
+                <a class="nav-link"
+                    id="collmeta-tab"
+                    data-toggle="tab"
+                    href="#collmeta"
+                    role="tab"
+                    aria-controls="collmeta">Metadata</a>
+            </li>
+            <li class="nav-item mx-2">
+                <a class="nav-link"
+                    id="collmeta-raw-tab"
+                    data-toggle="tab"
+                    href="#collmeta-raw"
+                    role="tab"
+                    aria-controls="collmeta-raw">Raw Metadata</a>
+            </li>
+            <li class="nav-item mx-2">
+                <a class="nav-link {% if object_avu |length == 0 %} disabled {% endif %}"
+                    id="objectmeta-tab"
+                    data-toggle="tab"
+                    href="#objectmeta"
+                    role="tab"
+                    aria-controls="objectmeta">Object Metadata</a>
+            </li>
+        </ul>
+    </div>
+    {% if current_user.settings.get('sysmeta', 'true') == 'false' %}
+    <div class="small-bar"><i>System metadata is not shown (<a href="{{ url_for('main.settings') }}">settings</a>)</i>
+    </div>
+    {% endif %}
+</div>
+<!-- Sub-bar containing Checkboxes + System Metadata notice -->
+<div class="p-2 bg-light border-bottom d-flex align-items-center justify-content-between px-3">
+    <div class="d-flex align-items-center" style="gap: 15px;">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" onchange='avu_table()' id="metatoggle" checked>
+            <label class="form-check-label" id="metatext" for="metatoggle">
+                Value Formatted
+            </label>
+        </div>
+        {% if current_user.feature('metadataunits') %}
+        <div class="form-check" id="unit-check">
+            <input class="form-check-input" type="checkbox" value="" onchange='avu_table()' id="unittoggle">
+            <label class="form-check-label" id="unittext" for="unittoggle">
+                Show Unit
+            </label>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<div class="card-body noscroll tab-content m-0 p-0">
+    <div class="tab-pane h-100 noscroll nopadding" id="collmeta" role="tabpanel" aria-labelledby="collmeta-tab">
+    </div>
+    <div class="tab-pane m-2 h-100 scroll" id="collmeta-raw" role="tabpanel" aria-labelledby="collmeta-raw-tab">
+        <table class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>Attribute</th>
+                    <th>Value</th>
+                    {% if current_user.feature('metadataunits') %}
+                    <th class="unitvalues" style="display:none;">Unit</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+
+        {% for entry in coll_avu %}
+            <tr>
+                <td> {{ entry.name }} </td>
+                <td class="rawvalues" style="display:none;">{{ entry.value }}</td>
+                <td class="formatvalues"> {{ entry.htmlstring|safe }} </td>
+                {% if current_user.feature('metadataunits') %}
+                <td class="unitvalues" style="display:none;"> {{ entry.datatype or '' }} </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if object_avu | length > 0 %}
+    <div class="tab-pane m-2 h-100 scroll" id="objectmeta" role="tabpanel" aria-labelledby="objectmeta-tab">
+        <table class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>Attribute</th>
+                    <th>Value</th>
+                    {% if current_user.feature('metadataunits') %}
+                    <th class="unitvalues" style="display:none;">Unit</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+        {% for entry in object_avu %}
+            <tr>
+                <td> {{ entry.name }} </td>
+                <td class="rawvalues" style="display:none;">{{ entry.value }}</td>
+                <td class="formatvalues"> {{ entry.htmlstring|safe }} </td>
+                {% if current_user.feature('metadataunits') %}
+                <td class="unitvalues" style="display:none;"> {{ entry.datatype or '' }} </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+
+function reload_jsontree() {
+    if (jsontree_loaded == false) {
+        $jsontree.destroyAll();
+        $('#collmeta').empty().append('<div class="h-100" id="json-tree-1" data-jsontree-js="bindingOptions"></div>');
+        // Prevent JsonTree from handling right-click/context-menu events
+        document.querySelector('#json-tree-1').addEventListener(
+            'contextmenu',
+            function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            },
+            true
+        );
+        $jsontree.renderAll();
+
+        jsontree_loaded = true;
+    }
+}
+
+$('.meta-tabs').on('shown.bs.tab', function(event){
+    activemetatab = event.target.getAttribute('id')
+    if (activemetatab == 'collmeta-tab') {
+        reload_jsontree(); // Forces JsonTree to render on tab switch
+        $('#unit-check').hide()
+    } else {
+        $('#unit-check').show()
+    }
+    avu_table();
+    if (activemetatab != 'objectmeta-tab') {
+      $.post('{{ url_for("userinfo.usersetting") }}', {
+        attr: 'metatab',
+        value: activemetatab
+      })
+    }
+});
+
+function avu_table() {
+// Show unit is by default not checked, if checked values != None are displayed
+    if ( $("#metatoggle").is(':checked') ) {
+        $('.rawvalues').hide();
+        $('.formatvalues').show();
+    } else {
+        $('.rawvalues').show();
+        $('.formatvalues').hide();
+    };
+    if ( $("#unittoggle").is(':checked') ) {
+        $('.unitvalues').show();
+    } else {
+        $('.unitvalues').hide();
+    }
+
+    // Remove JsonTree selection/highlighting when row is clicked
+    document.querySelectorAll(
+        '#json-tree-1 .object-type-value-title'
+    ).forEach(function (element) {
+        element.onclick = null;
+    });    
+}
+
+$("#metatoggle, #unittoggle").on("change", function () {
+    avu_table();
+});
+
+$jsontree.setConfiguration({
+    text: {
+        objectText: "<small>[record]<small>",
+        arrayText: "<small>[list]<small>"
+    }
+});
+
+function bindingOptions() {
+    return {
+        allowEditing: {
+            bulk: false,
+            propertyNames: false,
+            stringValues: false
+        },
+        lineNumbers: {
+            enabled: false
+        },
+        paging: {
+            enabled: true
+        },
+        sideMenu: {
+            enabled: false,
+            showClearJsonButton: false,
+            showImportButton: false,
+            showOnlyDataTypesAvailable: true
+        },
+        title: {
+            enableFullScreenToggling: false,
+            showFullScreenButton: false,
+            text: "",
+            showCloseOpenAllButtons: true,
+            showCopyButton: false
+        },
+        fileDroppingEnabled: false,
+        hideRootObjectNames: true,
+        jsonIndentSpaces: 4,
+        rootName: "metadata",
+        openUrlsInSameWindow: false,
+        showArrayIndexBrackets: false,
+        showOpenedObjectArrayBorders: false,
+        showEmailOpenButtons: false,
+        showChildIndexes: false,
+        showCommas: false,
+        showExpandIcons: false,
+        showObjectSizes: false,
+        showPropertyNameQuotes: false,
+        showStringQuotes: false,
+        showValueColors: true,
+        sortPropertyNames: false,
+        data: currentJsonData,
+
+        events: {
+            onStringRender: function (element, value) {
+                // Check if the string contains HTML markup
+                if (value.innerHTML.includes("<")) {
+                    // Prevent JsonTree from intercepting clicks on any rendered <a> links
+                    value.querySelectorAll("a").forEach(function (link) {
+                        link.addEventListener("click", function (event) {
+                            event.stopPropagation();
+                        });
+                    });
+                }
+            }
+        }
+    };
+}
+
+
+$(document).ready(function() {
+    if (objectmeta==true) {
+        var tabElement = $('a#objectmeta-tab')
+    } else {
+        var tabElement = $('a#' + activemetatab)
+    }
+    tabElement.tab('show')
+})
+
+</script>

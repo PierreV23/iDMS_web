@@ -1,0 +1,92 @@
+{% extends 'base2.html' %}
+
+{% block meta %}
+<meta http-equiv="refresh" content="30">  
+{% endblock %}
+
+{% block heading %}
+<h3>Job queue overview</h3>
+{% endblock %}
+
+{%block menuname %}
+menuname='joblist'
+{% endblock %}
+
+{% block content %}
+
+<script>
+$(document).ready(function(){
+  $('[data-toggle="tooltip"]').tooltip();   
+});
+</script>
+
+<!-- RUNSHEET JOB TABLE STARTS HERE -->
+<div class="card h-100">
+  <div class="card-header">
+    <div class="dropdown" style="display:inline">
+      <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+       {{ items }}
+      </button>
+      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        <a class="dropdown-item" href="/jobs?items=incoming">Incoming</a>
+        <a class="dropdown-item" href="/jobs?items=prepare">Prepare</a>
+        <a class="dropdown-item" href="/jobs?items=queued">Queued</a>
+        <a class="dropdown-item" href="/jobs?items=active">Active</a>
+        <a class="dropdown-item" href="/jobs?items=postprocessing">Post-processing</a>
+        <a class="dropdown-item" href="/jobs?items=notify">Notify</a>
+        <a class="dropdown-item" href="/jobs?items=done">Done</a>
+        <a class="dropdown-item" href="/jobs?items=notrun">Notrun</a>
+        <a class="dropdown-item" href="/jobs?items=waiting">Waiting</a>
+        <a class="dropdown-item" href="/jobs?items=error">Error</a>
+        <a class="dropdown-item" href="/jobs?items=all">All</a>
+      </div>
+    </div>
+    <div class="buttonbar" style="display:inline">
+      {% for button in buttons %}
+      <a class="btn {{ button['class'] }}" {{ button['ref'] | safe }} role="button"> {{ button['text'] }} </a>
+      {% endfor %}
+    </div>
+  </div>
+<div class="card-body scroll">
+<table class="table table-striped table-hover table-sm">
+<thead class="thead-dark">
+<tr>
+{% for column in columns %}
+<th scope="col">{{ column }}</th>
+{% endfor %}
+<!--
+<th>Actions</th>
+</tr>
+-->
+</thead>
+<tbody>
+{% for entry in joblist %}
+  {% if "Result" in entry and entry["Result"].value != 0 %}
+    <tr class="table-danger">
+  {% else %}
+    {% if entry.State.value in LAYOUT %}
+      <tr class="{{ LAYOUT[entry.State.value].tableclass }}">
+    {% else %}
+      <tr class="table-white">
+    {% endif %}
+  {% endif %}
+    {% for column in columns %}    
+        <td>
+        {% if column in entry %}
+          {% if '/jobs' in entry[column].htmlshort %}
+            {{ entry[column].htmlshort | striptags }}
+          {% else %}
+            {{ entry[column].htmlshort | safe }}
+          {% endif %}
+        {% endif %}</td>
+        
+    {% endfor %}
+    </tr>
+{% endfor %}
+</tbody>
+ </table>
+</div>
+
+</div>
+{% endblock %}
+

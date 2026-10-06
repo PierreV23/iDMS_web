@@ -1,0 +1,99 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3><b>Simple search</b></h3>
+{% endblock %}
+
+{% block menuname %}
+menuname='search_old'
+{% endblock %}
+
+{% block content %}
+
+<script>
+var search_id = Date.now()
+</script>
+
+<div class="card">
+    <div class="card-body">
+        <div class="form-group row">
+            <div class="col-sm-10">
+                <input type="text" id="search-text" minlength=5 data-trigger="manual" data-placement="top" data-content="minimum length of 5 characters" required>
+                <button id="btnSearch" type="button" class="btn btn-primary">Search</button>
+            </div>
+        </div>
+            <div class="form-group">
+                <div class="custom-control custom-switch">
+                    <input class="custom-control-input" type="checkbox" id="exactMatch">
+                    <label class="custom-control-label" for="exactMatch">Only exact matches</label>
+                </div>
+                <div class="custom-control custom-switch">
+                    <input class="custom-control-input" type="checkbox" id="searchMeta">
+                    <label class="custom-control-label" for="searchMeta">Search in metadata</label>
+                </div>
+                <div class="custom-control custom-switch">
+                    <input class="custom-control-input" type="checkbox" id="searchDatasetNames" checked>
+                    <label class="custom-control-label" for="searchDatasetNames">Search in name of collection/dataset</label>
+                </div>
+                <div class="custom-control custom-switch">
+                    <input class="custom-control-input" type="checkbox" id="searchObjectNames">
+                    <label class="custom-control-label" for="searchObjectNames">Search in name of dataobject</label>
+                </div>
+            </div>
+    </div>
+</div>
+
+<br>
+
+<div class="card">
+    <div class="card card-header">
+        <h5>Search results</h5>
+        <div class ="float-right">
+            <div class="buttons-toolbar"></div>
+        </div>
+    </div>
+    <div class="card card-body">
+           <center>
+            <img id="loading-indicator" src="{{ url_for('static', filename='img/loading.gif') }}" style="display: none">
+           </center>
+           <div class="" id="result-table">
+           </div>
+    </div>
+</div>
+       
+
+<script>
+$("#btnSearch").on("click", function() {
+    search_id = Date.now()
+    searchString = $( '#search-text' ).val()
+    if (searchString.length >= 5) {
+        $( '#result-table' ).empty()
+        $( '#loading-indicator' ).show()
+        $( '#search-text' ).popover( 'hide' ) 
+        searchOptions = {
+            'txt': searchString,
+            'exactMatch': $("#exactMatch").is(':checked'),
+            'searchMeta': $("#searchMeta").is(':checked'),
+            'searchDatasetNames': $("#searchDatasetNames").is(':checked'),
+            'searchObjectNames': $("#searchObjectNames").is(':checked'),
+            'searchId': search_id
+        }
+        $.get('{{ url_for("collbrowser.search_result_old") }}', searchOptions, function(content) {
+            //console.log(content.searchResults)
+            // only show result from the last search request
+            if (content.searchId == search_id) {
+                $( '#result-table' ).html(content.searchResults);
+            }
+        })
+        .always( function(){
+            $( '#loading-indicator' ).hide()
+        })
+    }
+    else {
+        $('#search-text').popover( 'show' ) 
+    }
+});
+
+
+</script>
+{% endblock %}

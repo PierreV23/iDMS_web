@@ -1,0 +1,46 @@
+{
+    "type": "object",
+    "properties": {
+        "sequencing::brand": {
+            "type": "string",
+            "title": "Sequencing Brand",
+            "enum": [
+                "Illumina",
+                "Nanopore"
+            ]
+        }
+    },
+    "if": {
+        "properties": {
+            "sequencing::brand": {
+                "const": "Illumina"
+            }
+        }
+    },
+    "then": {
+        "properties": {
+            "sequencing::type": {
+                "type": "string",
+                "title": "Sequencer type",
+                "enum": [
+                    "MiSeq",
+                    "NextSeq",
+                    "Other"
+                ]
+            }
+        }
+    },
+    "else": {
+        "properties": {
+            "sequencing::type": {
+                "type": "string",
+                "title": "Sequencer type",
+                "enum": [
+                    "MinION",
+                    "GridION",
+                    "Other"
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,425 @@
+{% macro render_metadata_editor(id, prefix, project_name, collection, meta_default_values_collection, edit_allowed, schemata_data_url, attribute_type) %}
+
+<script>
+  var formaction = 'default';
+
+  // edit_allowed can be a string or a boolean, for uniform handling:
+  {% set edit_allowed = edit_allowed|string|lower %}
+</script>
+
+<div class="selectgrid h-100">
+  <div class="card selectlist">
+    <div class="card-header">
+      <div class="card-title">Available schemata for: <b>{{ project_name }}</b></div>
+    </div>
+    <table id="{{ id }}-schemata-table" data-toggle='table' data-multi-sort="true" data-sort-name="order" data-sort-order="asc"
+      data-url="{{ schemata_data_url }}" data-checkbox-header="false">
+      <thead>
+        <tr>
+          <th data-field="selected" data-checkbox="true" title="Checking the box will display the form. Unchecking the box will delete all metadata in the form"></th>
+          <th data-field="schema" data-sortable="true">Schema Name</th>
+          <th data-field="schema_has_data" data-visible="false">has_data</th>
+          <th data-field="schemapath" data-visible="false"></th>
+          <th data-field="order" data-visible="false"></th>
+        </tr>
+      </thead>
+    </table>
+  </div>
+  <div class="card selectdetail">
+    <div class="card-header">
+      <div class="card-title"><b>Metadata Editor</b></div>
+      
+      <!-- for testing, uncomment these   
+        <h5 class="mt-5"><b>ID: </b>{{ id }}</h5>
+        <h5><b>Prefix for metadata: </b>{{ prefix }}</h5>
+        <h5><b>Project Name: </b>{{ project_name }}</h5>
+        <h5><b>Collection to store values on: </b>{{ collection }}</h5>
+        <h5><b>Collection to read default values from: </b>{{ meta_default_values_collection }}</h5>
+        <h5><b>edit_allowed: </b>{{ edit_allowed }}</h5>
+        <h5><b>data url to get schemata: </b>{{ schemata_data_url }}</h5>
+        <h5><b>attribute type: </b>{{ attribute_type }}</h5>
+     --> 
+      
+    </div>
+    <div class="card-body">
+      <div id="{{ id }}-schema-error" class="alert alert-danger" style="display: none; white-space: pre-line;"></div>
+      <div id="{{ id }}-reactform">
+        <center>SELECT A SCHEMA FILE...</center>
+      </div>
+    </div>
+    <div class="card-footer sticky-footer">
+      <button class="btn btn-primary formsubmit save_btn" type="submit" name="save" formnovalidate form="{{ id }}-metaForm" {% if edit_allowed == 'false' %}hidden{% else %}disabled{% endif %}>Save</button>
+      <!-- Only display the Continue button for dataset_uploads (never disable!)-->
+      <button class="btn btn-primary formsubmit continue_btn" type="submit" name="continue" form="{{ id }}-metaForm" {% if attribute_type != 'user::schema_in_use::dataset_upload' %}hidden{% else %}enabled{% endif %}>Save & Continue</button>
+    </div>
+  </div>
+</div>
+
+<!---------------------------------------------------------------------------------------------------------->
+
+<script src="{{ url_for('static', filename='js/rjsf_bundle.js') }}" crossorigin></script>
+<script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
+
+<script>
+
+
+(() => {
+  var selectedSchema = "";
+  let isFormChanged = false;
+  let isFormInitialized = false;
+  let ignoreCheck = false;
+  let uncheckDueToError = false;
+
+  // Warning if form is changed (only when edit allowed)
+  function confirmIfChanged() {
+    if (isFormChanged) {
+      {% if edit_allowed == 'true' %}
+      const selectedSchemaName = selectedSchema.match(/\/([^/]+)\.json$/)?.[1];
+      const proceed = confirm(
+        `You have unsaved changes in schema '${selectedSchemaName}' \nIf you switch to another schema these changes will be lost
+        \nCancel -> Return and Save to prevent deleting the changed metadata in '${selectedSchemaName}'
+        \nOK -> Proceed, Unsaved metadata in '${selectedSchemaName}' will be deleted!`
+      );
+      if (!proceed) return false;
+      {% endif %}
+    }
+    return true;
+  }
+
+  // Update the collection when a schema is enabled or disabled
+  const toggleRow = function (schemapath, schema_action) {
+    $.ajax({
+      method: "POST",
+      url: "{{ url_for('metaedit.set_schemata_for_collection') }}",
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      data: JSON.stringify({
+        collection: "{{ collection }}",
+        schemapath: schemapath,
+        action: schema_action,
+        meta_default_values_collection: "{{ meta_default_values_collection }}",
+        attr_type: "{{ attribute_type }}",
+        prefix: "{{ prefix }}"
+      })
+    }).done(function () {
+        refreshTable();
+        if (action == 'remove') {
+          selectedSchema = "";
+        }
+    });
+  }
+  
+  function refreshTable() {
+      $("#{{ id }}-schemata-table ").bootstrapTable("refresh", {
+        silent: true
+      });
+  }
+  
+    // Error Displaying
+  function showSchemaError(message) {
+    $('#{{ id }}-schema-error')
+      .text(message)
+      .show();
+  }
+
+  function hideSchemaError() {
+    $('#{{ id }}-schema-error')
+      .hide()
+      .text('');
+  }
+  
+  function handleFormError(error) {
+    const errorMessage = error
+      .map(error => error.stack || error.message || String(error))
+      .join('\n');
+    error = Array.isArray(error) ? error : [error];
+    
+    const schemaname = selectedSchema
+      ? selectedSchema.split('/').pop()
+      : 'unknown';
+
+    $('#{{ id }}-save').prop('disabled', true);
+    
+    uncheckDueToError = true;
+    
+    $('#{{ id }}-schemata-table').bootstrapTable('uncheckBy', {
+      field: 'schemapath',
+      values: [selectedSchema]
+    });
+
+    // Show error LAST
+    showSchemaError(
+      "The metadata form " + schemaname +
+      " contains an invalid JSON Schema.\n\n" +
+      errorMessage
+    );
+  }
+  
+  // Load the correct schema form when a schema is selected
+  const loadSchema = function(schemapath) {
+    
+    // Remove the currently displayed form immediately
+    unmountSchemaForm();
+
+    // set selectedSchema and determine schemaName for display
+    selectedSchema = schemapath
+
+    // Reset error-uncheck flag for this new load
+    uncheckDueToError = false;
+      
+    $.ajax({
+      method: "GET",
+      url: '{{ url_for("metaedit.get_schema_and_data") }}',
+      data: {
+        schemapath: schemapath,
+        collection: "{{ collection }}",
+        meta_default_values_collection: "{{ meta_default_values_collection }}",
+        prefix: "{{ prefix }}"
+      },
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      success: function (result) {
+          let schema;
+          let uiSchema;
+          let data;
+          
+          // Parse schema
+          try {
+            schema = JSON.parse(result.schema);
+          } catch (error) {
+            handleFormError([error]);
+            return;
+          }
+
+          // Parse UI schema
+          try {
+            uiSchema = JSON.parse(result.ui_schema);
+          } catch (error) {
+            handleFormError([error]);
+            return;
+          }
+
+          // Parse data
+          try {
+            data = JSON.parse(result.data);
+          } catch (error) {
+            handleFormError([error]);
+            return;
+          }
+          // All JSON parsed successfully
+          try {
+            renderFormFunction(
+              schema,
+              uiSchema,
+              data,
+              '{{ id }}-reactform'
+            );
+
+            $('#{{ id }}-save').prop('disabled', false);
+
+          } catch (error) {
+            // JSON was valid, but rendering failed
+            handleFormError([error]);
+            return;
+          }
+        },
+        error: function (xhr) {
+          let message = 'The metadata form could not be loaded.';
+          if (xhr.responseJSON) {
+            message = xhr.responseJSON.error || message;
+
+            if (xhr.responseJSON.details) {
+              message += "\n\nError:\n" + xhr.responseJSON.details;
+            }
+          }
+
+          // Do the uncheck first
+          uncheckDueToError = true;
+
+          $('#{{ id }}-schemata-table').bootstrapTable('uncheckBy', {
+            field: 'schemapath',
+            values: [schemapath]
+          });
+
+          // Display the error LAST
+          showSchemaError(message);
+
+          $('#{{ id }}-save').prop('disabled', true);
+        }
+    })
+  }
+
+  // Unmount current form
+  const unmountSchemaForm = function () {
+    const reactFormContainer = document.getElementById('{{ id }}-reactform');
+    if (reactFormContainer) {
+      window.unmountJsonSchemaForm({elementId: '{{ id }}-reactform'});
+    }
+    selectedSchema = "";
+    isFormChanged = false;
+    isFormInitialized = false;
+    hideSchemaError();
+  };
+  
+
+  // Install bootstraptable event handlers
+  $('#{{ id }}-schemata-table').bootstrapTable({
+    // On Row Click
+    onClickRow: function (row, $element, field) {
+
+      if (row.selected === false) return;
+      // prevent overwrite already filled metadata by clicking selected row
+      if (row.schemapath === selectedSchema) return;
+      if (!confirmIfChanged()) return;
+      unmountSchemaForm();
+      loadSchema(row.schemapath);
+      $('#{{ id }}-schemata-table tr').removeClass('highlight');
+      $element.addClass('highlight');
+    },
+    // On Check
+    onCheck: function (row, $element) {
+      if (ignoreCheck) {
+        ignoreCheck = false;
+        return;
+        }
+      if (!confirmIfChanged()) {
+        $('#{{ id }}-schemata-table').bootstrapTable('uncheckBy', {
+          field: 'schemapath',
+          values: [row.schemapath]
+        });
+      }
+      toggleRow(row.schemapath, 'add');
+      loadSchema(row.schemapath);
+      $('#{{ id }}-schemata-table tr').removeClass('highlight');
+      $element.addClass('highlight');
+      return;
+    },
+    // On UnCheck
+    onUncheck: function (row) {
+      {% if edit_allowed == 'true' %}
+        selectedSchema = row.schemapath
+        // Automatic uncheck caused by a schema error
+        if (uncheckDueToError && !row.schema_has_data) {
+          uncheckDueToError = false;
+          toggleRow(row.schemapath, 'remove');
+          $('#{{ id }}-schemata-table tr').removeClass('highlight');
+          return;
+        }
+        
+        // Warning that metadata is deleted due to error ( Error is displayed, metadata remains)
+        if (uncheckDueToError && row.schema_has_data ) {
+          ignoreCheck = true;
+          $('#{{ id }}-schemata-table').bootstrapTable('checkBy', {
+            field: 'schemapath',
+            values: [row.schemapath]
+          });
+          return;
+        }
+              
+        // Warning that metadata will be deleted (Only if data is changed, )
+        if (isFormChanged || row.schema_has_data) {
+          const selectedSchemaName = selectedSchema.match(/\/([^/]+)\.json$/)?.[1];
+          if (!confirm(
+            `Unchecking the select box will delete ALL metadata in '${selectedSchemaName}'. Do you want to proceed?`
+          )) {
+            ignoreCheck = true;
+            $('#{{ id }}-schemata-table').bootstrapTable('checkBy', {
+              field: 'schemapath',
+              values: [row.schemapath]
+            });
+            return;
+          }
+        };
+        
+        // Uncheck row, if no error occured, and no metadata will be deleted
+        toggleRow(row.schemapath, 'remove');
+        if (selectedSchema == row.schemapath) {
+          unmountSchemaForm();
+        }
+        
+      {% endif %}
+    }
+  })
+
+  const log = (type) => console.log.bind(console, type);
+  let metaForm;
+
+  function afterFormInit() {
+    isFormInitialized = true;
+    isFormChanged = false;
+    
+    // Disable form entries when editing is not allowed
+    {% if edit_allowed == 'false' %}
+      setTimeout(function () {
+        const frm = $("#{{ id }}-metaForm");
+        frm.find("input, select, textarea, button").prop("disabled", true);
+        frm.find("a").addClass("disabled-link"); 
+      } , 50);
+    {% endif %}
+  }
+
+  function renderFormFunction(schema, uiSchema, data, elementId) {
+    window.renderJsonSchemaForm({
+      schema: schema,
+      uiSchema: uiSchema,
+      formData: data,
+      elementId: elementId,
+      onChange: function () {
+            if (!isFormInitialized) return;
+            // Mark the form as changed
+            isFormChanged = true;
+            // Enable the Save button
+            $('.save_btn').removeAttr('disabled');
+          },
+      onSubmit: formSubmit,
+      onError: log("Form errors:"),
+      formId: "{{ id }}-metaForm",
+      afterInitFunction: afterFormInit
+    });
+  }
+
+  // Disable checkbox in schemata list when edit not allowed
+  {% if edit_allowed == 'false' %}
+  $('#{{ id }}-schemata-table').on('post-body.bs.table', function() {
+      $('#{{ id }}-schemata-table .bs-checkbox input').addClass('disabled-checkbox').prop('disabled', true);
+  });
+  {% endif %}
+  let formaction;
+  // Set a value for formaction
+  $('button.formsubmit[form="{{ id }}-metaForm"]').on('click', function () {
+      formaction = this.name;
+  });
+
+  function formSubmit(e) {
+    data = {
+      data: e.formData,
+      collection: "{{ collection }}",
+      schemapath: selectedSchema,
+      prefix: "{{ prefix }}",
+      action: formaction
+    },   
+    // store metadata
+    $.ajax({
+    method: "POST",
+    url: '{{ url_for("metaedit.store_metadata") }}',
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    data: JSON.stringify(data),
+    success: function () {     
+      // disable Save button
+      $('.save_btn').prop("disabled", true);
+      isFormChanged = false; // Clear changed-flag
+      refreshTable();
+      if (formaction === 'continue') {
+        window.location.replace('{{ url_for("upload.upload_data", coll=collection) }}');
+      }
+    },
+    error: function () {
+    }
+  });
+}
+
+})()
+</script>
+
+{% endmacro %}

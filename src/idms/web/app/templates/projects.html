@@ -1,0 +1,130 @@
+{% extends 'base2.html' %} {% block heading %}
+<h3>
+  Project details :
+  <div class="activeproject" style="display: inline"></div>
+</h3>
+{% endblock %} {%block menuname %} menuname='projects' {% endblock %} {% block menuitems %}
+<li class="nav-header bg-warning text-center">ACTIONS</li>
+<li class="nav-item">
+  <a class="nav-link" data-toggle="modal" data-target="#projectModal">
+    <i class="fas fa-plus nav-icon"></i>
+    Add new project
+  </a>
+</li>
+
+{% endblock %} {% block content %}
+<script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-jsonschema-form@1.8.1/dist/react-jsonschema-form.js" crossorigin></script>
+<script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
+
+<script>
+
+  $(document).on('click', '.projectname', function() {
+    resetUserSelection();
+    // Scroll to project, in case this is triggered programmatically
+    position = $(this).position().top - $('.fixed-table-body').height() / 2
+    $('.fixed-table-body').animate({scrollTop: position}, 500)
+    project=$(this).data('projectname');
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'last_project',
+      value: project
+    })
+    $('.projectname').removeClass('highlight')
+    $('.processname').removeClass('highlight')
+    $('.activeproject').html(project)
+    $(this).addClass("highlight")
+    $('#details').html('<center><img src="{{ url_for('static', filename='img/loading.gif') }}" width="30%"></img><center>')
+    $.get('{{ url_for('projects.show_projectdetails') }}', {
+      name: project,
+      project_name: project,
+      processgroup: "{{ processgroup }}"
+    }, function(data) {
+      $('#details').html(data);
+      $("a[id='{{ activetabname }}-tab']").trigger('click')
+    });
+  });
+
+  $(window).on('load', function() {
+    setTimeout(function(){
+      $("td[data-projectname='{{ project }}']").trigger('click');
+    }, 20)
+  });
+
+  // Some functions for the processgroup graphs
+
+  $(document).on('click', '#select_input_button', function(){
+      if (mode != 'select_input') {
+          mode = 'select_input';
+          console.log('Mode: select_input')
+      } else {
+          mode = 'display'
+      }
+      load_pgpage();
+  })
+
+  // to reset selected users on project change
+  let selectedAccount = null;
+  let foundUsers = [];
+  let existingUsers = [];
+
+  function resetUserSelection() {
+      selectedAccount = null;
+      foundUsers = [];
+
+      $('.userSelect').val('');
+      $('.user-add').prop('disabled', true);
+      $('.user-delete').prop('disabled', true);
+  }
+</script>
+
+<div class="modal fade" id="projectModal">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Add project</div>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form class="form" action="{{ url_for('projects.update_projectsettings') }}" method="post">
+        <div class="form-group">
+          <div class="modal-body">
+            <label for="new_pname" class="col-form-label">Project identifier (no spaces)</label>
+            <input type="text" class="form-control menuexpand" id="new_pname" name="project" />
+            <input type="hidden" name="action" value="add_project" />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="selectgrid h-100">
+  <div class="card selectlist">
+    <div class="card-body nopadding scroll">
+      <table id="projects-table" data-toggle="table" data-search="true">
+        <thead>
+          <tr>
+            <th data-field="project">Project</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for project in projects | sort %}
+          <tr>
+            <td class="projectname" data-projectname="{{ project }}">{{ project }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card selectdetail" id="details"></div>
+</div>
+
+{% endblock %}

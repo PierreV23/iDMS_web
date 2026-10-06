@@ -1,0 +1,147 @@
+<!-- Bootstrap editable -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-editable.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='font-awesome-3.2.1/css/font-awesome.min.css') }}" />
+<script src="{{ url_for('static', filename='js/bootstrap-editable.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap-table-editable.min.js') }}"></script>
+
+<div id="alert-container" style="position: absolute; top: 10%; right: 40%; z-index: 9999; width: 320px"></div>
+
+<table
+  id="version-table"
+  class="table"
+  data-toggle="table"
+  data-striped="true"
+  data-pagination="true"
+  data-pagination-use-intermediate="true"
+  data-page-list="[10, 50, 100]"
+  data-page-size="10"
+  data-detail-view="true"
+  data-detail-formatter="detailFormatter"
+  data-filter-control="true"
+  #data-height="500"
+  data-icons-prefix="fa"
+  data-show-button-icons="false"
+  data-search="false"
+  data-unique-id="id"
+  data-buttons-prefix="btn-sm btn"
+  data-editable="true"
+  data-side-pagination="client"
+  data-row-style="rowStyleFunction"
+  data-sort-name="creation_date"
+  data-sort-order="desc">
+  <thead>
+    <tr>
+      <th data-field="irods_display_path" data-align="left" data-sortable="true" data-filter-control="input">
+        Collection
+      </th>
+      <th data-field="creation_date" data-align="" data-sortable="true">Creation Date</th>
+      <th
+        data-field="version_name"
+        data-align=""
+        data-sortable="true"
+        data-title="Version Name"
+        data-editable="true"
+        data-editable-type="text"
+        data-editable-mode="inline">
+        Version Name
+      </th>
+      <th data-field="dataset_id" data-align="left" data-sortable="false">Dataset Id</th>
+      <th data-field="is_valid" data-align="left" data-sortable="false">Usable</th>
+      <!--th data-field="version" data-align="" data-sortable="false">Version Number</th-->
+    </tr>
+  </thead>
+</table>
+
+<script>
+
+  function rowStyleFunction( row, index) {
+    if( row['is_valid'] == 0 ) {
+      return {
+        css: {
+          'background-color': 'red'
+        }
+      }
+    }
+    return {}
+  }
+
+
+
+  function detailFormatter(index, row) {
+      var html = []
+      var meta = row["irods_metadata"]
+      $.each(meta, function (key, value) {
+        html.push('<p><b>' + key + ':</b> ' + value + '</p>')
+      })
+      return html.join('')
+    }
+
+  function showToast(message, type = 'warning') {
+    const alertHtml = `
+      <div class="alert alert-${type} alert-dismissible fade show shadow" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `;
+    const $alert =$(alertHtml).appendTo('#alert-container');
+
+    // Auto-dismiss after 4 seconds
+    setTimeout(() => {
+      $alert.alert('close');
+    }, 4000);
+  }
+
+  $('#version-table').bootstrapTable({
+    data: {{ data | safe }}
+  }).on('editable-save.bs.table', function(e, field, row, rowIndex, oldValue, $el) {
+    const newValue = row[field];
+    const { reference_id, version_id } = row;
+
+    // 1. Skip if value hasn't changed
+    if (oldValue === newValue) {
+      return;
+    }
+
+    // 2. Retrieve all current rows in the table
+    const tableData = $('#version-table').bootstrapTable('getData');
+
+    // 3. Check if any row OTHER than the edited one already uses the newValue
+    const isDuplicate = tableData.some(function(item, index) {
+      return index !== rowIndex && item[field] === newValue;
+    });
+
+    if (isDuplicate) {
+      showToast(`<strong>Duplicate Entry:</strong> "${newValue}" already exists.`, 'warning');
+      
+      row[field] = oldValue;
+      $('#version-table').bootstrapTable('updateRow', { index: rowIndex, row: row });
+      return;
+    }
+
+    // 4. Send the unique value to Flask
+    $.post('{{ url_for("reference.change_version_name") }}', {
+      reference_id: reference_id,
+      version_id: version_id,
+      new_name: newValue
+    })
+    .fail(function() {
+      alert("Error saving change to server.");
+      // Revert in case of server-side failure
+      row[field] = oldValue;
+      $('#version-table').bootstrapTable('updateRow', {
+        index: rowIndex,
+        row: row
+      });
+    });
+  });
+
+  $(document).on('click', '.path-change', function () {
+    collection = (this.nodeName == "g" ? this.id : $(this).data('path'));
+    history.pushState({ "coll": collection }, 'Browse ' + collection, '/collbrowser?path=' + collection);
+    $.post('{{ url_for("userinfo.usersetting") }}', {
+      attr: 'path',
+      value: collection
+    })
+    window.open( '/collbrowser?path='+collection, '_blank');
+  });
+</script>

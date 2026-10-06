@@ -1,0 +1,245 @@
+<!-- PROCESS SETTINGS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap4.min.css') }}">
+<script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+
+<div class="card h-100">
+  <div class="card-header">
+    <ul class="nav nav-tabs nav2">
+      <li class="nav-item mx-2">
+        <a class="nav-link active" id="procsettings-tab" data-toggle="tab" href="#procsettings"
+          role="tab" aria-controls="procsettings" aria-selected="false">Settings</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link" id="users-tab" data-toggle="tab" href="#users" role="tab"
+          aria-controls="users" aria-selected="false">Managers</a>
+      </li>
+      <li class="nav-item mx-2">
+        <a class="nav-link" id="usage-tab" data-toggle="tab" href="#usage-content" role="tab"
+          aria-controls="usage-content" aria-selected="false">Usage</a>
+      </li>
+      {% if current_user.feature('reference') %}
+      <li class="nav-item mx-2">
+        <a class="nav-link" id="refdata-tab" data-toggle="tab" href="#refdata-content" role="tab"
+          aria-controls="refdata-content" aria-selected="false">ReferenceData</a>
+      </li>
+      {% endif %}
+      <li class="nav-item mx-2">
+        <a class="nav-link" id="process-stats-tab" data-toggle="tab" href="#process-stats-content" role="tab"
+          aria-controls="process-stats-content" aria-selected="false">Statistics</a>
+      </li>      
+    </ul>
+  </div>
+  <div class="card-body tab-content h-100">
+    <div class="tab-pane active" id="procsettings" role="tabpanel" aria-labelledby="procsettings-tab">
+      <form action="{{ url_for('projects.update_process') }}" method="post">
+        <input type="hidden" id="action" name="action" value="update_process2">
+        <input type="hidden" id="process" name="process" value="{{ details['name'] }}">
+        <input type="hidden" id="procid" name="procid" value="{{ details['id'] }}">
+
+        <div class="form-group">
+          <label for="description">Description</label>
+          <input type="text" class="form-control" name="description" id="description" placeholder="Description"
+            value="{{ details['description'] }}">
+        </div>
+
+        <div class="form-group">
+          <label for="gitrepo_{{process}}">GIT Repository</label>
+          <input type="text" class="form-control" name="repo" id="repo_{{process}}" placeholder="GIT Repo"
+            value="{{ details['repo'] }}">
+        </div>
+        {% if 'sites' in sites_and_clusters %}
+        <div class="form-group">
+          <label for="compatible_clusters_{{process}}">Compatible clusters</label>
+          <select class="form-control compatible-clusters-select2" name="compatible_clusters" id="compatible_clusters_{{process}}" multiple required>
+          {% for site in sites_and_clusters.get("sites", {}) %}
+            <optgroup label="{{ site }}">
+            {% for cluster, cluster_dict in sites_and_clusters.get("clusters",{}).items() if cluster_dict.get("site") == site %}
+              <option value="{{ cluster }}" {% if cluster in (details.get("compatible_clusters") or []) %}selected{% endif %}>
+                {{ cluster }} (type: {{ cluster_dict.get("type","unknown") }})
+              </option>
+            {% endfor %}
+            </optgroup>
+          {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label for="required_memory_{{process}}">Required memory (GB)</label>
+          <input type="number" class="form-control" name="required_memory" id="required_memory_{{process}}" placeholder="Required memory"
+            value="{{ details['required_memory'] }}">
+        </div>
+
+        <div class="form-group">
+          <label for="max_runtime_{{process}}">Maximum Runtime (s) (0 to disable)</label>
+          <input type="number" class="form-control" name="max_runtime" id="max_runtime_{{process}}" placeholder="Max Runtime"
+            value="{{ details['max_runtime'] }}">
+        </div>
+
+        <div class="form-group">
+          <label for="concurrency_limit_{{process}}">Concurrency limit (0 to disable)</label>
+          <input type="number" class="form-control" min="0" name="concurrency_limit" id="concurrency_limit_{{process}}" placeholder="Concurrency limit"
+            value="{{ details['concurrency_limit'] }}">
+        </div>
+
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="do_bringonline" value="true" {% if
+            details['omit_bringonline'] !=1 %}checked{% endif %} id="do_bringonline_{{process}}">
+          <label class="form-check-label" for="do_bringonline_{{process}}">
+            Ensure data is online before starting process
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="do_staging" value="true" {% if details['omit_staging']
+            !=1 %}checked{% endif %} id="do_staging_{{process}}">
+          <label class="form-check-label" for="do_staging_{{process}}">
+            Download data from iRODS to input directory
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="modify_in_place" value="true" {% if
+            details['modify_in_place']==1 %}checked{% endif %} id="modify_in_place_{{process}}">
+          <label class="form-check-label" for="modify_in_place_{{process}}">
+            Modifies input collection, no output
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="restartable" value="true" {% if
+            details['restartable']==1 %}checked{% endif %} id="restartable_{{process}}">
+          <label class="form-check-label" for="restartable_{{process}}">
+            Restarts on error
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="distribution" value="true" {% if
+            details['distribution']==1 %}checked{% endif %} id="distribution_{{process}}">
+          <label class="form-check-label" for="distribution_{{process}}">
+            Distribution pipeline
+          </label>
+        </div>
+        <hr>
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="button" class="btn btn-primary" data-href="/remove_process2?name={{details['name']}}" data-toggle="modal" data-target="#confirm-delete">
+          Remove process
+        </button>
+
+      </form>
+    </div>
+
+    <div class="tab-pane" id="users" role="tabpanel" aria-labelledby="users-tab">
+    </div>
+
+    <div class="tab-pane h-100" id="usage-content" role="tabpanel" aria-labelledby="usage-tab">
+    </div>
+
+    <div class="tab-pane h-100 overflow-auto" id="refdata-content" role="tabpanel" aria-labelledby="refdata-tab">
+    </div>
+
+    <div class="tab-pane h-100 overflow-auto" id="process-stats-content" role="tabpanel" aria-labelledby="process-stats-tab">
+    </div>
+  </div>
+</div>
+
+<!-- PROCESS DELETE CONFIMATION DIALOG -->
+
+<div class="modal fade" id="confirm-delete" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        Remove process
+      </div>
+      <div class="modal-body">
+        Are you sure you want to remove process {{ details['name'] }}
+      </div>
+      <div class="modal-footer">
+        <form method="post" action="update_project">
+          <input type="hidden" id="action" name="action" value="remove_process">
+          <input type="hidden" id="process" name="process" value="{{ details['name'] }}">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger btn-ok">Delete</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+
+  function load_users() {
+    $.get("{{ url_for('projects.usermanager') }}", {
+      object: '{{ details['name'] }}',
+      objecttype: 'processes',
+      usertype: 'managers'
+    }, function(data) {
+      $('#users').html(data);
+    });
+  }
+
+  $('#users-tab').on('shown.bs.tab', function (e) {
+    load_users();
+  });
+
+  function load_usage() {
+    $('#usage-content').html('').addClass('pending')
+    $.get("{{ url_for('projects.processusage') }}", {
+      process: '{{ details['name'] }}'
+    }, function(data) {
+      $('#usage-content').html(data).removeClass('pending')
+    });
+  }
+
+  $('#usage-tab').on('shown.bs.tab', function (e) {
+    load_usage();
+  });
+
+
+  function load_refdata() {
+    $('#refdata-content').html('').addClass('pending')
+    $.get("{{ url_for('projects.process_list_refdata') }}", {
+      process: '{{ details['id'] }}'
+    }, function(data) {
+      $('#refdata-content').html(data).removeClass('pending')
+    });
+  }
+
+  $('#refdata-tab').on('shown.bs.tab', function (e) {
+    load_refdata();
+  });
+
+  $('#process-stats-tab').on('shown.bs.tab', function (e) {
+    load_process_stats();
+  });
+
+
+  function load_process_stats() {
+    $('#process-stats-content').html('').addClass('pending')
+    $.get("{{ url_for('projects.process_stats') }}", {
+      process: '{{ details['id'] }}'
+    }, function(data) {
+      $('#process-stats-content').html(data).removeClass('pending')
+    });
+  }  
+
+  // Disable checkbox 'Download data from iRODS to input directory' in Processes
+  function omit_check() {
+    if ($('input[name="do_bringonline"]').is(":checked")) {
+      $('input[name="do_staging"]').prop('disabled', false)
+    } else {
+      $('input[name="do_staging"]').prop('disabled', true).prop('checked', false)
+    }
+  }
+
+  $('input[name="do_bringonline"]').on('click', omit_check);
+  $('document').ready(function() {
+    omit_check();
+    $('.compatible-clusters-select2').select2();
+  });
+
+</script>

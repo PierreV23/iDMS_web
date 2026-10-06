@@ -1,0 +1,21 @@
+<table id='parsedDataTable2' 
+       data-toggle='table'
+       data-striped="true"
+       data-pagination="true"
+       data-height="500"  
+       data-show-columns-toggle-all="true"
+       data-show-pagination-switch="true"
+       data-show-toggle="true"
+       data-show-columns="true"
+       data-search="false"
+       xdata-buttons-prefix="btn-sm btn"
+       data-buttons-toolbar=".buttons-toolbar"></table>
+
+<script>
+$(function() {
+    $('#parsedDataTable2').bootstrapTable({
+      columns: {{ data.columnsJSON|safe }},  // here is where we use the column content from our Django View
+      data: {{ data.dataJSON|safe }} // we escape the content with the safe tag so the raw JSON isn't shown.
+    });
+  });
+</script>

@@ -1,0 +1,119 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3><b>Simple search</b></h3>
+{% endblock %}
+
+{% block menuname %}
+menuname='search'
+{% endblock %}
+
+{% block content %}
+
+<script>
+var search_id = Date.now()
+</script>
+
+<div class="card">
+    <div class="card-body">
+        <form class="form-inline search-form p-1">
+            <div class="input-group">
+                <label for="object_type_field" class="col-form-label">
+                    <i class="fas fa-info-circle pr-1" data-toggle="tooltip" title="What would you like to search for? Collections are like folders, objects are like files, and data sets are collections with metadata about processes."></i>
+                    Search for: 
+                </label>
+                <select id="object_type_field" class="custom-select">
+                    <option value="dataset" selected>Data set</option>
+                    <option value="collection">Collection</option>
+                    <option value="dataobject">Data object</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="search_in_selector" class="col-form-label">
+                    <i class="fas fa-info-circle pr-1" data-toggle="tooltip" title="What property would you like to search for? Note that collection/object names are full paths, which includes the project name as well."></i>
+                    by: 
+                </label>
+                <select id="search_in_selector" class="custom-select">
+                    <option value="collection_name" selected>Collection Name</option>
+                    <option value="object_name">Object Name</option>
+                    <option value="collection_metadata">Collection Metadata</option>
+                    <option value="dataobject_metadata">DataObject Metadata</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <div class="custom-control custom-switch form-check-inline">
+                    <input class="custom-control-input" type="checkbox" id="exactMatch">
+                    <label class="custom-control-label col-form-label" for="exactMatch">Only exact matches</label>
+                </div>
+            </div>
+        </form>
+        <form class="form-inline search-form p-1" onsubmit="return submit_search(event)">
+            <div class="input-group">
+                <input type="text" id="search-text" data-trigger="manual" data-placement="top" data-content="minimum length of 4 characters for data objects and collections"  class="form-control" placeholder="search text">
+            </div>
+            <div class="form-group">
+                <button id="btnSearch" type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<br>
+
+<div class="card">
+    <div class="card card-header">
+        <h5>Search results</h5>
+        <div class ="float-right">
+            <div class="buttons-toolbar"></div>
+        </div>
+    </div>
+    <div class="card card-body">
+           <center>
+            <img id="loading-indicator" src="{{ url_for('static', filename='img/loading.gif') }}" style="display: none">
+           </center>
+           <div class="" id="result-table">
+           </div>
+    </div>
+</div>
+       
+
+<script>
+
+function submit_search(e) {
+    e.preventDefault();
+    tableId = Date.now()
+    searchString = $( '#search-text' ).val()
+    objectType = $("#object_type_field").val()
+    exactMatch = $("#exactMatch").is(':checked')
+    searchObjectNames = $("#searchObjectNames").is(':checked')
+
+    if (searchString.length >= 5 || objectType == "dataset" || (exactMatch && searchString.length >= 1 )) {
+        $( '#result-table' ).empty()
+        $( '#loading-indicator' ).show()
+        $( '#search-text' ).popover( 'hide' )
+        searchOptions = {
+            'tableId': tableId,
+            'txt': $( '#search-text' ).val(),
+            'objectType': objectType,
+            'searchIn': $("#search_in_selector").val(),
+            'exactMatch': $("#exactMatch").is(':checked'),
+        }
+        $.get('{{ url_for("collbrowser.search_result_table") }}', searchOptions, function(content) {
+            // only show result from the last search request
+            if (content.tableId == tableId) {
+                $( '#result-table' ).html(content.searchResults);
+            }
+        })
+        .always( function(){
+            $( '#loading-indicator' ).hide()
+        })
+    }
+    else {
+        $('#search-text').popover( 'show' )
+    }
+    return false;
+}
+
+
+</script>
+{% endblock %}

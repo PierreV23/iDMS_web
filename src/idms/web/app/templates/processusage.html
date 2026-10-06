@@ -1,0 +1,85 @@
+<script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
+
+<div class="actiontable-grid h-100">
+    <div class="at-table h-100">
+    <table class="usageTable at-table" id="usageTable"
+        data-click-to-select="true" 
+        data-toggle='table' 
+        data-striped="true" 
+        xdata-height="500"
+        data-show-columns-toggle-all="false" 
+        data-show-pagination-switch="true" 
+        data-show-toggle="false"
+        data-show-columns="true"
+        data-sort-name="project"
+        data-url="{{ url_for('projects.process_usage_table', process=process) }}">
+        <thead>
+            <tr>
+                <th data-checkbox="true"></th>
+                <th data-sortable="true" data-field="project">Project</th>
+                <th data-sortable="true" data-field="processgroup">Processgroup</th>
+                <th data-sortable="true" data-field="name">Name</th>
+                <th data-sortable="true" data-field="tag">Tag</th> 
+            </tr>
+        </thead>
+
+    </table>
+    </div>
+
+    <div class="at-footer">
+        <form class="form-inline mt-4">
+            <div class="form-group mb-2 mr-sm-2">
+                <label for="new-tag" class="mr-2">New GIT TAG: </label>
+                <select class="form-control"  name="new-tag" id="new-tag">
+                </select>
+            </div>
+            <button class="btn btn-primary modify-tags mb-2">Update selected</button>
+        </form>
+    </div>
+
+    <script>
+
+    var $usageTable = $('table#usageTable')
+
+    $(function() {
+        $.get("{{ url_for('main.restcall', rest_endpoint='processes/' + process +'/tags') }}", 
+            function(data) {
+                for (var i=0; i<data.length; i++) {
+                    $('#new-tag').append('<option value="' + data[i] + '">' + data[i] + '</option')
+                }
+            })
+    })
+
+
+  $(function() {
+    $('.modify-tags').click(function (e) {
+      e.preventDefault();
+      var selected_tag = $('#new-tag').val()
+      var counter = 0
+      $.each($usageTable.bootstrapTable('getSelections'), function(i, entry) {
+        $('#usage-content').addClass('pending')
+        counter++
+        $.ajax({
+                url: "{{ url_for('main.restcall', rest_endpoint='') }}" + entry.url.substring(9),
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    tag: selected_tag
+                }),
+                dataType: 'json'
+            }).done(function(data) {
+                    $usageTable.bootstrapTable('updateCell', {index: i, field: 'tag', value: selected_tag})
+            }).fail(function(data) {
+                alert('Cannot change TAG for ' + entry.name)                
+            }).always(function(data){
+                counter--
+                if (counter == 0) {
+                    $('#usage-content').removeClass('pending')
+                    load_usage()
+                }
+            })
+      })
+    })
+  })
+
+    </script>

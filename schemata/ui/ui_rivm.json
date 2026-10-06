@@ -1,0 +1,175 @@
+{
+  "schema_version": {
+    "value": "1.2.4",
+    "ui:widget": "hidden"
+    },
+  "title": {},
+  "metadata_identifier": {
+    "ui:widget": "hidden"
+  },
+  "identifier": {
+    "ui:widget": "hidden"
+  },
+  "metadata_language": {
+    "ui:widget": "hidden"
+  },
+  "language": {},
+  "author": {
+    "name": {},
+    "affiliation": {},
+    "identifier": {},
+    "id_type": {}
+  },
+  "contact": {
+    "name": {},
+    "email": {}
+  },
+  "description": {},
+  "subject": {},
+  "keyword": {},
+  "distribution_date": {
+    "ui:widget": "hidden",
+    "ui:options": {
+      "yearsRange": [
+        1980,
+        2030
+      ],
+      "format": "YMD"
+    }
+  },
+  "depositor": {
+    "ui:widget": "hidden"
+  },
+  "authority": {
+    "ui:widget": "hidden"
+  },
+  "geographic_coverage": {},
+  "time_period": {
+    "items": {
+      "start": {
+        "ui:widget": "alt-date",
+        "ui:options": {
+          "yearsRange": [
+            1980,
+            2030
+          ],
+          "format": "YMD"
+        }
+      },
+      "end": {
+        "ui:widget": "alt-date",
+        "ui:options": {
+          "yearsRange": [
+            1980,
+            2030
+          ],
+          "format": "YMD"
+        }
+      }
+    }
+  },
+  "series": {},
+  "other_identifier": {},
+  "landing_page": {
+    "ui:widget": "hidden"
+  },
+  "documentation": {},
+  "related_resource": {},
+  "funding_information": {},
+  "access_rights": {},
+  "license": {},
+  "terms_of_use": {},
+  "legislation": {
+    "ui:widget": "hidden"
+  },
+  "hvd_category": {
+    "ui:widget": "hidden"
+  },
+  "hvd_category_url": {
+    "ui:widget": "hidden"
+  },
+  "download_url": {
+    "ui:widget": "hidden"
+  },
+  "distribution_title": {
+    "ui:widget": "hidden"
+  },
+  "byte_size": {
+    "ui:widget": "hidden"
+  },
+  "format": {
+    "ui:widget": "hidden",
+    "name": {},
+    "version": {},
+    "specification": {}
+  },
+  "version": {
+    "number": {},
+    "date": {
+      "ui:widget": "alt-date",
+      "ui:options": {
+        "yearsRange": [
+          1980,
+          2030
+        ],
+        "format": "YMD"
+      }
+    }
+  },
+  "status": {},
+  "modification_date": {
+    "ui:widget": "alt-date",
+    "ui:options": {
+      "yearsRange": [
+        1980,
+        2030
+      ],
+      "format": "YMD"
+    }
+  },
+  "availability": {
+    "ui:widget": "hidden"
+  },
+  "process_information": {
+    "url_selection_list": {},
+    "retention_processcategory": {
+      "ui:widget": "hidden"
+    },
+    "retention_process": {}
+  },
+  "retention_information": {
+    "period": {},
+    "trigger": {},
+    "start": {
+      "ui:widget": "alt-date",
+      "ui:options": {
+        "yearsRange": [
+          1980,
+          2030
+        ],
+        "format": "YMD"
+      }
+    }
+  },
+  "publish_to_external": {},
+  "external_connection_ngr": {
+    "ui:widget": "hidden"
+  },
+  "external_connection_inspire": {
+    "ui:widget": "hidden"
+  },
+  "metadata_location": {
+    "ui:widget": "hidden"
+  },
+  "dataset_location": {
+    "ui:widget": "hidden"
+  },
+  "source": {
+    "ui:widget": "hidden"
+  },
+  "metadata_author": {},
+  "skip_review": {},
+  "allow_skip_review": {
+    "ui:widget": "hidden"
+  }
+}

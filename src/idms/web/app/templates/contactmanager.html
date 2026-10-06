@@ -1,0 +1,288 @@
+<script>
+
+function deleteContact( entity_id, contact_id ) {
+   var data = {
+      "entity_id": `${entity_id}`,
+      "contact_id": `${contact_id}`,
+      "objecttype": "{{objecttype}}"
+   }
+   $.post( "{{ url_for('contacts.delete_contact') }}",
+           JSON.stringify(data),
+           function( data, status ) {
+              if( data['success'] ) {
+                $( '#contacts-alert' ).empty()
+                $( '#contacts-alert' ).hide()
+                $( `#row-contact-${contact_id}` ).remove()
+              }
+              else {
+                var msg = data['msg']
+                $( '#contacts-alert' ).html(msg)
+                $( '#contacts-alert' ).show()
+              }
+           },
+           'json' )
+}
+
+//all entity_id must be entity_id
+function updateContact( entity_id, contact_id, contact ) {
+    var data = {
+      "entity_id": `${entity_id}`,
+      "contact_id": `${contact_id}`,
+      "objecttype": "{{objecttype}}",
+      "contact": contact
+   }
+    $.post( "{{ url_for('contacts.update_contact') }}",
+           JSON.stringify(data),
+           function( data, status ) {
+              if( data['success'] ) {
+                $( '#contacts-alert' ).empty()
+                $( '#contacts-alert' ).hide()
+              }
+              else {
+                var msg = data['msg']
+                var contact = data['contact']
+                $( '#contacts-alert' ).html(msg)
+                $( '#contacts-alert' ).show()
+                //make sure the contact still shows the old state
+                $( `#contact-primary-${contact.id}`).prop('checked', true).change() 
+              }
+           },
+           'json' )
+}
+
+function createContact( entity_id, contact ) {
+    var data = {
+      "entity_id": `${entity_id}`,
+      "contact": contact,
+      "objecttype": "{{objecttype}}",
+   }
+    $.post( "{{ url_for('contacts.create_contact') }}",
+           JSON.stringify(data),
+           function( data, status ) {
+              if( data['success'] ) {
+                $( '#contacts-alert' ).empty()
+                $( '#contacts-alert' ).hide()
+                $( '#new_contact_name' ).val("")
+                $( '#new_contact_email' ).val("")
+                createContactRow( data.contact )
+              }
+              else {
+                var msg = data['msg']
+                $( '#contacts-alert' ).html(msg)
+                $( '#contacts-alert' ).show()
+              }
+           },
+           'json' )
+}
+
+function saveNewContact() {
+  createContact( "{{object}}", { 
+    "name": $( '#new_contact_name' ).val(),
+    "email": $( '#new_contact_email' ).val(),
+    "primary" : $('#new_contact_primary').prop("checked") ? 1 : 0,
+    "notify_data": $('#new_contact_notify_data').prop("checked") ? 1 : 0,
+    "notify_pipeline": $('#new_contact_notify_pipeline').prop("checked") ? 1 : 0,
+    "notify_errors": $('#new_contact_notify_errors').prop("checked") ? 1 : 0,
+    "notify_config_changes": $('#new_contact_notify_config_changes').prop("checked") ? 1 : 0,
+  });
+  // reset new contact switches
+  $('.new-contact').prop('checked', false)
+}
+
+function createContactRow( contact ) {
+  primary_checked = contact.primary == 1 ? "checked" : ""
+  notify_data_checked = contact.notify_data == 1 ? "checked" : ""
+  notify_pipeline_checked = contact.notify_pipeline == 1 ? "checked" : ""
+  notify_errors_checked = contact.notify_errors == 1 ? "checked" : ""
+  notify_config_changes_checked = contact.notify_config_changes == 1 ? "checked" : ""
+
+  var ct = $( "#contact-table" );
+  ct.append( `<tr id="row-contact-${contact.id}">
+    <td>${contact.name}</td>
+    <td>${contact.email}</td>
+    <td>
+      <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input toggle-primary-contact" id="contact-primary-${contact.id}"  data-contact_id="${contact.id}" ${primary_checked}>
+        <label class="custom-control-label" for="contact-primary-${contact.id}">&nbsp;</label>
+      </div>
+    </td>
+{% if options.new_data %}
+    <td>
+      <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input toggle-notify-data" id="contact-notify-data-${contact.id}"  data-contact_id="${contact.id}" ${notify_data_checked}>
+        <label class="custom-control-label" for="contact-notify-data-${contact.id}">&nbsp;</label>
+      </div>
+    </td>
+{% endif %}
+
+{% if options.pipeline_results %}
+    <td>
+      <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input toggle-notify-pipeline" id="contact-notify-pipeline-${contact.id}"  data-contact_id="${contact.id}" ${notify_pipeline_checked}>
+        <label class="custom-control-label" for="contact-notify-pipeline-${contact.id}">&nbsp;</label>
+      </div>
+    </td>
+{% endif %}
+
+{% if options.pipeline_errors %}
+    <td>
+      <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input toggle-notify-errors" id="contact-notify-errors-${contact.id}"  data-contact_id="${contact.id}" ${notify_errors_checked}>
+        <label class="custom-control-label" for="contact-notify-errors-${contact.id}">&nbsp;</label>
+      </div>
+    </td>
+{% endif %}
+
+{% if options.config_changes %}
+    <td>
+      <div class="custom-control custom-switch">
+        <input type="checkbox" class="custom-control-input toggle-notify-config-changes" id="contact-notify-config-changes-${contact.id}"  data-contact_id="${contact.id}" ${notify_config_changes_checked}>
+        <label class="custom-control-label" for="contact-notify-config-changes-${contact.id}">&nbsp;</label>
+      </div>
+    </td>  
+{% endif %}
+
+    <td><button class="btn btn-danger del-contact" data-contact_id="${contact.id}"><i class="fa fa-trash" aria-hidden="true"></i></button></td>
+  </tr>` )
+}
+
+
+
+  $( "#contacts-alert" ).hide()
+  var ct = $( "#contact-table" );
+  // ct.empty()
+  var pd_contacts = {{ contacts | tojson }}
+  pd_contacts.forEach( function(contact, index){
+    createContactRow( contact )
+  })
+
+  $( ".del-contact" ).on( 'click', function(event){
+    var contact_id = $( this ).attr("data-contact_id");
+    deleteContact( "{{object}}", contact_id );
+  })
+
+  $( ".toggle-primary-contact" ).on( 'click', function(event){
+    var contact_id = $( this ).attr("data-contact_id");
+    var data = { "primary" : $(this).prop("checked") ? 1 : 0 }
+    updateContact( "{{object}}", contact_id, data );
+  });
+
+  $( ".toggle-notify-data" ).on( 'click', function(event){
+    var contact_id = $( this ).attr("data-contact_id");
+    var data = { "notify_data" : $(this).prop("checked") ? 1 : 0 }
+    updateContact( "{{object}}", contact_id, data );
+  });
+
+  $( ".toggle-notify-pipeline" ).on( 'click', function(event){
+    var contact_id = $( this ).attr("data-contact_id");
+    var data = { "notify_pipeline" : $(this).prop("checked") ? 1 : 0 }
+    updateContact( "{{object}}", contact_id, data );
+  });
+
+  $( ".toggle-notify-config-changes" ).on( 'click', function(event){
+    var contact_id = $( this ).attr("data-contact_id");
+    var data = { "notify_config_changes" : $(this).prop("checked") ? 1 : 0 }
+    updateContact( "{{object}}", contact_id, data );
+  });
+
+  $( ".toggle-notify-errors" ).on( 'click', function(event){
+    var contact_id = $( this ).attr("data-contact_id");
+    var data = { "notify_errors" : $(this).prop("checked") ? 1 : 0 }
+    updateContact( "{{object}}", contact_id, data );
+  });
+
+</script>
+
+
+    {%  set numberOfOptions = 0 %}
+    {%  if options.new_data %}
+    {%     set numberOfOptions = numberOfOptions+1 %}
+    {%  endif %}
+    {%  if options.pipeline_results  %}
+    {%     set numberOfOptions = numberOfOptions+1 %}
+    {%  endif %}
+    {%  if options.pipeline_errors  %}
+    {%     set numberOfOptions = numberOfOptions+1 %}
+    {%  endif %}
+    {%  if options.config_changes %}
+    {%     set numberOfOptions = numberOfOptions+1 %}
+    {%  endif %}
+
+      <div id="contacts-alert" class="alert alert-danger" role="alert">
+        Error: msg
+      </div>
+      <table class="table table-bordered table-sm">
+        <thead>
+          <tr><th colspan="3">Contact details</th>
+             {%  if numberOfOptions > 0 %}
+              <th colspan="{{numberOfOptions}}">Notification Options</th>
+             {%  endif %}
+              <th>Actions</th></tr>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+            <th scope="col">Primary</th>
+            {% if options.new_data %}
+            <th scope="col">New data</th>
+            {% endif %}
+            {% if options.pipeline_results %}
+            <th scope="col">Pipeline results</th>
+            {% endif %}
+            {% if options.pipeline_errors %}
+            <th scope="col">Pipeline errors</th>
+            {% endif %}
+            {% if options.config_changes %}
+            <th scope="col">Config changes</th>
+            {% endif %}
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody id="contact-table">
+          {% if permissions.users or permissions.managers %}
+          <tr>
+          <td><input type="text" class="form-control" id="new_contact_name" value=""></td>
+          <td><input type="text" class="form-control" id="new_contact_email" value=""></td>
+          <td>            
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input new-contact" id="new_contact_primary" >
+              <label class="custom-control-label" for="new_contact_primary">&nbsp;</label>
+            </div>
+          </td>
+          {% if options.new_data %}
+          <td>            
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input new-contact" id="new_contact_notify_data" >
+              <label class="custom-control-label" for="new_contact_notify_data">&nbsp;</label>
+            </div>
+          </td>
+          {% endif %}
+          {% if options.pipeline_results %}
+          <td>            
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input new-contact" id="new_contact_notify_pipeline" >
+              <label class="custom-control-label" for="new_contact_notify_pipeline">&nbsp;</label>
+            </div>
+          </td>   
+          {% endif %}  
+          {% if options.pipeline_errors %}  
+          <td>            
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input new-contact" id="new_contact_notify_errors" >
+              <label class="custom-control-label" for="new_contact_notify_errors">&nbsp;</label>
+            </div>
+          </td>
+          {% endif %}
+          {% if options.config_changes %}  
+          <td>            
+            <div class="custom-control custom-switch">
+              <input type="checkbox" class="custom-control-input new-contact" id="new_contact_notify_config_changes" >
+              <label class="custom-control-label" for="new_contact_notify_config_changes">&nbsp;</label>
+            </div>
+          </td>    
+          {% endif %}        
+          <td><button class="btn btn-primary" onClick="saveNewContact()">save</button></td>
+          {% endif %}
+          </tr>
+        </tbody>
+      </table>
+    

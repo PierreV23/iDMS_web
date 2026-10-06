@@ -1,0 +1,9 @@
+{
+    "actions": ["Show actions pane", "true"],
+    "jobs": ["Show process configuration and job status page", "true"],
+    "projects": ["Show project configuration pages", "true"],
+    "provenance": ["Show and manage data provenance", "true"],
+    "reference": ["Show reference data configuration", "false"],
+    "sharing": ["Configure datasets that need to be shared externally", "false"],
+    "metadataunits": ["Show option to display unit column in metadata table", "false"]
+}

@@ -1,0 +1,95 @@
+<div class="action-topbar">
+    <div class="alignleft">
+        <button class="btn btn-outline-secondary" id="add-upstream">Add upstream dataset</button>
+    </div>
+    <div id="btns"></div>
+</div>
+<div>
+    <table id="upstream-table" class="table" data-buttons="buttons" data-show-button-icons="true"
+        data-buttons-prefix="btn-sm btn" data-toggle="table" data-url="{{ url_for('collbrowser.upstream') }}"
+        data-query-params="queryParams" data-select="true" data-buttons-toolbar="#btns">
+        <thead>
+            <tr>
+                <th data-checkbox="true"></th>
+                <th data-field=colllink data-sortable="true">
+                    Collection
+                </th>
+                <th data-field=type data-sortable="true">
+                    Type
+                </th>
+            </tr>
+        </thead>
+    </table>
+</div>
+<script>
+
+    $('#upstream-table').bootstrapTable()
+
+    function delete_upstream() {
+        $('#upstream-table').bootstrapTable('getSelections').forEach(element => {
+            $.ajax({
+                url: '{{ url_for("collbrowser.rmmeta") }}',
+                data: {
+                    collection: collection,
+                    attr: element.meta.attr,
+                    value: element.meta.value
+                },
+                async: false
+            });
+        })
+        load_graph()
+        load_actions()
+    }
+
+    function buttons() {
+        return {
+            btnDelete: {
+                text: 'Unlink selected upstream',
+                icon: "fa-link-slash",
+                event: function () {
+                    if (confirm('Are you sure you want to unlink selected collections?')) {
+                        delete_upstream()
+                    }
+                },
+                attributes: {
+                    title: 'Unlink selected upstream collections'
+                }
+            }
+        }
+    }
+
+    function queryParams(params) {
+        params.collection = collection
+        return params
+    }
+
+    function select_collection(caller, target, value) {
+        upstream = value['collection']
+        collection = caller.context['collection']
+        if (confirm(`Are you sure you want to set ${upstream} as upstream collection for ${collection}?`)) {
+            caller.close()
+            $.get('{{ url_for("collbrowser.addmeta") }}', {
+                collection: collection,
+                attr: "user::pipeline::input_collection",
+                value: upstream
+            }, function () {
+                load_graph()
+                load_actions()
+            })
+        }
+    }
+
+    $('#add-upstream').on('click', function () {
+        searchModal = new SearchModal({
+            api_available_attrs: '{{ url_for("search.api_available_attrs") }}',
+            api_attrvalues_for_search: '{{ url_for("search.api_attrvalues_for_search") }}',
+            api_searchtable: '{{ url_for("search.searchtable") }}',
+            format: 'plain',
+            context: { 'collection': collection },
+            select_function: select_collection
+        })
+        searchModal.show()
+
+    })
+
+</script>

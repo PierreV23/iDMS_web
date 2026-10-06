@@ -1,0 +1,14 @@
+{
+    "type": "object",
+    "properties": {
+        "author": {
+            "type": "string",
+            "title": "Author"
+        },
+        "BValues" : {
+            "type": "string",
+            "title": "BValues",
+            "enum": ["bee", "bear"]
+        }
+    }
+}

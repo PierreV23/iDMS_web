@@ -1,0 +1,22 @@
+{% extends 'base2.html' %}
+
+  
+{% block header %}
+<h2>{% block title %}iRODS Users{% endblock %}</h2>
+{% endblock %}
+
+{% block content %}
+<h2>iRODS Users</h2>
+<table class="table table-striped table-hover table-sm">
+<tr bgcolor=darkgray height=50>
+<th>Username</th>
+
+</tr>
+{% for entry in users %}
+<tr>
+   <td>{{ entry }}</td>
+
+   </tr>
+{% endfor %}
+ </table>
+{% endblock %}

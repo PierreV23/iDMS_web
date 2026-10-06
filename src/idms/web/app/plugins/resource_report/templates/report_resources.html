@@ -1,0 +1,20 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3>Resources</h3>
+{% endblock %}
+
+{%block menuname %}
+menuname='resource_report'
+{% endblock %}
+
+{% block content %}
+<div id="resources_table"><center><img src="{{ url_for('static', filename='img/loading.gif') }}" width="30%"></img><center></div>
+<script>
+$('document').ready(function(){
+    $.get("{{ url_for('resource_report.resource_data') }}", function(data) {
+        $("#resources_table").html(data)
+    })
+})
+</script>
+{% endblock %}

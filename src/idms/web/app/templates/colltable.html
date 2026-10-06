@@ -1,0 +1,156 @@
+
+<!-- UP-button used in colltable selector for igv viewer -->
+{% if options.up_btn is sameas true %}
+    {% set parts = path.split('/') %}
+    {% set count_slash = parts|length - 1 %}
+    {% if count_slash >= 2 %}  <!-- Prevent going to upper directories, without selection options -->
+        <button class="up-btn path-change" id="up-button" data-path="{{ parts[:-1] | join('/') }}" title="Go to parent directory">Up</button>
+    {% endif %}
+        <div class="irods-collection-wrapper">
+            <span>
+                <b>Collection:</b> {{ path }}
+            </span>
+        </div>
+        
+    
+{% endif %}
+<table id="colltable" class="table table-bordered"
+    data-toggle="table"
+    data-striped="true"
+    data-pagination="true"
+    data-pagination-use-intermediate="true"
+    data-page-list="[10, 25, 50, 100]"
+    data-page-size="{{ current_user.settings.get('page_size', 10) }}"
+    data-filter-control="true"
+    #data-height="500"
+    data-icons-prefix="fa"
+    data-row-style="rowStyleFunction"
+    data-show-button-icons="false"
+    data-search="false"
+    data-unique-id="id"
+    data-buttons-prefix="btn-sm btn"
+    data-url="{{ url_for('collbrowser.collcontents', path=path) }}"
+    data-side-pagination="server">
+    <thead>
+        <tr>
+            <th data-field="displayname" data-align="left" data-sortable="true" data-filter-control="input">Name</th>
+            {% if display_field %}
+            <th data-field="display_field" data-align="left" data-sortable="false" data-filter-control="input">Description</th>
+            {% endif %}
+            <th data-field="size" data-align="right" data-sortable="true" data-formatter="decDots">Size</th>
+            <th data-field="create_time" data-align="" data-sortable="true">Create Date</th>
+            <th data-field="owner_name" data-align="" data-sortable="true">Owner</th>
+            {% if options.download_btn == True %}
+            <th data-field="dnld" data-formatter="rowButtons"></th>
+            {% endif %}
+            {% if options.view_btn == True %}
+            <th data-field='view' data-formatter="rowButtons"></th>
+            {% endif %}
+            {% if options.delete_btn == True %}
+            <th data-field='delete' data-formatter="rowButtons"></th>
+            {% endif %}
+        </tr>
+    </thead>
+</table>
+
+<script>
+    var collection = "{{ path }}"
+    
+    var styles = {
+        "temporary": "table-warning",
+        "invalid": "table-danger",
+        "valid": "table-success",
+        "distributed": "table-secondary"
+    };
+
+    function decDots(value) {
+        if (isNaN(value)) {
+            return value
+        } else {
+            // Use . as thousands separator
+            return Intl.NumberFormat('nl-NL').format(value)
+        }
+    }
+
+    function decDots(value) {
+        if (isNaN(value)) {
+            return value
+        } else {
+            // Use . as thousands separator
+            return Intl.NumberFormat('nl-NL').format(value)
+        }
+    }
+
+    function rowStyleFunction(row, index) {
+        return {
+            classes: {% if options.row_select_class %}row.tableclass + " {{ options.row_select_class }}"{% else %}row.tableclass{% endif %},
+            css: {
+                'height': '22px !important',
+                'padding-top': '4px',
+                'padding-bottom': '4px',
+                'font-size': '12.8px'
+            }             
+        }
+    }
+
+    function confirmDelete(path, displayname) {
+        if (confirm('Are you sure you want to delete ' + displayname + ' ?') == true) {
+            $.post("{{ url_for('collbrowser.delete_file') }}", {
+                path: path
+            }, function(response) {
+                $('#colltable').bootstrapTable('refresh')
+            });
+        }
+    }
+
+    function rowButtons(value, row, index, field) {
+        if (row["object"] == "dataobject") {
+            if (field == "dnld") {
+                img = "{{ url_for('static', filename='img/download-button.png' ) }}"
+                path = encodeURIComponent(row['path'])
+                displayname = encodeURIComponent(row['displayname'])
+                res = `<a onClick="download_wrapper('${path}','${displayname}')"><img src="${img}" class="mybutton"></a>`
+                return res;
+            }
+            if (field == 'view') {
+                img = "{{ url_for('static', filename='img/view-button.png' ) }}";
+                path = encodeURIComponent(row['path'])
+                displayname = encodeURIComponent(row['displayname'])
+                res = `<a onClick="showModal('${path}','${displayname}')">
+                    <img src="${img}" class="mybutton"></a>`
+                return res;
+            }
+            if (field == 'delete') {
+                img = "{{ url_for('static', filename='img/delete-button.png' ) }}";
+                path = row['path']
+                displayname = row['displayname']
+                res = `<a onClick="confirmDelete('${path}','${displayname}')">
+                    <img src="${img}" class="mybutton"></a>`
+                return res;
+            }
+        }
+        return '';
+    }
+    
+
+    $('#colltable').bootstrapTable({
+        {% if options.row_handler is sameas True %}
+        onClickRow: function (row, element, field) {
+            if (row['object'] == 'dataobject' & field != 'dnld' & field != 'view') {
+                $('#colltable tr').removeClass('table-primary');
+                element.addClass('table-primary');
+                selected_object = row['path'];
+                collection = row['path'].substring(0, row['path'].lastIndexOf('/')) //Leave file name out of path when object selected in table
+                load_meta();
+                build_title();
+            }
+        },
+        {% endif %}
+        onPageChange: function (number, size) {
+            // Store the page size
+            $.post('{{ url_for("userinfo.usersetting") }}', {
+                attr: 'page_size',
+                value: size
+            })
+        }
+    })

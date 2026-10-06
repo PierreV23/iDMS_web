@@ -1,0 +1,401 @@
+{% macro render_menu_item(item) %}
+  {% if item.children %}
+    <li class="nav-item treeview menu">
+      <a class="nav-link" href="#">
+        <i class="nav-icon {{ item.icon }}"></i>
+        <p>{{ item.label }} <i class="right fas fa-angle-left"></i></p>
+      </a>
+      <ul class="nav nav-treeview">
+        {% for child in item.children %}
+          <li class="nav-item">
+            <a class="nav-link" data-menuname="{{ child.name }}" href="{{ child.href }}">
+              <i class="nav-icon {{ child.icon }}"></i>
+              <p>{{ child.label }}</p>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </li>
+  {% else %}
+    <li class="nav-item">
+      <a class="nav-link" data-menuname="{{ item.name }}" href="{{ item.href }}">
+        <i class="nav-icon {{ item.icon }}"></i>
+        <p>{{ item.label }}</p>
+      </a>
+    </li>
+  {% endif %}
+{% endmacro %}
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- favicon Huisstijl Rijksoverheid
+  <link rel="shortcut icon" type="image/svg+xml" href="{{ url_for('static', filename='files/favicons/favicon.svg') }}">
+  -->
+
+  <!-- favicon -->
+  <link rel="shortcut icon" type="image/svg+xml" href="{{ url_for('branding.static', filename=branding.FAVICON_URL) }}">
+  
+  <title>{{ branding.APP_NAME_LONG}}</title>
+
+  {% block meta %}
+
+  {% endblock %}
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mymodal.css') }}">
+
+  <!-- Bootstrap-table -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-table.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-table-filter-control.min.css') }}">
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='font-awesome-6.2.1/css/all.min.css') }}">
+
+  
+  <!-- branding CSS (e.g. Rijkshuisstyle etc.) -->
+  {% if branding.CUSTOM_CSS is not none %}
+  <link rel="stylesheet" href="{{ url_for('branding.static', filename=branding.CUSTOM_CSS) }}">
+  {% endif %}
+
+  <!-- generic styling changes-->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom-stylesheet.css') }}">
+
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.7.1/css/bootstrap-datepicker.min.css" rel="stylesheet"/>
+
+  <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+
+  <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap-autocomplete.min.js') }}"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.7.1/js/bootstrap-datepicker.min.js"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
+  <!-- https://copyprogramming.com/howto/bootstrap-table-with-filter-control-and-server-site -->
+  <script src="{{ url_for('static', filename='js/bootstrap-table-filter-control.js') }}"></script>
+  <!--script src="{{ url_for('static', filename='js/bootstrap-table-filter-control.min.js') }}"></script-->
+  <script src="{{ url_for('static', filename='js/bootstrap-table-auto-refresh.js') }}"></script>
+
+  <script src="{{ url_for('static', filename='js/adminlte.min.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/adminlte.min.css') }}">
+  <script src="{{ url_for('static', filename='js/search_modal.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/searchpage.css') }}">
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+
+  <!-- Jsontree -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/williamtroup/JsonTree.js@4.7.1/dist/jsontree.js.min.css"/>
+  <script src="https://cdn.jsdelivr.net/gh/williamtroup/JsonTree.js@4.7.1/dist/jsontree.min.js"></script>  
+  <link rel="stylesheet"
+      href="{{ url_for('static', filename='css/json-tree-custom.css') }}">
+
+  {% block head %}
+  {% endblock %}
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed layout-navbar-fixed">
+
+  {% with messages = get_flashed_messages(category_filter=["modalpopup", "news"], with_categories=true) %}
+  {% if messages %}
+  <div class="modal" data-show="true" id="message">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="tab-content">
+          {% for category, message in messages %}
+          <div class="tab-pane {% if loop.first %} active {% endif %}" id="message{{ loop.index }}">
+            <div class="modal-body">
+              {{ message | safe }}
+            </div>
+            <div class="modal-footer">
+              {% if loop.last %}
+              {% if category == "news" %}
+              <div class="form-check mr-auto">
+                <input class="form-check-input" type="checkbox" value="" id="dontshow">
+                <label class="form-check-label" for="dontshow">
+                  Don't show this again
+                </label>
+              </div>
+              {% endif %}
+              <button type="button" class="btn btn-primary msg-close" data-dismiss="modal">Close</button>
+              {% else %}
+              <button type="button" class="btn btn-primary" data-toggle="tab"
+                href="#message{{ loop.index + 1}}">Next</button>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $('#message').modal()
+    $('.msg-close').on('click', function () {
+      if ($('#dontshow').is(":checked")) {
+        $.post('{{ url_for("main.msgconfirm") }}')
+      }
+    })
+  </script>
+
+
+  {% endif %}
+  {% endwith %}
+
+  <!-- Main Sidebar Container -->
+  <aside class="main-sidebar sidebar-dark-primary sidebar-no-expand elevation-4" style="overflow-x: hidden">
+    <div class="brand-link logo-switch font-weight-light"
+        style="display:flex; align-items:center; justify-content:space-between; height:50px; padding:0 10px;">
+      <!-- Brand Logo -->
+      <a href="/" class="logo-xl" style="width:100px">
+        <!-- <img src="dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8"> -->
+        <span class="brand-link">
+          <img src="{{ url_for('branding.static', filename=branding.LOGO_URL ) }}"  alt="logo" width="44" height="44" />
+          {{ branding.APP_NAME_SHORT }} 
+        </span>
+      </a>
+      <!-- Hamburger Menu-->
+      <a data-widget="pushmenu" data-enable-remember=True href="#" role="button" style="display:flex; align-items:center; justify-content:center;">
+        <i class="fas fa-arrow-left brand-link logo-xl" style="width:40px; transition: width 0.0s"></i>
+        <i class="fas fa-arrow-right brand-link logo-xs" style="display:flex; align-items:center;"></i>
+      </a>
+    </div>
+
+    <div class="sidebar" style="height:calc(100% - (16.5rem + 2px))"><!--height adjusted for sidebar-bottom-->
+      <!-- Sidebar user panel (optional) -->
+      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <!-- <div class="image">
+          <img src="dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
+        </div> -->
+        <div class="info">
+          <a href="#" class="d-block">{{ current_user.fullname }}</a>
+          <p class="white">{{ current_user.irods_zone }}</p>
+        </div>
+        <div class="info mt-3 ml-5">
+          <a href="{{ url_for('auth.logout') }}">
+            Logout
+            <i class="fas fa-sign-out-alt nav-item"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- SidebarSearch Form -->
+      <!-- <div class="form-inline">
+        <div class="input-group" data-widget="sidebar-search">
+          <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
+          <div class="input-group-append">
+            <button class="btn btn-sidebar">
+              <i class="fas fa-search fa-fw"></i>
+            </button>
+          </div>
+        </div>
+      </div> -->
+
+      <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar nav-child-indent flex-column" 
+            data-widget="treeview" role="menu" data-accordion="false" id="main_sidebar_menu_list">
+
+          {% for item in sidebar_menu() %}
+            {{ render_menu_item(item) }}
+          {% endfor %}
+
+          <div class="separator"></div>
+
+          <li class="nav-item">
+            <a href="#" id="opensearch" data-menuname="search_datasets" class="nav-link">
+              <i class="fas fa-search nav-icon"></i>
+              <p>Search datasets (beta)</p>
+            </a>
+          </li>
+
+        </ul>
+      </nav>
+
+      <div class="separator"></div>
+      <nav>
+        <ul class="nav nav-pills nav-btns nav-sidebar nav-child-indent flex-column float-down" data-widget="treeview" role="menu"
+        data-accordion="false"  id="context_dependant_menu_list2">
+          {% block menubuttons %}
+          {% endblock %}
+        </ul>
+      </nav>
+      <nav>
+        <!-- CONTEXT_DEPENDANT MENU -->
+        <ul class="nav nav-pills nav-sidebar nav-child-indent flex-column" data-widget="treeview" role="menu"
+          data-accordion="false" id="context_dependant_menu_list1">
+          {% block menuitems %}
+          {% endblock %}
+        </ul>
+      </nav>
+      <!-- /.sidebar-menu -->
+    </div>
+
+    <div class="sidebar-bottom">
+      <!-- .sidebar-bottom -->
+      <div class="separator"></div>
+      <nav>
+        <ul class="nav nav-pills nav-sidebar nav-child-indent flex-column" data-widget="treeview" role="menu"
+          data-accordion="false" id="sidebar_bottom_menu_list">
+          <!-- Add icons to the links using the .nav-icon class
+              with font-awesome or any other icon font library -->
+
+          <li class="nav-item">
+            <a class="nav-link" href="/" role="button">
+              <i class="fas fa-home nav-icon"></i>
+              <p>Home</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" id="openhelp" data-menuname="help" class="nav-link" data-toggle="modal" data-target="#helpmodal">
+              <i class="fas fa-question nav-icon"></i>
+              <p>Help</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{{ url_for('main.settings') }}" data-menuname="settings" class="nav-link">
+              <i class="fas fa-gear nav-icon"></i>
+              <p>Settings</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="{{ url_for('main.about') }}" data-menuname="about" class="nav-link">
+              <i class="fas fa-info-circle nav-icon"></i>
+              <p>About</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" data-widget="fullscreen" href="#" role="button">
+              <i class="fas fa-expand-arrows-alt nav-icon"></i>
+              <p>Fullscreen</p>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <!-- /.sidebar-bottom -->
+    </div>
+
+    <!-- /.sidebar -->
+  </aside>
+
+<!-- HELP Modal -->
+<div class="modal" id="helpmodal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Help {% if self.helptitle() %} on {% endif %}{% block helptitle %}{% endblock %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>{% if not (self.helptext() | trim) %}No help is available for this page{% endif %}{% block helptext %} {% endblock %}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    {% with messages = get_flashed_messages(category_filter=["error"]) %}
+    {% if messages %}
+    {% for message in messages %}
+    <div class="flash_bar bg-danger flash-error"><b>{{ message }}</b></div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    {% if header_messages %}
+    {% for message in header_messages %}
+    <div class="flash_bar {{ message.class }}"><b>{{ message.msg | safe }}</b></div>
+    {% endfor %}
+    {% endif %}
+    <div class="title">{% block heading %}{% endblock %}</div>
+
+    <!-- Main content -->
+    <div class="content">
+      {% block content %} {% endblock %}
+    </div>
+    <!-- /.content-wrapper -->
+  </div>
+
+  <!-- Control Sidebar -->
+  <aside class="control-sidebar control-sidebar-light">
+    <!-- Control sidebar content goes here -->
+    {% block control_sidebar %} {% endblock %}
+  </aside>
+  <!-- /.control-sidebar -->
+
+  <script>
+
+    function sizing() {
+      $('html, body').css('height', '100%');
+      $('.content-wrapper').css('min-height', '60%');
+      let h = $(window).height() - $('.content-wrapper').offset().top
+      $('.content-wrapper').css('height', h)
+      h = $(window).height() - $('.content').offset().top - 10
+      $('.content').css('height', h)
+    };
+
+    $(window).resize(function () {
+      sizing();
+    })
+
+    $(function () {
+      sizing();
+    })
+
+    // enable tooltip on menu items
+
+    $('.sidebar').find('.nav-link').each(function () {
+      $(this).attr('title', $(this).children('p').html());
+    })
+
+    // Keep sidebar selection open and in focus
+    let menuname = "unknown"
+    {% block menuname %} {% endblock %}
+
+    $('a[data-menuname=' + menuname + ']').addClass('active')
+    $('a[data-menuname=' + menuname + ']').parents("li").addClass("menu-open active")
+
+    $('.menuexpand').on('click', function () {
+      $('[data-widget="pushmenu"]').PushMenu('expand');
+    })
+
+    $('#opensearch').on('click', function () {
+      console.log('Create search modal object')
+      searchModal = new SearchModal({
+        api_available_attrs: '{{ url_for("search.api_available_attrs") }}',
+        api_attrvalues_for_search: '{{ url_for("search.api_attrvalues_for_search") }}',
+        api_searchtable: '{{ url_for("search.searchtable") }}',
+        format: 'html'
+      })
+      searchModal.show()
+
+    })
+
+    function uploadDownstream() {
+      window.location.href = "{{ url_for('upload.new_upload')}}?parent=" + encodeURIComponent(collection)
+    }
+
+    $(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+  });
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,433 @@
+<html>
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mymodal.css') }}">
+    
+    <!-- Bootstrap-table -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-table.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-table-filter-control.min.css') }}">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='font-awesome-3.2.1/css/font-awesome.min.css') }}"> 
+    <link rel="stylesheet" href="{{ url_for('static', filename='font-awesome-6.2.1/css/all.min.css') }}">
+    
+    <!-- Custom Rijkshuisstijl Font and colors 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom-rijkshuisstijl.css') }}">
+    -->
+    
+    <!-- MyCustomCss -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom-stylesheet.css') }}">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/adminlte.min.css') }}">
+    
+    <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-autocomplete.min.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-table-filter-control.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-table-auto-refresh.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap-table-editable.js') }}"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/igv@3.5.0/dist/igv.min.js"></script>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/searchpage.css') }}">
+    <script src="{{ url_for('static', filename='js/search_modal.js') }}"></script>
+        
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.7.1/css/bootstrap-datepicker.min.css">
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.7.1/js/bootstrap-datepicker.min.js"></script>
+        
+        <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+</head>
+
+<body>
+    <script>
+        // Starting collection when you select an irods object
+        let browse_coll = "{{ coll }}"
+        let selected_object = ""
+    </script>
+    <div class="container-max-width">
+        <!--  Top Navbar -->
+        <nav class="navbar navbar-expand navbar-light bg-light">
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                            title="By default the previously selected reference genome is used">
+                            Select Genome
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item hosted-genome" href="#" data-toggle="modal"
+                                data-target="#hosted-genomes" title="IGV viewer has a selection of prehosted genomes">
+                                Hosted Genome ...
+                            </a>
+                            <a class="dropdown-item irods-modal irods-genome" href="#" data-toggle="modal"
+                                data-target="#irods-select" data-value="{{ coll }}"
+                                title="Find a reference genome in iRODS, relative to the selected file">
+                                Select iRODS object ...
+                            </a>
+                            <a class="dropdown-item irods-modal irods-genome" href="#" data-toggle="modal"
+                                data-target="#irods-select" data-value="/rivmZone/reference_dbs"
+                                title="Find a reference genome in iRODS in the reference datasets">
+                                Select iRODS reference dataset ...
+                            </a>
+                        </div>
+                    </li>
+                    <li class="nav-item active dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                            title="Select an additional track file">
+                            Add Track
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item irods-modal irods-track" href="#" data-toggle="modal"
+                                data-target="#irods-select" data-value="{{ coll }}"
+                                title="Find an track file in iRODS, relative to the selected file">Select Track file in
+                                iRODS...
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+                <form class="form-inline my-4 my-lg-0">{{ path }}
+                </form>
+            </div>
+        </nav>
+        
+<div id="igv-container" style="position: relative;">
+  <div id="igv-div"></div>   <!-- IGV.js target -->
+
+  <!-- Spinner overlay -->
+  <div id="loading-spinner" style="display:none;">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<style>
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #555;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin: 10px auto;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+
+        </div>
+
+        <!-- Modal to select an irods object-->
+        <div class="modal" data-show="true" id="irods-select">
+            <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Select iRODS object</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="select-object" style="height:80vh">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal"
+                            id="object-select-button">Select</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal to select Hosted Genome-->
+        <div class="modal" data-show="true" id="hosted-genomes">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Select Hosted Genome</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span inert="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="mb-6">
+                                <select class="form-select form-select-lg" size="10" aria-label="hosted genome"
+                                    id="genome-select">
+                                    <option value="tair10">A.thaliana(TAIR10)</option>
+                                    <option value="panPan2">Bonobo(MPI-EVApanpan1.1/panPan2)</option>
+                                    <option value="ce11">C.elegans(ce11)</option>
+                                    <option value="galGal6">Chicken(galGal6)</option>
+                                    <option value="panTro5">Chimp(panTro5)(panTro5)</option>
+                                    <option value="panTro6">Chimp(panTro6)(panTro6)</option>
+                                    <option value="panTro4">Chimp(SAC2.1.4/panTro4)</option>
+                                    <option value="GCA_000182895.1">Coprinopsiscinereaokayama7#130(GCA_000182895.1)
+                                    </option>
+                                    <option value="bosTau9">Cow(ARS-UCD1.2/bosTau9)</option>
+                                    <option value="bosTau8">Cow(UMD_3.1.1/bosTau8)</option>
+                                    <option value="dm3">D.melanogaster(dm3)</option>
+                                    <option value="dm6">D.melanogaster(dm6)</option>
+                                    <option value="dmel_r5.9">D.melanogaster(dmel_r5.9)</option>
+                                    <option value="canFam3">Dog(BroadCanFam3.1/canFam3)</option>
+                                    <option value="canFam5">Dog(canFam5)</option>
+                                    <option value="canFam4">Dog(UU_Cfam_GSD_1.0/canFam4)</option>
+                                    <option value="GCF_016699485.2">Gallusgallus(GCF_016699485.2)</option>
+                                    <option value="gorGor4">Gorilla(gorGor4.1/gorGor4)</option>
+                                    <option value="gorGor6">Gorilla(Kamilah_GGO_v0/gorGor6)</option>
+                                    <option value="hg19">Human(GRCh37/hg19)</option>
+                                    <option value="hg38">Human(GRCh38/hg38)</option>
+                                    <option value="hg18">Human(hg18)</option>
+                                    <option value="hg38_1kg">Human(hg381kg/GATK)</option>
+                                    <option value="chm13v1.1">Human(T2TCHM13-v1.1)</option>
+                                    <option value="hs1">Human(T2TCHM13-v2.0/hs1)</option>
+                                    <option value="GCA_011100615.1">Macacafascicularis6.0(GCA_011100615.1)</option>
+                                    <option value="macFas5">Macacafascicularis(macFas5)</option>
+                                    <option value="mm10">Mouse(GRCm38/mm10)</option>
+                                    <option value="mm39">Mouse(GRCm39/mm39)</option>
+                                    <option value="mm9">Mouse(NCBI37/mm9)</option>
+                                    <option value="GCF_001433935.1">O.sativaIRGSP-1.0(GCF_001433935.1)</option>
+                                    <option value="GCA_003086295.2">Peanut(GCA_003086295.2)</option>
+                                    <option value="susScr11">Pig(SGSCSscrofa11.1/susScr11)</option>
+                                    <option value="rn6">Rat(RGCS6.0/rn6)</option>
+                                    <option value="rn7">Rat(rn7)</option>
+                                    <option value="NC_016856.1">Salmonellaentericasubsp.enterica</option>
+                                    <option value="ASM985889v3">Sars-CoV-2(ASM985889v3)</option>
+                                    <option value="sacCer3">S.cerevisiae(sacCer3)</option>
+                                    <option value="ASM294v2">S.pombe(ASM294v2)</option>
+                                    <option value="danRer10">Zebrafish(GRCZ10/danRer10)</option>
+                                    <option value="danRer11">Zebrafish(GRCZ11/danRer11)</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal"
+                            id="hosted-genome-button">Select</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            var igvDiv = document.getElementById("igv-div");
+            var MainTrack = {   
+                        "name": "{{ name }}"
+                        , "url": "{{ url_for('docviewer.serve_file', path=path) }}"
+                        , "format": "{{ format }}"
+                        , "type": "alignment"
+                    }
+            fetchIndexPath("{{ path }}")
+                        .then(data => {
+                            if (data.exists) {
+                                MainTrack.indexURL =
+                                    "{{ url_for('docviewer.serve_file') }}" +
+                                    "?path=" + encodeURIComponent(data.index_path);
+                            }
+                        });
+            var options = {
+                tracks: [MainTrack]
+                }
+            {% if reftype == 'hosted' %}
+            options.genome = "{{ genome }}"
+            {% elif reftype == 'object' %}
+            options.genome = {
+                'fastaURL': "{{ url_for('docviewer.serve_file') }}" + "?path={{ ref_object }}",
+            }
+            fetchIndexPath("{{ ref_object }}")
+                        .then(data => {
+                            if (data.exists) {
+                                options.genome.indexURL =
+                                    "{{ url_for('docviewer.serve_file') }}" +
+                                    "?path=" + encodeURIComponent(data.index_path);
+                            }
+                        });
+                        
+            {% endif %};
+            
+            createIGV(igv, options)
+
+            
+            // If an irods-modal is selected, get initial path from data-value in html
+            document.querySelectorAll('.irods-modal').forEach(item => {
+            item.addEventListener('click', function () {
+            browse_coll = this.dataset.value;
+                });
+            });
+            
+            // Detect which irods selection modal is open
+            $(document).on("click", ".irods-modal", function () {
+                isTrackSelection = $(this).hasClass("irods-track");
+                isIrodsGenomeSelection = $(this).hasClass("irods-genome");
+            });
+
+            // Handle click "Select" button in modal
+            $(document).on('click', '#object-select-button', function () {
+                if (isTrackSelection) {
+                    handleIrodsTrackSelection(selected_object);
+                }
+                if (isIrodsGenomeSelection) {
+                    handleIrodsGenomeSelection(selected_object);
+                } 
+            });
+            
+            function fetchIndexPath(filePath) {
+                const url =
+                    "{{ url_for('igv.check_index') }}" +
+                    "?path=" + encodeURIComponent(filePath);
+
+                return fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error("Index lookup failed");
+                        }
+                        return response.json();
+                    });
+                    
+            }
+            
+            // Initialize an IGV viewer
+            function createIGV() {
+                igv.removeAllBrowsers()
+                igv.createBrowser(igvDiv, options).then(function (b) {
+                browser = b;   // save reference
+                });
+            }
+
+            // Handle selection of genome in iRODS
+            function handleIrodsGenomeSelection(obj) {
+                options.genome = {
+                    'fastaURL': "{{ url_for('docviewer.serve_file') }}" + "?path=" + browse_coll + "/" + obj,
+                }
+                fetchIndexPath(browse_coll + "/" + obj)
+                        .then(data => {
+                            if (data.exists) {
+                                options.genome.indexURL =
+                                    "{{ url_for('docviewer.serve_file') }}" +
+                                    "?path=" + encodeURIComponent(data.index_path);
+                            }
+                        });
+    
+                $.post('{{ url_for("userinfo.usersetting") }}', {
+                    attr: 'igv::reftype',
+                    value: 'object'
+                })
+                $.post('{{ url_for("userinfo.usersetting") }}', {
+                    attr: 'igv::fasta',
+                    value: browse_coll + '/' + obj
+                })
+                createIGV(igv, options) 
+            }
+            
+            // Handle selection of additional tracks (format and type are inferred!)
+            function handleIrodsTrackSelection(obj) {
+                const track_extension = obj.split('.').pop().toLowerCase();
+                const newTrack = {
+                    name: obj,
+                    url: "{{ url_for('docviewer.serve_file') }}" + "?path=" + browse_coll + "/" + obj,
+                    displayMode: "EXPANDED",
+                    format: track_extension,
+                    order: Number.MAX_VALUE // place at bottom
+                };
+                if (track_extension === "bam" || track_extension === "cram") {
+                    newTrack.type = "alignment";
+                    fetchIndexPath(browse_coll + "/" + obj)
+                        .then(data => {
+                            if (data.exists) {
+                                newTrack.indexURL =
+                                    "{{ url_for('docviewer.serve_file') }}" +
+                                    "?path=" + encodeURIComponent(data.index_path);
+                            }
+                            browser.loadTrack(newTrack);
+                        });
+
+                    return; 
+                }
+                // Show spinner
+                showSpinner();
+
+                // loadTrack returns a Promise
+                browser.loadTrack(newTrack).then(() => {
+                    hideSpinner();
+                }).catch(err => {
+                    console.error("Error loading track:", err);
+                    hideSpinner();
+                });
+            }
+
+            // --- Simple spinner helpers ---
+            function showSpinner() {
+                document.getElementById("loading-spinner").style.display = "block";
+            }
+            function hideSpinner() {
+                document.getElementById("loading-spinner").style.display = "none";
+            }
+                    
+            $(document).on('click', '#hosted-genome-button', function () {
+                options.genome = $('#genome-select').val()
+                // Store this as user setting
+                $.post('{{ url_for("userinfo.usersetting") }}', {
+                    attr: 'igv::reftype',
+                    value: 'hosted'
+                })
+                $.post('{{ url_for("userinfo.usersetting") }}', {
+                    attr: 'igv::genome',
+                    value: options.genome
+                })
+                createIGV(igv, options)
+            })
+                      
+            // Functions to make the select box work
+            $(document).on('click', '.path-change', function (e) {
+                browse_coll = $(this).data('path')
+                load_browser()
+            })
+            
+            // set select_object if an object is selected
+            $(document).on('click', '.object-select', function (e) {
+                $('#colltable tr').removeClass('table-primary');
+                $(this).addClass('table-primary');
+                selected_object = $(this).children(':first').html()
+            })
+            
+            // Show collist when browser is loaded
+            function load_browser() {
+                $.get('{{ url_for("collbrowser.collist") }}', {
+                    path: browse_coll,
+                    download_btn: "false",
+                    view_btn: "false",
+                    delete_btn: "false",
+                    up_btn: "true",
+                    row_handler: "false",
+                    row_select_class: "object-select",
+                    refresh: 1
+                }, function (data) {
+                    $('#select-object').html(data)
+                });
+            }
+            
+            // Reset selected_object when modal is opened
+            $('#irods-select').on('shown.bs.modal', function (e) {
+                selected_object = ""
+                load_browser()
+            })
+            
+        </script>
+    </div>
+</body>
+
+</html>

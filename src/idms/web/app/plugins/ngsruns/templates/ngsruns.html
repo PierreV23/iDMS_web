@@ -1,0 +1,198 @@
+{% extends 'base2.html' %}
+
+{% block heading %}
+<h3><b>NGS Run overview</b></h3>
+{% endblock %}
+
+{%block menuname %}
+menuname='run_list'
+{% endblock %}
+
+{% block helptitle %}
+the NGS runs overview
+{% endblock%}
+
+{% block helptext %}
+
+This page shows an overview of all NGS Runs on Oxford Nanopore technologies sequencers. <p>
+As soon as a collection is found that has a matching flowcell, it will be shown in the <emp>Collection</emp> column.<p>
+The project column will display <b>Multiple</b> if the sample sheet contains samples for multiple projects.<p>
+Selecting a row will display the barcodes on the right hand side, with options to <b>Delete</b> or <b>Edit</b> the sample sheet, 
+for example disabling specific barcodes.<p>
+Use the <a href="{{ url_for('ngsruns.run_form')}}">New run</a> menu item to create a new samplesheet.
+
+{% endblock %}
+
+{% block content %}
+
+<div class="row h-100">
+   <div class="h-100 card border-primary col-md-4 scroll">
+      <div class="card-header">
+         <h2 class="inline">List of all runs</h2>
+         <div class="inline float-right runtable-toolbar"></div>
+      </div>
+      <div class="card-body">
+         <table id="runtable" class="table"
+            data-toggle="table"
+            data-striped="true"
+            data-pagination="true"
+            data-page-size="10"
+            data-page-list=[10,25,50,100]
+            data-filter-control="true"
+            data-show-toggle="false"
+            data-show-columns="true"
+            data-show-filter-control-switch="true"
+            data-show-search-clear-button="true"
+            data-custom-sort="sorter"
+            data-side-pagination="server"
+            data-unique-id="id"
+            data-url="{{ url_for('ngsruns.runs') }}"
+            data-buttons-prefix="btn-sm btn"
+            data-buttons-toolbar=".runtable-toolbar">
+            <thead>
+               <tr>
+                  {% for c in columns %}
+                  <th data-field="{{columns[c]['field']}}"
+                      data-align="{{columns[c]['align']}}"
+                      data-sortable="{{columns[c]['sortable']}}"
+                      data-visible="{{columns[c]['visible']}}"
+                      data-filter-control="{{columns[c]['filtercontrol']}}"
+                      {% if 'formatter' in columns[c] %}
+                      data-formatter="{{columns[c]['formatter']}}"
+                      {% endif %}
+                      {% if columns[c]['filtercontrol']=="select" %}
+                          data-filter-data='url:{{ url_for("ngsruns.filterdata", field=columns[c]["field"]) }}'
+                      {% endif %}>
+                      {{columns[c]['title']}}
+                  </th>
+                  {% endfor %}
+               </tr>
+            </thead>
+         </table>
+
+      </div>
+   </div>
+
+   <div class="card border-primary col-md-8 d-nonxe h-100" id="barcodes">
+      <div class="card-header d-none" id="barcode-title">
+         <div class="alignleft">
+            <h2>
+               Barcodes in run with Run ID <b class="runid"></b>
+            </h2>
+            (Name: <b class="runname"></b>, Flowcell: <b class="flowcellname"></b><span
+                  class="rundescription"></span>)
+         </div>
+
+         <button type="button" class="btn btn-danger alignright" id="delete1" data-toggle="modal"
+            data-target="#confirm-delete">Delete</button>
+         <button type="button" class="btn btn-primary alignright" id="edit1">Edit</button>
+      </div>
+      <div class="scroll card-body" id="barcodepane">
+
+      </div>
+   </div>
+
+<div id="confirm-delete" class="modal fade" role="dialog">
+   <div class="modal-dialog">
+     <div class="modal-content">
+       <div class="modal-header">
+         <h5 class="modal-title">Confirm delete of </h5>
+       </div>
+       <div class="modal-body">
+         Are you sure you want to delete run <span class="runname"></span> and all associated barcodes?<p> This action cannot be undone!
+       </div>
+       <div class="modal-footer">
+         <button type="button" class="btn btn-danger btn-sm" data-dismiss="modal" id="deletebutton">Delete</button>
+         <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Cancel</button>
+       </div>
+     </div>
+   </div>
+ </div>
+
+<script>
+
+var selected_id = {{ idrequest }};
+
+function flowcellFormatter(value, row) {
+   if (row.duplicate){
+      return value + " (duplicate)"
+   } else {
+      return value
+   }
+}
+
+$(function () {
+   $('#runtable').bootstrapTable();
+   $('.bootstrap-table-filter-control-project').val('{{ default_project }}')
+   $('tr[data-uniqueid='+selected_id+'] > td:first-child').click()
+});
+
+function resize_tables() {
+   $('#barcodetable').attr('data-height', $('#barcodepane').height())
+}
+
+$('document').ready(function(){
+   $('#edit1').on('click', function(e) {
+      window.location.href = '{{ url_for("ngsruns.run_form") }}?id=' + selected_id;
+   })
+   $('#runtable').on('click-row.bs.table', function(e, row) {
+      selected_id = row.id
+      $('#barcode-title').removeClass('d-none')
+      if (row._authorized) {
+         $('#delete1').prop('disabled', false);
+         $('#edit1').prop('disabled', false);
+      } else {
+         $('#delete1').prop('disabled', true);
+         $('#edit1').prop('disabled', true);
+      }
+      $('.runid').html(row.id);
+      $('.runname').html(row.name);
+      $('.flowcellname').html(row.flowcell);
+      var row_display = ''
+      if (row.description) {
+         row_display = ', ' + row.description;
+      }
+      $('.rundescription').html(row_display);
+      $.get('{{ url_for("ngsruns.run_barcodes") }}', {
+         idrequest: row.id
+         }, function (data) {
+               $('#barcodepane').html(data);
+               $('tr[data-uniqueid='+selected_id+']').addClass('bg-secondary').siblings().removeClass('bg-secondary')
+               resize_tables();
+            }
+         );
+   });
+
+   $('#runtable').on('column-search.bs.table', function(e, column, value) {
+      $('#barcode-title').addClass('d-none')
+      $('#barcodepane').html('')
+      if (column == 'project') {
+         $.post('{{ url_for("userinfo.usersetting") }}', {
+            attr: 'default_project',
+            value: value
+         })
+      }
+   });
+
+   $('#deletebutton').on('click', function() {
+      window.location.href = '{{ url_for("ngsruns.delete_ngs_run") }}?id=' + selected_id;
+   })
+
+})
+   function sorter(field, sortOrder, data) {
+         var order = sortOrder === 'desc' ? -1 : 1
+         data.sort(function (a, b) {
+               var aa = a['_' + field]
+               var bb = b['_' + field]
+               if (aa < bb) {
+                  return order * -1
+               }
+               if (aa > bb) {
+                  return order
+               }
+               return 0
+         })
+      }
+
+</script>
+{% endblock %}

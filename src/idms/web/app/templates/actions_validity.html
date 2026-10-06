@@ -1,0 +1,13 @@
+System state of this collection is <b>{% if coll_state.sys_coll_state == "invalid" %}in{% endif %}valid</b>
+<div class="custom-control custom-switch vertical-down">
+  <input type="checkbox" class="custom-control-input" onChange="setCollectionValidity()"
+        value="true"
+        id="overrideValidity" {% if coll_state.user_coll_state %}checked{% endif %}>
+  <label class="custom-control-label" for="overrideValidity">Override state as {% if coll_state.sys_coll_state != "invalid" %}in{% endif %}valid</label>
+</div>
+{% if coll_state.sys_coll_state != "invalid" %}
+<div class="mt-2">
+  Propagate invalid user state to all downstream collections:<br>
+  <button class="btn btn-outline-secondary button12" {% if coll_state.user_coll_state != "invalid" %} disabled {% endif %} onClick="propagateUserState()">Propagate</button>
+</div>
+{% endif %}
