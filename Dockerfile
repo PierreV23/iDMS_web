@@ -19,13 +19,14 @@ RUN micromamba install -y -n base -f /tmp/idms_web.yaml && \
 
 # Activate environment for subsequent RUN commands
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
-ARG BRANCH=master
+ARG VERSION=latest
 ARG PORT=3456
 
 ENV PORT=${PORT}
 ENV FLASK_INSTANCE_PATH=/idms_web/instance
 
-RUN pip install --extra-index-url https://gitlab.rivm.nl/api/v4/projects/4682/packages/pypi/simple "git+https://gitlab.rivm.nl/bioinformatics/ngsweb.git@${BRANCH}"
+RUN PKG_SPEC=$([ "$VERSION" = "latest" ] && echo "idms_web" || echo "idms_web==${VERSION}") && \
+    pip install --extra-index-url https://gitlab.rivm.nl/api/v4/projects/4682/packages/pypi/simple "$PKG_SPEC"
 
 WORKDIR /idms_web
 

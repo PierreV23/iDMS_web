@@ -28,7 +28,7 @@ services:
     build:
       context: .
       args:
-        BRANCH: ${BRANCH:-master}
+        VERSION: ${VERSION:-latest}
     #image: gitlab.rivm.nl:4567/bioinformatics/idms_web:latest
     environment:
       FLASK_APP: 'idms.web:create_app()'
