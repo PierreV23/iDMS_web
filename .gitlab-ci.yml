@@ -43,22 +43,13 @@ include:
 
 # Override rules on the jobs created by the components
 build_package:
-  before_script:
-    - export PATH="$HOME/.local/bin:$PATH"
-    - test -f $HOME/.local/bin/env && source $HOME/.local/bin/env || true
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+(-rc\.\d+)?$/
 
 publish_package_rc:
-  before_script:
-    #- export PATH="$HOME/.local/bin:$PATH"
-    - test -f $HOME/.local/bin/env && source $HOME/.local/bin/env || true
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+-rc\.\d+$/
 
 publish_package_pr:
-  before_script:
-    - export PATH="$HOME/.local/bin:$PATH"
-    - test -f $HOME/.local/bin/env && source $HOME/.local/bin/env || true
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
