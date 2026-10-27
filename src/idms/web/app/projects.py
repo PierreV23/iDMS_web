@@ -667,7 +667,7 @@ def pg_details():
     all_reference_datasets = []
     connected_reference_datasets = []
     selected_process = datafield('process', 'NOT FOUND', Datatypes.TEXT)
-    list_of_lsf_queue_options = current_app.config.get('IRODS_ENVS', {}).get(current_user.environment, {}).get('lsf_queues', [])
+    list_of_lsf_queue_options = current_app.config.get('IRODS_ENVS', {}).get(current_user.env_tag, {}).get('lsf_queues', [])
     if selected_processref:
         sel_list = search(pl, lambda x: x.get('name'), selected_processref)
         selected_details  = sel_list[0] if sel_list else None

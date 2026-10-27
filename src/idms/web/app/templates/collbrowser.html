@@ -293,7 +293,7 @@ menuname='collectionbrowser'
     path_elem.shift()
     path_elem.shift()
     var path_without_zone = path_elem.join(seperator)
-    var path = protocolPrefix + "{{ config.get('IRODS_ENVS',{}).get(current_user.environment, {}).get('webdav_server', '') }}"
+    var path = protocolPrefix + "{{ config.get('IRODS_ENVS',{}).get(current_user.env_tag, {}).get('webdav_server', '') }}"
     if (add_ssl) path += "@SSL"
     path += seperator + path_without_zone;
     return path

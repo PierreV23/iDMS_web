@@ -21,11 +21,15 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 def login():
     if request.method == 'POST':
         requestdata = request.form.to_dict()
-        user = WebUser.from_login(username=requestdata['username'],
+        env = current_app.config["IRODS_ENVS"][requestdata['environment']]
+        logging.info(f"ENVIRONMENT: {env}")
+        try:
+            user = WebUser.login(username=requestdata['username'],
                     password=requestdata['password'],
-                    environment=requestdata['environment'])
-        if not user.validate_irods_session():
-            logging.info(f"User {user} failed to log in to {requestdata['environment']}")
+                    environment=env)
+            user.env_tag = requestdata['environment']
+        except:
+            logging.info(f"User {requestdata['username']} failed to log in to {requestdata['environment']} ({env})")
             flash('Login to the web interface failed', 'login')
             return redirect(url_for("auth.login"))
         logging.info(f"User {user} logged in to {requestdata['environment']}")

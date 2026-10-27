@@ -370,7 +370,7 @@ function update_process(sourceElem, destElem) {
       <h3>Current User info</h3>
       <table class="table">
         <tr><th>Attr</th><th>Value</th></tr>
-        <tr><td>environment</td><td>{{ current_user.environment }}</td></tr>
+        <tr><td>environment</td><td>{{ current_user.env_tag }}</td></tr>
         <tr><td>features</td><td>{{ formatvar(current_user.features) }}</td></tr>
         <tr><td>fullname</td><td>{{ current_user.fullname }}</td></tr>
         <tr><td>groups</td><td>{{ formatvar(current_user.groups()) }}</td></tr>
