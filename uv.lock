@@ -668,7 +668,7 @@ wheels = [
 [[package]]
 name = "idms-common-constants"
 version = "0.0.12"
-source = { git = "https://github.com/rivm-syso/iDMS_common_constants#94dc2734c96199dab1c2c9b12bcf69fd5a1b69a4" }
+source = { git = "https://github.com/rivm-syso/iDMS_common_constants?branch=main#94dc2734c96199dab1c2c9b12bcf69fd5a1b69a4" }
 
 [[package]]
 name = "idms-common-filesys"
@@ -689,13 +689,15 @@ dependencies = [
     { name = "apscheduler" },
     { name = "idms-common-constants" },
     { name = "python-irodsclient" },
+    { name = "typing-extensions" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "apscheduler" },
-    { name = "idms-common-constants", specifier = ">=0.0.8", index = "https://gitlab.rivm.nl/api/v4/projects/4682/packages/pypi/simple" },
+    { name = "idms-common-constants", git = "https://github.com/rivm-syso/iDMS_common_constants?branch=main" },
     { name = "python-irodsclient" },
+    { name = "typing-extensions", specifier = ">=4.16.0" },
 ]
 
 [package.metadata.requires-dev]

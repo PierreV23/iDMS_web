@@ -66,3 +66,9 @@ idms-web = "idms.web.wsgi:main"
 idms-common-constants = { git = "https://github.com/rivm-syso/iDMS_common_constants" }
 idms-common-filesys   = { git = "https://github.com/rivm-syso/iDMS_common_filesys" }
 idms-common-irods     = { path = "../iDMS_common_irods", editable = true }
+
+[tool.uv]
+config-settings = { editable_mode = "compat" }
+
+[tool.pyright]
+extraPaths = ["../iDMS_common_irods/src"]
